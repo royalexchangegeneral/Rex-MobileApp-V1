@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../utils/app_theme.dart';
+import 'motor_third_party_screen.dart';
 
 class ExploreServicesScreen extends StatefulWidget {
   const ExploreServicesScreen({super.key});
@@ -199,11 +200,21 @@ class _ExploreServicesScreenState extends State<ExploreServicesScreen> {
                       height: 44,
                       child: OutlinedButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Buy ${service['title']}'),
-                            ),
-                          );
+                          if (service['title'] == 'Motor Third Party') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const MotorThirdPartyScreen(),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Buy ${service['title']}'),
+                              ),
+                            );
+                          }
                         },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   // Brand Colors
   static const Color primaryBlue = Color(0xFF1E2D64);
+  static const Color primaryNavy = Color(0xFF1E2D64); // Alias for primaryBlue
   static const Color accentOrange = Color(0xFFF47920);
   static const Color darkBackground = Color(0xFF0A0E1A);
   static const Color white = Color(0xFFFFFFFF);
