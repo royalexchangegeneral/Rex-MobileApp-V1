@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../utils/app_theme.dart';
-import 'motor_third_party_screen.dart';
+import 'motor_insurance_screen.dart';
 
 class ExploreServicesScreen extends StatefulWidget {
   const ExploreServicesScreen({super.key});
@@ -17,7 +17,7 @@ class _ExploreServicesScreenState extends State<ExploreServicesScreen> {
   final List<Map<String, String>> _services = [
     {
       'image': 'assets/images/e1.png',
-      'title': 'Motor Third Party',
+      'title': 'Motor Insurance',
       'description':
           'This policy covers the third party against bodily injury and death resulting from a car accident caused by the insured the legal liability of the insured where damage was caused to another person\'s property',
     },
@@ -200,12 +200,12 @@ class _ExploreServicesScreenState extends State<ExploreServicesScreen> {
                       height: 44,
                       child: OutlinedButton(
                         onPressed: () {
-                          if (service['title'] == 'Motor Third Party') {
+                          if (service['title'] == 'Motor Insurance') {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    const MotorThirdPartyScreen(),
+                                    const MotorInsuranceScreen(),
                               ),
                             );
                           } else {

@@ -77,7 +77,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Motor Third Party',
+                              'Motor Insurance',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,

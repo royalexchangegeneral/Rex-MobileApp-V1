@@ -1,8 +1,101 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import 'policy_purchase_success_screen.dart';
 
 class PrivateMotorDetailsScreen extends StatelessWidget {
-  const PrivateMotorDetailsScreen({super.key});
+  final String vehicleType;
+  final String price;
+  
+  const PrivateMotorDetailsScreen({
+    super.key,
+    this.vehicleType = 'Private Car',
+    this.price = 'N5,000',
+  });
+
+  void _showPaymentBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // Payment option
+            InkWell(
+              onTap: () {
+                Navigator.pop(context);
+                // Simulate payment processing
+                Future.delayed(const Duration(seconds: 1), () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PolicyPurchaseSuccessScreen(),
+                    ),
+                  );
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.cyan[50],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.payment,
+                        color: Colors.cyan[600],
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Text(
+                      'Pay with paystack',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const Spacer(),
+                    Radio(
+                      value: true,
+                      groupValue: true,
+                      onChanged: (value) {},
+                      activeColor: AppTheme.primaryNavy,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,9 +108,9 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Private Motor Details',
-          style: TextStyle(
+        title: Text(
+          '$vehicleType Details',
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -99,6 +192,32 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Text(
+                    'Payment Information',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  _buildInfoRow('Product', vehicleType),
+                  _buildInfoRow('Price', price),
+                  
+                  const SizedBox(height: 32),
+                  
+                  const Text(
+                    'Vehicle Information',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  _buildInfoRow('Reg Number', 'AB 789 CD'),
                   _buildInfoRow('Chassis No.', '1HGCMBB2633A123456'),
                   _buildInfoRow('Make', 'Honda'),
                   _buildInfoRow('Colour', 'Silver'),
@@ -139,7 +258,7 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // Handle payment
+                  _showPaymentBottomSheet(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryNavy,

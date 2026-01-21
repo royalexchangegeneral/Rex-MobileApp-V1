@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
 import 'vehicle_information_screen.dart';
+import 'comprehensive_personal_info_screen.dart';
 
 class PrivateCarPurchaseScreen extends StatefulWidget {
-  const PrivateCarPurchaseScreen({super.key});
+  final String vehicleType;
+  final String price;
+  
+  const PrivateCarPurchaseScreen({
+    super.key,
+    this.vehicleType = 'Private Car',
+    this.price = 'N15,000',
+  });
 
   @override
   State<PrivateCarPurchaseScreen> createState() =>
@@ -46,9 +54,9 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Private Car',
-          style: TextStyle(
+        title: Text(
+          widget.vehicleType,
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -206,12 +214,21 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const VehicleInformationScreen(),
-                    ),
-                  );
+                  // Check if it's comprehensive motor
+                  if (widget.vehicleType.toLowerCase().contains('comprehensive')) {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => ComprehensivePersonalInfoScreen(vehicleType: widget.vehicleType)));
+                    return;
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VehicleInformationScreen(
+                          vehicleType: widget.vehicleType,
+                          price: widget.price,
+                        ),
+                      ),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryNavy,
@@ -259,6 +276,10 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 14,
+          ),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
@@ -266,18 +287,18 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
               fontSize: 14,
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: Colors.grey[400]!, width: 1.5),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: Colors.grey[400]!, width: 1.5),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppTheme.primaryNavy),
+              borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -309,9 +330,9 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey[50],
+            color: Colors.white,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(color: Colors.grey[400]!, width: 1.5),
           ),
           child: DropdownButtonFormField<String>(
             value: value,
@@ -321,6 +342,10 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                 color: Colors.grey[400],
                 fontSize: 14,
               ),
+            ),
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 14,
             ),
             decoration: const InputDecoration(
               border: InputBorder.none,

@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
+import 'customer_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,10 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
       
       if (success && mounted) {
-        // TODO: Navigate to dashboard
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful!')),
-        );
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const CustomerDashboardScreen()));
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Invalid email or password')),

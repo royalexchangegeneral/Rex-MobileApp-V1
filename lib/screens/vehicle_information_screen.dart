@@ -3,7 +3,14 @@ import '../utils/app_theme.dart';
 import 'private_motor_details_screen.dart';
 
 class VehicleInformationScreen extends StatefulWidget {
-  const VehicleInformationScreen({super.key});
+  final String vehicleType;
+  final String price;
+  
+  const VehicleInformationScreen({
+    super.key,
+    this.vehicleType = 'Private Car',
+    this.price = 'N15,000',
+  });
 
   @override
   State<VehicleInformationScreen> createState() =>
@@ -48,7 +55,10 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => const PrivateMotorDetailsScreen(),
+          builder: (context) => PrivateMotorDetailsScreen(
+            vehicleType: widget.vehicleType,
+            price: widget.price,
+          ),
         ),
       );
     }
@@ -65,9 +75,9 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Private Car',
-          style: TextStyle(
+        title: Text(
+          widget.vehicleType,
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -162,6 +172,10 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _regNumberController,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'enter your reg. no.',
                         hintStyle: TextStyle(
@@ -169,18 +183,18 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
                           fontSize: 14,
                         ),
                         filled: true,
-                        fillColor: Colors.grey[50],
+                        fillColor: Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: BorderSide(color: Colors.grey[400]!, width: 1.5),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: BorderSide(color: Colors.grey[400]!, width: 1.5),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: AppTheme.primaryNavy),
+                          borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
