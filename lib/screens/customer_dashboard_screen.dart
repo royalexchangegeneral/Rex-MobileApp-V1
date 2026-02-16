@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
 import 'login_screen.dart';
 import 'new_policy_screen.dart';
+import 'new_claims_screen.dart';
+import 'customer_care_screen.dart';
+import 'policy_details_screen.dart';
 
 class CustomerDashboardScreen extends StatefulWidget {
   const CustomerDashboardScreen({super.key});
@@ -71,7 +74,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildQuickAction(Icons.description_outlined, 'New\nPolicies', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen()))),
-                        _buildQuickAction(Icons.assignment_outlined, 'New\nClaims', onTap: () {}),
+                        _buildQuickAction(Icons.assignment_outlined, 'New\nClaims', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewClaimsScreen()))),
                         _buildQuickAction(Icons.cloud_download_outlined, 'View\nCertificate', onTap: () {}),
                         _buildQuickAction(Icons.payment_outlined, '\nPayments', onTap: () {}),
                       ],
@@ -90,7 +93,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
               ),
               const SizedBox(height: 12),
               // Policy Cards
-              _buildPolicyCard('Motor Insurance', 'Policy #MOT-2025-089', '28 May, 2025', Icons.directions_car, const Color(0xFF1A3A5C), 'Active', Colors.green),
+              _buildPolicyCard('Motor Insurance', 'Policy #MOT-2025-089', '28 May, 2025', Icons.directions_car, const Color(0xFF1A3A5C), 'Active', Colors.green, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PolicyDetailsScreen(policyType: 'Motor Insurance', policyNumber: 'MOT-2025-089')))),
               const SizedBox(height: 12),
               _buildPolicyCard('Fire Insurance', 'Policy #FIR-2025-089', '28 May, 2025', Icons.local_fire_department, const Color(0xFFFF6B6B), 'Active', Colors.green),
               const SizedBox(height: 12),
@@ -131,7 +134,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                     const SizedBox(height: 8),
                     const Text('Need a personal insurance agent?', style: TextStyle(color: Colors.black87)),
                     const SizedBox(height: 12),
-                    ElevatedButton(onPressed: () {}, style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: const Text('Request Now')),
+                    ElevatedButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerCareScreen())), style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: const Text('Request Now')),
                   ],
                 ),
               ),
@@ -191,24 +194,27 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
     );
   }
 
-  Widget _buildPolicyCard(String title, String policyNumber, String renewalDate, IconData icon, Color iconColor, String status, Color statusColor) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFFFAFAFA), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
-      child: Column(
-        children: [
-          Row(children: [
-            Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: iconColor, size: 20)),
-            const SizedBox(width: 10),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
-              Text(policyNumber, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
-            ])),
-            Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3), decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(16)), child: Text(status, style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.w600))),
-          ]),
-          const SizedBox(height: 6),
-          Row(children: [Text('Renewal Date', style: TextStyle(fontSize: 10, color: Colors.grey[600])), const Spacer(), Text(renewalDate, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.accentOrange))]),
-        ],
+  Widget _buildPolicyCard(String title, String policyNumber, String renewalDate, IconData icon, Color iconColor, String status, Color statusColor, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: const Color(0xFFFAFAFA), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
+        child: Column(
+          children: [
+            Row(children: [
+              Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: iconColor, size: 20)),
+              const SizedBox(width: 10),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                Text(policyNumber, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+              ])),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3), decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(16)), child: Text(status, style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.w600))),
+            ]),
+            const SizedBox(height: 6),
+            Row(children: [Text('Renewal Date', style: TextStyle(fontSize: 10, color: Colors.grey[600])), const Spacer(), Text(renewalDate, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.accentOrange))]),
+          ],
+        ),
       ),
     );
   }

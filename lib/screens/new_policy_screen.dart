@@ -3,6 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../utils/app_theme.dart';
 import 'customer_motor_insurance_screen.dart';
 import 'protection_plans_screen.dart';
+import 'royal_care_screen.dart';
+import 'underwritten_products_screen.dart';
 
 class NewPolicyScreen extends StatelessWidget {
   const NewPolicyScreen({super.key});
@@ -279,7 +281,7 @@ class NewPolicyScreen extends StatelessWidget {
 
   Widget _buildRoyalCareCard(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalCareScreen())),
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
@@ -330,7 +332,7 @@ class NewPolicyScreen extends StatelessWidget {
 
   Widget _buildUnderwrittenCard(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UnderwrittenProductsScreen())),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
