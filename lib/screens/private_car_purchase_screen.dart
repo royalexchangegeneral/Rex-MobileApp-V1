@@ -20,7 +20,7 @@ class PrivateCarPurchaseScreen extends StatefulWidget {
 
 class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
   final _formKey = GlobalKey<FormState>();
-  int _currentStep = 0;
+  final int _currentStep = 0;
 
   // Form controllers
   final _firstNameController = TextEditingController();
@@ -72,9 +72,9 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                const Row(
                   children: [
-                    const Text(
+                    Text(
                       'Step 1 of 3',
                       style: TextStyle(
                         fontSize: 14,
@@ -82,8 +82,8 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                         color: AppTheme.primaryNavy,
                       ),
                     ),
-                    const Spacer(),
-                    const Text(
+                    Spacer(),
+                    Text(
                       'Personal information',
                       style: TextStyle(
                         fontSize: 14,
@@ -335,7 +335,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
             border: Border.all(color: Colors.grey[400]!, width: 1.5),
           ),
           child: DropdownButtonFormField<String>(
-            value: value,
+            initialValue: value,
             hint: Text(
               hint,
               style: TextStyle(

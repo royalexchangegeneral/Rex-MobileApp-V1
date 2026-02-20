@@ -57,11 +57,11 @@ class PolicyDetailsScreen extends StatelessWidget {
                         child: const Icon(Icons.directions_car, color: Colors.white, size: 20),
                       ),
                       const SizedBox(width: 10),
-                      Expanded(
+                      const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Third Party Insurance', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                            Text('Third Party Insurance', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
                             Text('Policy #FIR-2025-089', style: TextStyle(color: Colors.white70, fontSize: 11)),
                           ],
                         ),
@@ -209,11 +209,11 @@ class PolicyDetailsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     children: [
                       Icon(Icons.headset_mic, color: AppTheme.primaryNavy, size: 18),
-                      const SizedBox(width: 6),
-                      const Text('Talk to an Agent', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+                      SizedBox(width: 6),
+                      Text('Talk to an Agent', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -270,7 +270,7 @@ class PolicyDetailsScreen extends StatelessWidget {
                 label: const Text('View Certificate', style: TextStyle(fontSize: 14)),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.primaryNavy,
-                  side: BorderSide(color: AppTheme.primaryNavy),
+                  side: const BorderSide(color: AppTheme.primaryNavy),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                 ),
@@ -369,7 +369,7 @@ class PolicyDetailsScreen extends StatelessWidget {
         Expanded(
           child: Text(title, style: const TextStyle(fontSize: 12, color: Colors.black)),
         ),
-        Icon(Icons.download, color: AppTheme.accentOrange, size: 18),
+        const Icon(Icons.download, color: AppTheme.accentOrange, size: 18),
       ],
     );
   }

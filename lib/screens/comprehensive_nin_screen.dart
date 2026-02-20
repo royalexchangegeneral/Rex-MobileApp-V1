@@ -49,10 +49,10 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  const Text('Step 4 of 5', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
-                  const Spacer(),
-                  const Text('Identification', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+                const Row(children: [
+                  Text('Step 4 of 5', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+                  Spacer(),
+                  Text('Identification', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
                 ]),
                 const SizedBox(height: 12),
                 Row(children: List.generate(5, (i) => Expanded(child: Container(height: 4, margin: EdgeInsets.only(right: i < 4 ? 4 : 0), decoration: BoxDecoration(color: i < 4 ? AppTheme.primaryNavy : Colors.grey[300], borderRadius: BorderRadius.circular(2)))))),
@@ -93,7 +93,7 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
                         Icon(Icons.cloud_upload_outlined, size: 32, color: Colors.grey[400]),
                         const SizedBox(height: 4),
                         Text('JPEG, PNG, PDF 2MB', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                        RichText(text: TextSpan(style: TextStyle(fontSize: 12, color: Colors.grey[600]), children: [TextSpan(text: 'Browse file', style: TextStyle(color: AppTheme.primaryNavy, decoration: TextDecoration.underline)), const TextSpan(text: ' from your phone')])),
+                        RichText(text: TextSpan(style: TextStyle(fontSize: 12, color: Colors.grey[600]), children: const [TextSpan(text: 'Browse file', style: TextStyle(color: AppTheme.primaryNavy, decoration: TextDecoration.underline)), TextSpan(text: ' from your phone')])),
                       ])),
                     ),
                   ),

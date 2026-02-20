@@ -35,7 +35,7 @@ class _QuoteSuccessScreenState extends State<QuoteSuccessScreen> {
               Container(
                 width: 80,
                 height: 80,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppTheme.primaryNavy,
                   shape: BoxShape.circle,
                 ),

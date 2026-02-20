@@ -66,7 +66,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppTheme.primaryNavy),
+                  borderSide: const BorderSide(color: AppTheme.primaryNavy),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
@@ -90,7 +90,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppTheme.primaryNavy),
+                  borderSide: const BorderSide(color: AppTheme.primaryNavy),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
@@ -114,7 +114,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppTheme.primaryNavy),
+                  borderSide: const BorderSide(color: AppTheme.primaryNavy),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
@@ -138,7 +138,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppTheme.primaryNavy),
+                  borderSide: const BorderSide(color: AppTheme.primaryNavy),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),

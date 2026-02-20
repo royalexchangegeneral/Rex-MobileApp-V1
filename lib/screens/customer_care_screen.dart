@@ -57,7 +57,7 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppTheme.primaryNavy),
+                  borderSide: const BorderSide(color: AppTheme.primaryNavy),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 filled: true,
@@ -164,9 +164,9 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Icon(Icons.add_circle_outline, size: 20),
                     SizedBox(width: 8),
                     Text('Create New Ticket', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),

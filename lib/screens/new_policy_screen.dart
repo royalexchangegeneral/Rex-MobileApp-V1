@@ -43,22 +43,22 @@ class NewPolicyScreen extends StatelessWidget {
                 color: const Color(0xFFF3F8FF),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
                       Icon(Icons.help_outline, color: AppTheme.primaryNavy, size: 20),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Text('Need Help?', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
+                  SizedBox(height: 8),
+                  Text(
                     'Not sure what to buy?, do you need assistance choosing, customizing, or purchasing a new insurance policy.',
                     style: TextStyle(fontSize: 12, color: Colors.black87, height: 1.4),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text('Click here for advice.', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
                 ],
               ),

@@ -64,9 +64,9 @@ class MotorInsuranceScreen extends StatelessWidget {
                       Container(
                         color: Colors.white,
                         padding: const EdgeInsets.all(24),
-                        child: Column(
+                        child: const Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text('Motor Insurance', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
                             SizedBox(height: 8),
                             Text(

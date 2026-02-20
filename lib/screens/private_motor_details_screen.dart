@@ -126,9 +126,9 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                const Row(
                   children: [
-                    const Text(
+                    Text(
                       'Step 3 of 3',
                       style: TextStyle(
                         fontSize: 14,
@@ -136,8 +136,8 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
                         color: AppTheme.primaryNavy,
                       ),
                     ),
-                    const Spacer(),
-                    const Text(
+                    Spacer(),
+                    Text(
                       'Summary',
                       style: TextStyle(
                         fontSize: 14,

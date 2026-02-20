@@ -61,10 +61,10 @@ class _ComprehensivePersonalInfoScreenState extends State<ComprehensivePersonalI
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  const Text('Step 1 of 5', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
-                  const Spacer(),
-                  const Text('Personal information', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+                const Row(children: [
+                  Text('Step 1 of 5', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+                  Spacer(),
+                  Text('Personal information', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
                 ]),
                 const SizedBox(height: 12),
                 Row(children: List.generate(5, (i) => Expanded(child: Container(height: 4, margin: EdgeInsets.only(right: i < 4 ? 4 : 0), decoration: BoxDecoration(color: i < 1 ? AppTheme.primaryNavy : Colors.grey[300], borderRadius: BorderRadius.circular(2)))))),
@@ -146,7 +146,7 @@ class _ComprehensivePersonalInfoScreenState extends State<ComprehensivePersonalI
         Container(
           decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(8)),
           child: DropdownButtonFormField<String>(
-            value: value,
+            initialValue: value,
             hint: Text('select your ${label.toLowerCase()}', style: TextStyle(color: Colors.grey[400], fontSize: 14)),
             decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4)),
             icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[400]),

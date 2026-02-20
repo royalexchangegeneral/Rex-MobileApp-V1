@@ -257,7 +257,7 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
                       onPressed: () {},
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.primaryNavy,
-                        side: BorderSide(color: AppTheme.primaryNavy),
+                        side: const BorderSide(color: AppTheme.primaryNavy),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),

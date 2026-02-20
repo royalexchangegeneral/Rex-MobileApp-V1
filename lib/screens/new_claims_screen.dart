@@ -168,7 +168,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppTheme.primaryNavy),
+                borderSide: const BorderSide(color: AppTheme.primaryNavy),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
@@ -207,7 +207,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppTheme.primaryNavy),
+                borderSide: const BorderSide(color: AppTheme.primaryNavy),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
@@ -232,7 +232,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppTheme.primaryNavy),
+                borderSide: const BorderSide(color: AppTheme.primaryNavy),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
@@ -257,7 +257,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppTheme.primaryNavy),
+                borderSide: const BorderSide(color: AppTheme.primaryNavy),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
@@ -281,7 +281,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppTheme.primaryNavy),
+                borderSide: const BorderSide(color: AppTheme.primaryNavy),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
@@ -326,7 +326,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
                 int index = entry.key;
                 File photo = entry.value;
                 return _buildUploadedPhoto(photo, index);
-              }).toList(),
+              }),
               if (uploadedPhotos.length < 5) _buildPhotoUploadBox(),
             ],
           ),
@@ -352,7 +352,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppTheme.primaryNavy),
+                borderSide: const BorderSide(color: AppTheme.primaryNavy),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),

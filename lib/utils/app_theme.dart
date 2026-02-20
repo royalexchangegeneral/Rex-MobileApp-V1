@@ -20,7 +20,6 @@ class AppTheme {
       primary: primaryBlue,
       secondary: accentOrange,
       surface: white,
-      background: white,
     ),
     
     textTheme: GoogleFonts.poppinsTextTheme(const TextTheme(
@@ -89,7 +88,6 @@ class AppTheme {
       primary: primaryBlue,
       secondary: accentOrange,
       surface: darkGrey,
-      background: darkBackground,
     ),
     
     textTheme: GoogleFonts.poppinsTextTheme(const TextTheme(

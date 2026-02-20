@@ -73,10 +73,10 @@ class MotorThirdPartyScreen extends StatelessWidget {
                       Container(
                         color: Colors.white,
                         padding: const EdgeInsets.all(24),
-                        child: Column(
+                        child: const Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Motor Insurance',
                               style: TextStyle(
                                 fontSize: 18,
@@ -84,8 +84,8 @@ class MotorThirdPartyScreen extends StatelessWidget {
                                 color: Colors.black,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            const Text(
+                            SizedBox(height: 8),
+                            Text(
                               'This policy covers the third party against bodily injury and death resulting from a car accident caused by the insured the legal liability of the insured where damage was caused to another person\'s property',
                               style: TextStyle(
                                 fontSize: 11,
@@ -158,7 +158,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Price at top right
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
@@ -269,7 +269,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Price at top right
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Column(
@@ -388,7 +388,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Price at top right
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
@@ -483,7 +483,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Price at top right
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
@@ -578,7 +578,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Price at top right
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
@@ -673,7 +673,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Price at top right
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
@@ -877,7 +877,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Price at top right
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
@@ -939,7 +939,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               RichText(
-                text: TextSpan(
+                text: const TextSpan(
                   style: TextStyle(
                     fontSize: 9,
                     color: Colors.white,
@@ -1019,7 +1019,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Price at top right
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
@@ -1081,7 +1081,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               RichText(
-                text: TextSpan(
+                text: const TextSpan(
                   style: TextStyle(
                     fontSize: 9,
                     color: Colors.white,

@@ -238,4 +238,3 @@ class _PolicyRenewalScreenState extends State<PolicyRenewalScreen> {
     );
   }
 }
-}

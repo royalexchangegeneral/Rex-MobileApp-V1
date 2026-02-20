@@ -93,9 +93,9 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                const Row(
                   children: [
-                    const Text(
+                    Text(
                       'Step 2 of 3',
                       style: TextStyle(
                         fontSize: 14,
@@ -103,8 +103,8 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
                         color: AppTheme.primaryNavy,
                       ),
                     ),
-                    const Spacer(),
-                    const Text(
+                    Spacer(),
+                    Text(
                       'Vehicle Information',
                       style: TextStyle(
                         fontSize: 14,
@@ -231,7 +231,7 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
                       disabledForegroundColor: Colors.white,
                     ),
                     child: _isVerifying
-                        ? Row(
+                        ? const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               SizedBox(
@@ -242,8 +242,8 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
                                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              const Text(
+                              SizedBox(width: 12),
+                              Text(
                                 'Verifying RegNo',
                                 style: TextStyle(
                                   fontSize: 16,
@@ -253,12 +253,12 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
                             ],
                           )
                         : _isVerified
-                            ? Row(
+                            ? const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.check_circle, color: Colors.white),
-                                  const SizedBox(width: 8),
-                                  const Text(
+                                  SizedBox(width: 8),
+                                  Text(
                                     'Registration No Verified',
                                     style: TextStyle(
                                       fontSize: 16,

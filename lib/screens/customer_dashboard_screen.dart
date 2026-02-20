@@ -31,7 +31,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
           'assets/images/image 4.png',
           height: 22,
           fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) => Row(
+          errorBuilder: (context, error, stackTrace) => const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('rex', style: TextStyle(color: AppTheme.primaryNavy, fontSize: 20, fontWeight: FontWeight.bold)),
@@ -57,7 +57,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
+                        const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Text('320', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
                           Text('Active Policies', style: TextStyle(color: Colors.white70, fontSize: 12)),
                         ]),
@@ -130,7 +130,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(children: [Icon(Icons.support_agent, color: AppTheme.primaryNavy), const SizedBox(width: 8), const Text('Request Agent', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy))]),
+                    const Row(children: [Icon(Icons.support_agent, color: AppTheme.primaryNavy), SizedBox(width: 8), Text('Request Agent', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy))]),
                     const SizedBox(height: 8),
                     const Text('Need a personal insurance agent?', style: TextStyle(color: Colors.black87)),
                     const SizedBox(height: 12),
@@ -271,17 +271,17 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
             color: AppTheme.primaryNavy,
-            child: Row(
+            child: const Row(
               children: [
                 CircleAvatar(
                   radius: 25,
                   backgroundColor: Colors.white,
                   child: Icon(Icons.person, color: AppTheme.primaryNavy, size: 30),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text('Aderomi Abaranje', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                     Text('aaderonmi@example.com', style: TextStyle(color: Colors.white70, fontSize: 12)),
                   ],
@@ -311,8 +311,8 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
               onTap: () {
                 Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (ctx) => const LoginScreen()), (route) => false);
               },
-              child: Row(
-                children: const [
+              child: const Row(
+                children: [
                   Icon(Icons.logout, color: AppTheme.primaryNavy),
                   SizedBox(width: 16),
                   Text('Log Out', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppTheme.primaryNavy)),

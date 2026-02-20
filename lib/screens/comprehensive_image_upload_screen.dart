@@ -39,10 +39,10 @@ class _ComprehensiveImageUploadScreenState extends State<ComprehensiveImageUploa
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  const Text('Step 3 of 5', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
-                  const Spacer(),
-                  const Text('image upload', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+                const Row(children: [
+                  Text('Step 3 of 5', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+                  Spacer(),
+                  Text('image upload', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
                 ]),
                 const SizedBox(height: 12),
                 Row(children: List.generate(5, (i) => Expanded(child: Container(height: 4, margin: EdgeInsets.only(right: i < 4 ? 4 : 0), decoration: BoxDecoration(color: i < 3 ? AppTheme.primaryNavy : Colors.grey[300], borderRadius: BorderRadius.circular(2)))))),
@@ -61,7 +61,7 @@ class _ComprehensiveImageUploadScreenState extends State<ComprehensiveImageUploa
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(children: [Icon(Icons.lightbulb_outline, color: AppTheme.primaryNavy, size: 20), const SizedBox(width: 8), const Text('Upload Tips:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black))]),
+                        const Row(children: [Icon(Icons.lightbulb_outline, color: AppTheme.primaryNavy, size: 20), SizedBox(width: 8), Text('Upload Tips:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black))]),
                         const SizedBox(height: 12),
                         _buildTip('Take pictures in daylight for better clarity and good lighting'),
                         const SizedBox(height: 8),
@@ -99,7 +99,7 @@ class _ComprehensiveImageUploadScreenState extends State<ComprehensiveImageUploa
                         Icon(Icons.cloud_upload_outlined, size: 40, color: Colors.grey[400]),
                         const SizedBox(height: 8),
                         Text('Drop your files here', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
-                        RichText(text: TextSpan(style: TextStyle(fontSize: 12, color: Colors.grey[600]), children: [TextSpan(text: 'Browse file', style: TextStyle(color: AppTheme.primaryNavy, decoration: TextDecoration.underline)), const TextSpan(text: ' from your phone')])),
+                        RichText(text: TextSpan(style: TextStyle(fontSize: 12, color: Colors.grey[600]), children: const [TextSpan(text: 'Browse file', style: TextStyle(color: AppTheme.primaryNavy, decoration: TextDecoration.underline)), TextSpan(text: ' from your phone')])),
                       ])),
                     ),
                   ),
