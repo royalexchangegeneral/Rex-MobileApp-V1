@@ -5,7 +5,9 @@ import 'new_policy_screen.dart';
 import 'quote_screen.dart';
 
 class UnderwrittenProductsScreen extends StatelessWidget {
-  const UnderwrittenProductsScreen({super.key});
+  final bool isAgent;
+  
+  const UnderwrittenProductsScreen({super.key, this.isAgent = false});
 
   @override
   Widget build(BuildContext context) {
@@ -127,34 +129,65 @@ class UnderwrittenProductsScreen extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: SizedBox(
+      floatingActionButton: isAgent ? null : SizedBox(
         width: 50,
         height: 50,
         child: FloatingActionButton(
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewPolicyScreen(isAgent: isAgent))),
           backgroundColor: AppTheme.primaryNavy,
           shape: const CircleBorder(),
           child: const Icon(Icons.add, color: Colors.white, size: 24),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 6,
-        child: SizedBox(
-          height: 50,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.home_outlined, 'Home', false),
-              _buildNavItem(Icons.description_outlined, 'Policies', true),
-              const SizedBox(width: 40),
-              _buildNavItem(Icons.assignment_outlined, 'Claims', false),
-              _buildNavItem(Icons.person_outline, 'Profile', false),
-            ],
-          ),
-        ),
-      ),
+      floatingActionButtonLocation: isAgent ? null : FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: isAgent
+          ? BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: const Color(0xFF1E2D64),
+              unselectedItemColor: Colors.grey,
+              currentIndex: 1,
+              selectedFontSize: 11,
+              unselectedFontSize: 11,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined, size: 22),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.description_outlined, size: 22),
+                  label: 'Policy',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.people_outline, size: 22),
+                  label: 'Clients',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.bar_chart_outlined, size: 22),
+                  label: 'Reports',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline, size: 22),
+                  label: 'Profile',
+                ),
+              ],
+            )
+          : BottomAppBar(
+              shape: const CircularNotchedRectangle(),
+              notchMargin: 6,
+              child: SizedBox(
+                height: 50,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(Icons.home_outlined, 'Home', false),
+                    _buildNavItem(Icons.description_outlined, 'Policies', true),
+                    const SizedBox(width: 40),
+                    _buildNavItem(Icons.assignment_outlined, 'Claims', false),
+                    _buildNavItem(Icons.person_outline, 'Profile', false),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 

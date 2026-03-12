@@ -7,7 +7,9 @@ import 'royal_care_screen.dart';
 import 'underwritten_products_screen.dart';
 
 class NewPolicyScreen extends StatelessWidget {
-  const NewPolicyScreen({super.key});
+  final bool isAgent;
+  
+  const NewPolicyScreen({super.key, this.isAgent = false});
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +69,7 @@ class NewPolicyScreen extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: SizedBox(
+      floatingActionButton: isAgent ? null : SizedBox(
         width: 50,
         height: 50,
         child: FloatingActionButton(
@@ -77,24 +79,55 @@ class NewPolicyScreen extends StatelessWidget {
           child: const Icon(Icons.add, color: Colors.white, size: 24),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 6,
-        child: SizedBox(
-          height: 50,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.home_outlined, 'Home', false),
-              _buildNavItem(Icons.description_outlined, 'Policies', true),
-              const SizedBox(width: 40),
-              _buildNavItem(Icons.assignment_outlined, 'Claims', false),
-              _buildNavItem(Icons.person_outline, 'Profile', false),
-            ],
-          ),
-        ),
-      ),
+      floatingActionButtonLocation: isAgent ? null : FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: isAgent
+          ? BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: const Color(0xFF1E2D64),
+              unselectedItemColor: Colors.grey,
+              currentIndex: 1,
+              selectedFontSize: 11,
+              unselectedFontSize: 11,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined, size: 22),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.description_outlined, size: 22),
+                  label: 'Policy',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.people_outline, size: 22),
+                  label: 'Clients',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.bar_chart_outlined, size: 22),
+                  label: 'Reports',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline, size: 22),
+                  label: 'Profile',
+                ),
+              ],
+            )
+          : BottomAppBar(
+              shape: const CircularNotchedRectangle(),
+              notchMargin: 6,
+              child: SizedBox(
+                height: 50,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(Icons.home_outlined, 'Home', false),
+                    _buildNavItem(Icons.description_outlined, 'Policies', true),
+                    const SizedBox(width: 40),
+                    _buildNavItem(Icons.assignment_outlined, 'Claims', false),
+                    _buildNavItem(Icons.person_outline, 'Profile', false),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
@@ -179,7 +212,7 @@ class NewPolicyScreen extends StatelessWidget {
 
   Widget _buildMotorInsuranceCard(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerMotorInsuranceScreen())),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerMotorInsuranceScreen(isAgent: isAgent))),
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
@@ -230,7 +263,7 @@ class NewPolicyScreen extends StatelessWidget {
 
   Widget _buildProtectionPlansCard(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProtectionPlansScreen())),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProtectionPlansScreen(isAgent: isAgent))),
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
@@ -281,7 +314,7 @@ class NewPolicyScreen extends StatelessWidget {
 
   Widget _buildRoyalCareCard(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalCareScreen())),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RoyalCareScreen(isAgent: isAgent))),
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
@@ -332,7 +365,7 @@ class NewPolicyScreen extends StatelessWidget {
 
   Widget _buildUnderwrittenCard(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UnderwrittenProductsScreen())),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => UnderwrittenProductsScreen(isAgent: isAgent))),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(

@@ -12,11 +12,11 @@ class IdentityVerificationScreen extends StatefulWidget {
 class _IdentityVerificationScreenState extends State<IdentityVerificationScreen> {
   String _selectedIdType = 'NIN';
 
-  final List<Map<String, String>> _idTypes = [
-    {'type': 'BVN', 'icon': 'assets/icons/bvn.svg'},
-    {'type': 'NIN', 'icon': 'assets/icons/bvn.svg'},
-    {'type': 'Passport', 'icon': 'assets/icons/passport.svg'},
-    {'type': "Driver's license", 'icon': 'assets/icons/bvn.svg'},
+  final List<Map<String, dynamic>> _idTypes = [
+    {'type': 'BVN', 'icon': 'assets/icons/bvn.svg', 'enabled': false},
+    {'type': 'NIN', 'icon': 'assets/icons/bvn.svg', 'enabled': true},
+    {'type': 'Passport', 'icon': 'assets/icons/passport.svg', 'enabled': false},
+    {'type': "Driver's license", 'icon': 'assets/icons/bvn.svg', 'enabled': false},
   ];
 
   void _continue() {
@@ -113,45 +113,47 @@ class _IdentityVerificationScreenState extends State<IdentityVerificationScreen>
               ...List.generate(_idTypes.length, (index) {
                 final idType = _idTypes[index];
                 final isSelected = _selectedIdType == idType['type'];
+                final isEnabled = idType['enabled'] == true;
                 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: InkWell(
-                    onTap: () {
+                    onTap: isEnabled ? () {
                       setState(() {
-                        _selectedIdType = idType['type']!;
+                        _selectedIdType = idType['type'] as String;
                       });
-                      // Navigate immediately when clicked
-                      _continue();
-                    },
+                    } : null,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: Colors.grey[300]!,
+                          color: isEnabled ? Colors.grey[300]! : Colors.grey[200]!,
                           width: 1,
                         ),
                         borderRadius: BorderRadius.circular(12),
-                        color: Colors.white,
+                        color: isEnabled ? Colors.white : Colors.grey[50],
                       ),
                       child: Row(
                         children: [
-                          SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: SvgPicture.asset(
-                              idType['icon']!,
-                              fit: BoxFit.contain,
+                          Opacity(
+                            opacity: isEnabled ? 1.0 : 0.4,
+                            child: SizedBox(
+                              width: 28,
+                              height: 28,
+                              child: SvgPicture.asset(
+                                idType['icon'] as String,
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 14),
                           Expanded(
                             child: Text(
-                              idType['type']!,
-                              style: const TextStyle(
+                              idType['type'] as String,
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.black,
+                                color: isEnabled ? Colors.black : Colors.grey[400],
                               ),
                             ),
                           ),
@@ -161,12 +163,12 @@ class _IdentityVerificationScreenState extends State<IdentityVerificationScreen>
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: isSelected ? AppTheme.primaryBlue : Colors.grey[400]!,
+                                color: isSelected && isEnabled ? AppTheme.primaryBlue : Colors.grey[400]!,
                                 width: 2,
                               ),
-                              color: isSelected ? AppTheme.primaryBlue : Colors.white,
+                              color: isSelected && isEnabled ? AppTheme.primaryBlue : Colors.white,
                             ),
-                            child: isSelected
+                            child: isSelected && isEnabled
                                 ? const Icon(
                                     Icons.check,
                                     size: 14,
@@ -180,6 +182,31 @@ class _IdentityVerificationScreenState extends State<IdentityVerificationScreen>
                   ),
                 );
               }),
+              
+              const SizedBox(height: 24),
+              
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _continue,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
               
               const SizedBox(height: 16),
               

@@ -4,7 +4,9 @@ import '../utils/app_theme.dart';
 import 'new_policy_screen.dart';
 
 class ProtectionPlansScreen extends StatelessWidget {
-  const ProtectionPlansScreen({super.key});
+  final bool isAgent;
+  
+  const ProtectionPlansScreen({super.key, this.isAgent = false});
 
   @override
   Widget build(BuildContext context) {
@@ -80,18 +82,49 @@ class ProtectionPlansScreen extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: SizedBox(
+      floatingActionButton: isAgent ? null : SizedBox(
         width: 50,
         height: 50,
         child: FloatingActionButton(
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewPolicyScreen(isAgent: isAgent))),
           backgroundColor: AppTheme.primaryNavy,
           shape: const CircleBorder(),
           child: const Icon(Icons.add, color: Colors.white, size: 24),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
+      floatingActionButtonLocation: isAgent ? null : FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: isAgent
+          ? BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: const Color(0xFF1E2D64),
+              unselectedItemColor: Colors.grey,
+              currentIndex: 1,
+              selectedFontSize: 11,
+              unselectedFontSize: 11,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined, size: 22),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.description_outlined, size: 22),
+                  label: 'Policy',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.people_outline, size: 22),
+                  label: 'Clients',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.bar_chart_outlined, size: 22),
+                  label: 'Reports',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline, size: 22),
+                  label: 'Profile',
+                ),
+              ],
+            )
+          : BottomAppBar(
         shape: const CircularNotchedRectangle(),
         notchMargin: 6,
         child: SizedBox(

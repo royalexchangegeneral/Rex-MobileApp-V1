@@ -58,7 +58,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
           widget.vehicleType,
           style: const TextStyle(
             color: Colors.black,
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -68,7 +68,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
         children: [
           // Progress indicator
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -77,7 +77,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                     Text(
                       'Step 1 of 3',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.primaryNavy,
                       ),
@@ -86,19 +86,19 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                     Text(
                       'Personal information',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.primaryNavy,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
                       child: Container(
-                        height: 4,
+                        height: 3,
                         decoration: BoxDecoration(
                           color: AppTheme.primaryNavy,
                           borderRadius: BorderRadius.circular(2),
@@ -108,7 +108,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Container(
-                        height: 4,
+                        height: 3,
                         decoration: BoxDecoration(
                           color: Colors.grey[300],
                           borderRadius: BorderRadius.circular(2),
@@ -118,7 +118,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Container(
-                        height: 4,
+                        height: 3,
                         decoration: BoxDecoration(
                           color: Colors.grey[300],
                           borderRadius: BorderRadius.circular(2),
@@ -134,7 +134,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
           // Form
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -145,40 +145,40 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                       hint: 'enter first name',
                       controller: _firstNameController,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
                     _buildTextField(
                       label: 'Last Name*',
                       hint: 'enter last name',
                       controller: _lastNameController,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
                     _buildTextField(
                       label: 'Email Address*',
                       hint: 'enter your email address',
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
                     _buildTextField(
                       label: 'Phone Number*',
                       hint: 'enter your phone number',
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
                     _buildTextField(
                       label: 'Occupation',
                       hint: 'enter your occupation',
                       controller: _occupationController,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
                     _buildTextField(
                       label: 'Address*',
                       hint: 'enter your address',
                       controller: _addressController,
                       maxLines: 3,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
                     _buildDropdownField(
                       label: 'State*',
                       hint: 'select your state',
@@ -189,7 +189,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                         });
                       },
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
                     _buildDropdownField(
                       label: 'LGA*',
                       hint: 'select your LGA',
@@ -200,7 +200,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                         });
                       },
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -209,31 +209,34 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
 
           // Continue button
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // Check if it's comprehensive motor
-                  if (widget.vehicleType.toLowerCase().contains('comprehensive')) {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => ComprehensivePersonalInfoScreen(vehicleType: widget.vehicleType)));
-                    return;
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => VehicleInformationScreen(
-                          vehicleType: widget.vehicleType,
-                          price: widget.price,
+                  // Validate all required fields
+                  if (_formKey.currentState!.validate()) {
+                    // Check if it's comprehensive motor
+                    if (widget.vehicleType.toLowerCase().contains('comprehensive')) {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => ComprehensivePersonalInfoScreen(vehicleType: widget.vehicleType)));
+                      return;
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => VehicleInformationScreen(
+                            vehicleType: widget.vehicleType,
+                            price: widget.price,
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    }
                   }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryNavy,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -241,7 +244,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                 child: const Text(
                   'Continue',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -260,31 +263,41 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
     TextInputType? keyboardType,
     int maxLines = 1,
   }) {
+    final isRequired = label.contains('*');
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
             color: Colors.black87,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
           style: const TextStyle(
             color: Colors.black,
-            fontSize: 14,
+            fontSize: 13,
           ),
+          validator: isRequired
+              ? (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'This field is required';
+                  }
+                  return null;
+                }
+              : null,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
               color: Colors.grey[400],
-              fontSize: 14,
+              fontSize: 13,
             ),
             filled: true,
             fillColor: Colors.white,
@@ -300,9 +313,17 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2),
             ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.red, width: 1.5),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
+              horizontal: 12,
+              vertical: 10,
             ),
           ),
         ),
@@ -316,18 +337,20 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
     required String? value,
     required Function(String?) onChanged,
   }) {
+    final isRequired = label.contains('*');
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
             color: Colors.black87,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -335,23 +358,31 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
             border: Border.all(color: Colors.grey[400]!, width: 1.5),
           ),
           child: DropdownButtonFormField<String>(
-            initialValue: value,
+            value: value,
             hint: Text(
               hint,
               style: TextStyle(
                 color: Colors.grey[400],
-                fontSize: 14,
+                fontSize: 13,
               ),
             ),
             style: const TextStyle(
               color: Colors.black,
-              fontSize: 14,
+              fontSize: 13,
             ),
+            validator: isRequired
+                ? (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'This field is required';
+                    }
+                    return null;
+                  }
+                : null,
             decoration: const InputDecoration(
               border: InputBorder.none,
               contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
+                horizontal: 12,
+                vertical: 10,
               ),
             ),
             icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),

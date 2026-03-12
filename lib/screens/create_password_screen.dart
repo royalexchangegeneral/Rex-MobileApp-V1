@@ -33,13 +33,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       setState(() => _isLoading = false);
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created successfully!')),
-        );
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/login',
-          (route) => false,
-        );
+        Navigator.of(context).pushNamed('/existing-policy-question');
       }
     }
   }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
 import 'customer_dashboard_screen.dart';
+import 'agent_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,7 +41,18 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
       
       if (success && mounted) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const CustomerDashboardScreen()));
+        // Route based on user type
+        if (authProvider.isAgent()) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const CustomerDashboardScreen()),
+          );
+        }
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Invalid email or password')),

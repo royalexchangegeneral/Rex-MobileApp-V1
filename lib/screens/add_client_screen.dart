@@ -1,0 +1,998 @@
+import 'package:flutter/material.dart';
+import 'client_summary_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+class AddClientScreen extends StatefulWidget {
+  final String clientType; // 'individual' or 'corporate'
+  
+  const AddClientScreen({super.key, required this.clientType});
+
+  @override
+  State<AddClientScreen> createState() => _AddClientScreenState();
+}
+
+class _AddClientScreenState extends State<AddClientScreen> {
+  // Controllers
+  final _ninController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _dobController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _lgaController = TextEditingController();
+  
+  // Corporate client controllers
+  final _cacController = TextEditingController();
+  final _businessNameController = TextEditingController();
+  final _businessAddressController = TextEditingController();
+  final _businessSectorController = TextEditingController();
+  
+  String? _selectedState;
+  String? _selectedLga;
+  List<Map<String, dynamic>> _lgaList = [];
+  bool _isLoadingLgas = false;
+  bool _isVerifyingNin = false;
+  bool _ninVerified = false;
+  
+  final Map<String, int> _stateIdMap = {
+    'Abia': 1,
+    'Adamawa': 2,
+    'Akwa Ibom': 3,
+    'Anambra': 4,
+    'Bauchi': 5,
+    'Bayelsa': 6,
+    'Benue': 7,
+    'Borno': 8,
+    'Cross River': 9,
+    'Delta': 10,
+    'Ebonyi': 11,
+    'Edo': 12,
+    'Ekiti': 13,
+    'Enugu': 14,
+    'Federal Capital Territory': 15,
+    'Gombe': 16,
+    'Imo': 17,
+    'Jigawa': 18,
+    'Kaduna': 19,
+    'Kano': 20,
+    'Katsina': 21,
+    'Kebbi': 22,
+    'Kogi': 23,
+    'Kwara': 24,
+    'Lagos': 25,
+    'Nasarawa': 26,
+    'Niger': 27,
+    'Ogun': 28,
+    'Ondo': 29,
+    'Osun': 30,
+    'Oyo': 31,
+    'Plateau': 32,
+    'Rivers': 33,
+    'Sokoto': 34,
+    'Taraba': 35,
+    'Yobe': 36,
+    'Zamfara': 37,
+  };
+  
+  final List<String> _nigerianStates = [
+    'Select State',
+    'Abia',
+    'Adamawa',
+    'Akwa Ibom',
+    'Anambra',
+    'Bauchi',
+    'Bayelsa',
+    'Benue',
+    'Borno',
+    'Cross River',
+    'Delta',
+    'Ebonyi',
+    'Edo',
+    'Ekiti',
+    'Enugu',
+    'Federal Capital Territory',
+    'Gombe',
+    'Imo',
+    'Jigawa',
+    'Kaduna',
+    'Kano',
+    'Katsina',
+    'Kebbi',
+    'Kogi',
+    'Kwara',
+    'Lagos',
+    'Nasarawa',
+    'Niger',
+    'Ogun',
+    'Ondo',
+    'Osun',
+    'Oyo',
+    'Plateau',
+    'Rivers',
+    'Sokoto',
+    'Taraba',
+    'Yobe',
+    'Zamfara',
+  ];
+
+  @override
+  void dispose() {
+    _ninController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _dobController.dispose();
+    _addressController.dispose();
+    _stateController.dispose();
+    _lgaController.dispose();
+    _cacController.dispose();
+    _businessNameController.dispose();
+    _businessAddressController.dispose();
+    _businessSectorController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchLgas(String stateName) async {
+    final stateId = _stateIdMap[stateName];
+    if (stateId == null) return;
+
+    setState(() {
+      _isLoadingLgas = true;
+      _lgaList = [];
+      _selectedLga = null;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://eportal.rexinsure.com/api/get-lga?state_id=$stateId'),
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Request timeout');
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        
+        // Handle different response formats
+        List<Map<String, dynamic>> lgaList = [];
+        if (data is List) {
+          lgaList = List<Map<String, dynamic>>.from(data);
+        } else if (data is Map && data['data'] is List) {
+          lgaList = List<Map<String, dynamic>>.from(data['data']);
+        } else if (data is Map && data['lgas'] is List) {
+          lgaList = List<Map<String, dynamic>>.from(data['lgas']);
+        }
+        
+        setState(() {
+          _lgaList = lgaList;
+          _isLoadingLgas = false;
+        });
+        
+        if (lgaList.isEmpty && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No LGAs found for this state')),
+          );
+        }
+      } else {
+        setState(() {
+          _isLoadingLgas = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to load LGAs: ${response.statusCode}')),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingLgas = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading LGAs: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _verifyNin() async {
+    final nin = _ninController.text.trim();
+    
+    // Validate NIN length
+    if (nin.length != 11) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('NIN must be exactly 11 characters')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isVerifyingNin = true;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'Intcode': 'TESTCODE',
+          'Password': 'royal1234',
+          'number': nin,
+        }),
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          throw Exception('Request timeout');
+        },
+      );
+
+      setState(() {
+        _isVerifyingNin = false;
+      });
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        
+        // Check if verification was successful
+        if (responseData['status'] == 'success' && 
+            responseData['data'] != null && 
+            responseData['data']['data'] != null &&
+            responseData['data']['data']['kyc'] != null) {
+          
+          final kycData = responseData['data']['data']['kyc'];
+          
+          // Populate fields with response data
+          setState(() {
+            _firstNameController.text = kycData['firstname']?.toString() ?? '';
+            _lastNameController.text = kycData['surname']?.toString() ?? '';
+            _emailController.text = kycData['email']?.toString() ?? '';
+            _phoneController.text = kycData['telephoneno']?.toString() ?? '';
+            
+            // Format date of birth from DD-MM-YYYY to DD/MM/YYYY
+            String dob = kycData['birthdate']?.toString() ?? '';
+            if (dob.isNotEmpty) {
+              _dobController.text = dob.replaceAll('-', '/');
+            }
+            
+            _addressController.text = kycData['residence_address']?.toString() ?? '';
+            
+            // Set state if available
+            String residenceState = kycData['residence_state']?.toString() ?? '';
+            if (residenceState.isNotEmpty && _nigerianStates.contains(residenceState)) {
+              _selectedState = residenceState;
+              // Fetch LGAs for the state
+              _fetchLgas(residenceState);
+            }
+            
+            _ninVerified = true;
+          });
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('NIN verified successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } else {
+          // No data returned or verification failed
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No data found. Please enter details manually'),
+              ),
+            );
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Verification failed: ${response.statusCode}. Please enter details manually'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isVerifyingNin = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}. Please enter details manually'),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Add A New Client',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Progress indicator
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Step 1 of 2',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      'Client information',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E2D64),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          // Scrollable Content
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Enter NIN
+                  const Text(
+                    'Enter NIN',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _ninController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 11,
+                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    decoration: InputDecoration(
+                      hintText: 'enter NIN (11 digits)',
+                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      counterText: '',
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Verify Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isVerifyingNin ? null : _verifyNin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E2D64),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                        disabledBackgroundColor: Colors.grey[400],
+                      ),
+                      child: _isVerifyingNin
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Verify',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // OR divider
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: Colors.grey[300])),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'OR',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: Colors.grey[300])),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // First Name
+                  const Text(
+                    'First Name',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _firstNameController,
+                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    decoration: InputDecoration(
+                      hintText: 'enter first name',
+                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Last Name
+                  const Text(
+                    'Last Name',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _lastNameController,
+                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    decoration: InputDecoration(
+                      hintText: 'enter last name',
+                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Email Address
+                  const Text(
+                    'Email Address',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    decoration: InputDecoration(
+                      hintText: 'enter your email address',
+                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Phone Number
+                  const Text(
+                    'Phone Number',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    decoration: InputDecoration(
+                      hintText: 'enter your phone number',
+                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Date of Birth
+                  const Text(
+                    'Date of Birth',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime(2000),
+                        firstDate: DateTime(1900),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _dobController.text = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+                        });
+                      }
+                    },
+                    child: AbsorbPointer(
+                      child: TextField(
+                        controller: _dobController,
+                        style: const TextStyle(fontSize: 14, color: Colors.black),
+                        decoration: InputDecoration(
+                          hintText: 'dd/mm/yyyy',
+                          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          suffixIcon: Icon(Icons.calendar_today_outlined, color: Colors.grey[600], size: 20),
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Address
+                  const Text(
+                    'Address',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _addressController,
+                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    decoration: InputDecoration(
+                      hintText: 'enter your address',
+                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // State and LGA
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'State',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _selectedState,
+                                  isExpanded: true,
+                                  hint: Text(
+                                    'select state',
+                                    style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                                  ),
+                                  icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600], size: 20),
+                                  style: const TextStyle(fontSize: 14, color: Colors.black),
+                                  items: _nigerianStates.map((String state) {
+                                    return DropdownMenuItem<String>(
+                                      value: state == 'Select State' ? null : state,
+                                      child: Text(state),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    setState(() {
+                                      _selectedState = newValue;
+                                    });
+                                    if (newValue != null) {
+                                      _fetchLgas(newValue);
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'LGA',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _isLoadingLgas
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[100],
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        SizedBox(
+                                          height: 16,
+                                          width: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'Loading...',
+                                          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : _lgaList.isNotEmpty
+                                    ? Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[100],
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: DropdownButtonHideUnderline(
+                                          child: DropdownButton<String>(
+                                            value: _selectedLga,
+                                            isExpanded: true,
+                                            hint: Text(
+                                              'select LGA',
+                                              style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                                            ),
+                                            icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600], size: 20),
+                                            style: const TextStyle(fontSize: 14, color: Colors.black),
+                                            items: _lgaList.map((lga) {
+                                              final lgaName = lga['name']?.toString() ?? lga['lga']?.toString() ?? '';
+                                              return DropdownMenuItem<String>(
+                                                value: lgaName,
+                                                child: Text(lgaName),
+                                              );
+                                            }).toList(),
+                                            onChanged: (String? newValue) {
+                                              setState(() {
+                                                _selectedLga = newValue;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      )
+                                    : TextField(
+                                        controller: _lgaController,
+                                        style: const TextStyle(fontSize: 14, color: Colors.black),
+                                        decoration: InputDecoration(
+                                          hintText: _selectedState == null ? 'select state first' : 'enter LGA',
+                                          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                                          filled: true,
+                                          fillColor: Colors.grey[100],
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                        ),
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _selectedLga = value;
+                                          });
+                                        },
+                                      ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Next Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Validate all required fields
+                        if (_firstNameController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter first name')),
+                          );
+                          return;
+                        }
+                        if (_lastNameController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter last name')),
+                          );
+                          return;
+                        }
+                        if (_emailController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter email address')),
+                          );
+                          return;
+                        }
+                        if (_phoneController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter phone number')),
+                          );
+                          return;
+                        }
+                        if (_dobController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please select date of birth')),
+                          );
+                          return;
+                        }
+                        if (_addressController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter address')),
+                          );
+                          return;
+                        }
+                        if (_selectedState == null || _selectedState!.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please select state')),
+                          );
+                          return;
+                        }
+                        if (_selectedLga == null || _selectedLga!.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please select LGA')),
+                          );
+                          return;
+                        }
+                        
+                        // Collect all client data
+                        final clientData = {
+                          'firstName': _firstNameController.text,
+                          'lastName': _lastNameController.text,
+                          'email': _emailController.text,
+                          'phone': _phoneController.text,
+                          'dob': _dobController.text,
+                          'address': _addressController.text,
+                          'state': _selectedState ?? '',
+                          'lga': _selectedLga ?? '',
+                        };
+                        
+                        // Navigate to summary screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ClientSummaryScreen(
+                              clientType: widget.clientType,
+                              clientData: clientData,
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E2D64),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Next',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Buy policy for customer Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        // Navigate to buy policy screen
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF1E2D64),
+                        side: const BorderSide(color: Color(0xFF1E2D64), width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Buy policy for customer',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 80), // Extra space for bottom nav
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: const Color(0xFF1E2D64),
+        unselectedItemColor: Colors.grey,
+        currentIndex: 2,
+        selectedFontSize: 11,
+        unselectedFontSize: 11,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined, size: 22),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.description_outlined, size: 22),
+            label: 'Policy',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people_outline, size: 22),
+            label: 'Clients',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart_outlined, size: 22),
+            label: 'Reports',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline, size: 22),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+}

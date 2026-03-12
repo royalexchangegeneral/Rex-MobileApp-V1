@@ -15,6 +15,14 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
   bool _hasDocument = false;
 
   @override
+  void initState() {
+    super.initState();
+    _ninController.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
   void dispose() {
     _ninController.dispose();
     super.dispose();
@@ -32,7 +40,7 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
   }
 
   void _continue() {
-    if (_ninController.text.isNotEmpty || _hasDocument) {
+    if (_ninController.text.length == 11 || _hasDocument) {
       Navigator.pushNamed(context, '/create-password');
     }
   }
@@ -69,7 +77,7 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
               const Text(
                 'Enter your NIN',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
@@ -82,7 +90,7 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.black, fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: 'enter your NIN',
+                  hintText: 'enter your 11-digit NIN',
                   hintStyle: TextStyle(color: Colors.grey[400]),
                   filled: true,
                   fillColor: Colors.grey[50],
@@ -98,7 +106,18 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 2),
                   ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red, width: 1),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red, width: 2),
+                  ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  errorText: _ninController.text.isNotEmpty && _ninController.text.length != 11
+                      ? 'NIN must be exactly 11 digits'
+                      : null,
                 ),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
@@ -112,7 +131,7 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
                 child: Text(
                   'OR',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Colors.black,
                   ),
@@ -124,7 +143,7 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
               Text(
                 'Scan or upload a copy of your document',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   color: Colors.grey[600],
                 ),
                 textAlign: TextAlign.center,
@@ -138,91 +157,125 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
                   width: double.infinity,
                   height: 200,
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: _hasDocument ? Colors.green[50] : Colors.grey[100],
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[300]!),
+                    border: Border.all(
+                      color: _hasDocument ? Colors.green : Colors.grey[300]!,
+                      width: _hasDocument ? 2 : 1,
+                    ),
                   ),
                   child: Stack(
                     children: [
                       Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.person_outline,
-                              size: 80,
-                              color: Colors.grey[300],
-                            ),
-                            const SizedBox(height: 16),
-                            Container(
-                              width: 200,
-                              height: 4,
-                              color: Colors.grey[300],
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              width: 150,
-                              height: 4,
-                              color: Colors.grey[300],
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              width: 180,
-                              height: 4,
-                              color: Colors.grey[300],
-                            ),
-                          ],
-                        ),
+                        child: _hasDocument
+                            ? Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    size: 80,
+                                    color: Colors.green,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    'Document Uploaded',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.green,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Tap to upload a different document',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.person_outline,
+                                    size: 80,
+                                    color: Colors.grey[300],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Container(
+                                    width: 200,
+                                    height: 4,
+                                    color: Colors.grey[300],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    width: 150,
+                                    height: 4,
+                                    color: Colors.grey[300],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    width: 180,
+                                    height: 4,
+                                    color: Colors.grey[300],
+                                  ),
+                                ],
+                              ),
                       ),
-                      Positioned(
-                        bottom: 16,
-                        right: 16,
-                        child: Container(
-                          width: 56,
-                          height: 56,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.primaryBlue,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 28,
+                      if (!_hasDocument)
+                        Positioned(
+                          bottom: 16,
+                          right: 16,
+                          child: Container(
+                            width: 56,
+                            height: 56,
+                            decoration: const BoxDecoration(
+                              color: AppTheme.primaryBlue,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.white,
+                              size: 28,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
               ),
+              
+              const SizedBox(height: 32),
+              
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: (_ninController.text.length == 11 || _hasDocument) ? _continue : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: (_ninController.text.length == 11 || _hasDocument)
+                        ? AppTheme.primaryBlue
+                        : Colors.grey[300],
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 24),
             ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            onPressed: (_ninController.text.isNotEmpty || _hasDocument) ? _continue : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: (_ninController.text.isNotEmpty || _hasDocument)
-                  ? AppTheme.primaryBlue
-                  : Colors.grey[300],
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
-            child: const Text(
-              'Continue',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
           ),
         ),
       ),

@@ -6,11 +6,16 @@ class AuthProvider with ChangeNotifier {
   String? _userId;
   String? _userName;
   String? _userEmail;
+  String? _userType; // 'agent' or 'customer'
 
   bool get isAuthenticated => _isAuthenticated;
   String? get userId => _userId;
   String? get userName => _userName;
   String? get userEmail => _userEmail;
+  String? get userType => _userType;
+  
+  bool isAgent() => _userType == 'agent';
+  bool isCustomer() => _userType == 'customer';
 
   // Check authentication status
   Future<void> checkAuthStatus() async {
@@ -19,6 +24,7 @@ class AuthProvider with ChangeNotifier {
     _userId = prefs.getString('userId');
     _userName = prefs.getString('userName');
     _userEmail = prefs.getString('userEmail');
+    _userType = prefs.getString('userType');
     notifyListeners();
   }
 
@@ -29,16 +35,24 @@ class AuthProvider with ChangeNotifier {
     
     // Mock validation
     if (email.isNotEmpty && password.length >= 6) {
+      // Determine user type based on email domain
+      // Agent emails end with @rexinsurance.com or contain 'agent'
+      final isAgentEmail = email.toLowerCase().endsWith('@rexinsurance.com') || 
+                          email.toLowerCase().contains('agent');
+      final userType = isAgentEmail ? 'agent' : 'customer';
+      
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isAuthenticated', true);
       await prefs.setString('userId', 'user_${DateTime.now().millisecondsSinceEpoch}');
       await prefs.setString('userName', email.split('@')[0]);
       await prefs.setString('userEmail', email);
+      await prefs.setString('userType', userType);
       
       _isAuthenticated = true;
       _userId = prefs.getString('userId');
       _userName = prefs.getString('userName');
       _userEmail = email;
+      _userType = userType;
       
       notifyListeners();
       return true;
@@ -79,6 +93,7 @@ class AuthProvider with ChangeNotifier {
     _userId = null;
     _userName = null;
     _userEmail = null;
+    _userType = null;
     
     notifyListeners();
   }

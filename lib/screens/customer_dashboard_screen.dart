@@ -274,16 +274,16 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
             child: const Row(
               children: [
                 CircleAvatar(
-                  radius: 25,
+                  radius: 28,
                   backgroundColor: Colors.white,
-                  child: Icon(Icons.person, color: AppTheme.primaryNavy, size: 30),
+                  child: Icon(Icons.person, color: AppTheme.primaryNavy, size: 32),
                 ),
                 SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Aderomi Abaranje', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text('aaderonmi@example.com', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text('Aderomi Abaranje', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                    Text('aaderonmi@example.com', style: TextStyle(color: Colors.white70, fontSize: 11)),
                   ],
                 ),
               ],
@@ -292,7 +292,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
           // Menu items
           Expanded(
             child: ListView(
-              padding: EdgeInsets.zero,
+              padding: const EdgeInsets.only(top: 3),
               children: [
                 _buildDrawerItem(Icons.home_outlined, 'Home', 0),
                 _buildDrawerItem(Icons.people_outline, 'My Policies', 1),
@@ -301,46 +301,60 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                 _buildDrawerItem(Icons.share_outlined, 'Refer a Friend', 4),
                 _buildDrawerItem(Icons.help_outline, 'FAQ', 5),
                 _buildDrawerItem(Icons.phone_outlined, 'Call your Agent', 6),
+                _buildDrawerItem(Icons.logout, 'Log Out', 7, isLogout: true),
               ],
             ),
           ),
-          // Logout
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: InkWell(
-              onTap: () {
-                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (ctx) => const LoginScreen()), (route) => false);
-              },
-              child: const Row(
-                children: [
-                  Icon(Icons.logout, color: AppTheme.primaryNavy),
-                  SizedBox(width: 16),
-                  Text('Log Out', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppTheme.primaryNavy)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  Widget _buildDrawerItem(IconData icon, String title, int index) {
+  Widget _buildDrawerItem(IconData icon, String title, int index, {bool isLogout = false}) {
     final isSelected = _drawerSelectedIndex == index;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
       decoration: BoxDecoration(
-        color: isSelected ? AppTheme.primaryNavy : Colors.transparent,
+        color: isSelected && !isLogout ? AppTheme.primaryNavy : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
-        leading: Icon(icon, color: isSelected ? Colors.white : AppTheme.primaryNavy),
-        title: Text(title, style: TextStyle(color: isSelected ? Colors.white : AppTheme.primaryNavy, fontWeight: FontWeight.w500)),
-        trailing: isSelected ? null : Icon(Icons.chevron_right, color: Colors.grey[400]),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        dense: true,
+        visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
+        leading: Icon(
+          icon,
+          color: isLogout
+              ? Colors.red
+              : isSelected
+                  ? Colors.white
+                  : AppTheme.primaryNavy,
+          size: 22,
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isLogout
+                ? Colors.red
+                : isSelected
+                    ? Colors.white
+                    : AppTheme.primaryNavy,
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+          ),
+        ),
+        trailing: isSelected || isLogout ? null : Icon(Icons.chevron_right, color: Colors.grey[400]),
         onTap: () {
-          setState(() => _drawerSelectedIndex = index);
-          Navigator.pop(context);
+          if (isLogout) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (ctx) => const LoginScreen()),
+              (route) => false,
+            );
+          } else {
+            setState(() => _drawerSelectedIndex = index);
+            Navigator.pop(context);
+          }
         },
       ),
     );

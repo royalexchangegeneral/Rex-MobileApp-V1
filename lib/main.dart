@@ -18,6 +18,11 @@ import 'screens/enter_bvn_screen.dart';
 import 'screens/enter_passport_screen.dart';
 import 'screens/enter_drivers_license_screen.dart';
 import 'screens/create_password_screen.dart';
+import 'screens/existing_policy_question_screen.dart';
+import 'screens/get_covered_screen.dart';
+import 'screens/enter_policy_details_screen.dart';
+import 'screens/agent_dashboard_screen.dart';
+import 'screens/select_client_type_screen.dart';
 import 'utils/app_theme.dart';
 import 'providers/onboarding_provider.dart';
 import 'providers/auth_provider.dart';
@@ -73,6 +78,11 @@ class MyApp extends StatelessWidget {
               '/enter-passport': (context) => const EnterPassportScreen(),
               '/enter-drivers-license': (context) => const EnterDriversLicenseScreen(),
               '/create-password': (context) => const CreatePasswordScreen(),
+              '/existing-policy-question': (context) => const ExistingPolicyQuestionScreen(),
+              '/get-covered': (context) => const GetCoveredScreen(),
+              '/enter-policy-details': (context) => const EnterPolicyDetailsScreen(),
+              '/agent-dashboard': (context) => const AgentDashboardScreen(),
+              '/select-client-type': (context) => const SelectClientTypeScreen(),
             },
             onGenerateRoute: (settings) {
               if (settings.name == '/verify-code') {
