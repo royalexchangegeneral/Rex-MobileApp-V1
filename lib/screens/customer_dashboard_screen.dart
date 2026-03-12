@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
+import '../providers/auth_provider.dart';
 import 'login_screen.dart';
 import 'new_policy_screen.dart';
 import 'new_claims_screen.dart';
@@ -263,6 +265,10 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
   }
 
   Widget _buildDrawer() {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final userName = authProvider.userName ?? 'User';
+    final userEmail = authProvider.userEmail ?? 'user@example.com';
+    
     return Drawer(
       child: Column(
         children: [
@@ -271,20 +277,37 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
             color: AppTheme.primaryNavy,
-            child: const Row(
+            child: Row(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 28,
                   backgroundColor: Colors.white,
                   child: Icon(Icons.person, color: AppTheme.primaryNavy, size: 32),
                 ),
-                SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Aderomi Abaranje', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                    Text('aaderonmi@example.com', style: TextStyle(color: Colors.white70, fontSize: 11)),
-                  ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        userName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        userEmail,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 9,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

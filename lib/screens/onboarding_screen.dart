@@ -18,16 +18,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   
   final List<OnboardingModel> _pages = [
      OnboardingModel(
-       title: 'Instant Coverage Delivered Right to Your Fingertips',
-      description: 'Say goodbye to paperwork and long waits — buy, manage, and renew policies quickly and securely from your mobile device.',
+       title: 'Into a Future Built on Security and Confidence',
+      description: 'Our trusted partner in safeguarding what matters most, today and tomorrow.',
       imagePath: 'assets/images/onboarding1.png',
-      buttonText: 'Next',
+      buttonText: 'Get Started',
     ),
       OnboardingModel(
-      title: 'Into a Future Built on Security and Confidence',
-      description: 'No matter where life takes you, we provide the foundation you need to grow, explore, and thrive without fear.',
+      title: 'Instant Coverage Delivered Right to Your Fingertips',
+      description: 'Say goodbye to paperwork and long wait. Buy, manage, and renew policies quickly and securely from your mobile device.',
       imagePath: 'assets/images/onboarding2.png',
-      buttonText: 'Get Started',
+      buttonText: 'Next',
     ),
     OnboardingModel(
       title: 'Protect What Matters Most with Comprehensive Coverage',
@@ -191,17 +191,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Text(
                   page.title,
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Text(
                   page.description,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: Colors.white.withOpacity(0.9),
                     height: 1.5,
                   ),
@@ -233,9 +233,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Colors.black.withOpacity(0.2),
-            Colors.black.withOpacity(0.5),
-            Colors.black.withOpacity(0.9),
+            Colors.black.withOpacity(0.1),
+            Colors.black.withOpacity(0.3),
+            Colors.black.withOpacity(0.75),
           ],
           stops: const [0.0, 0.6, 1.0],
         );

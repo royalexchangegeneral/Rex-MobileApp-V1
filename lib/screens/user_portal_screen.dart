@@ -106,7 +106,7 @@ class UserPortalScreen extends StatelessWidget {
               
               const SizedBox(height: 16),
               
-              // Explore Services Card
+              // Explore Products Card
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -124,7 +124,7 @@ class UserPortalScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     const Text(
-                      'Explore Our Services',
+                      'Explore Our Products',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -133,7 +133,7 @@ class UserPortalScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Browse our insurance products, and find the right coverage for your needs—no account required.',
+                      'Browse our insurance products, and find the right coverage for your needs, no account required. secure, user-friendly dashboard.',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey[600],
@@ -158,7 +158,7 @@ class UserPortalScreen extends StatelessWidget {
                           elevation: 0,
                         ),
                         child: const Text(
-                          'Browse Services',
+                          'Browse Products',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
+import '../providers/auth_provider.dart';
 import 'select_client_type_screen.dart';
 import 'buy_new_policy_screen.dart';
+import 'clients_list_screen.dart';
 
 class AgentDashboardScreen extends StatelessWidget {
   const AgentDashboardScreen({super.key});
@@ -353,6 +356,17 @@ class AgentDashboardScreen extends StatelessWidget {
         selectedItemColor: const Color(0xFF1E2D64),
         unselectedItemColor: Colors.grey,
         currentIndex: 0,
+        onTap: (index) {
+          if (index == 2) {
+            // Navigate to Clients screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ClientsListScreen(),
+              ),
+            );
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
@@ -529,6 +543,10 @@ class AgentDashboardScreen extends StatelessWidget {
   }
   
   Widget _buildDrawer(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final userName = authProvider.userName ?? 'User';
+    final userEmail = authProvider.userEmail ?? 'user@example.com';
+    
     return Drawer(
       child: Column(
         children: [
@@ -554,25 +572,27 @@ class AgentDashboardScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Aderomi Abgranie',
-                            style: TextStyle(
+                            userName,
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
-                            'aaderonmi@example.com',
-                            style: TextStyle(
-                              fontSize: 11,
+                            userEmail,
+                            style: const TextStyle(
+                              fontSize: 9,
                               color: Colors.white70,
                             ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                         ],
                       ),
@@ -603,6 +623,12 @@ class AgentDashboardScreen extends StatelessWidget {
                   title: 'All Customers',
                   onTap: () {
                     Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ClientsListScreen(),
+                      ),
+                    );
                   },
                 ),
                 _buildDrawerItem(
