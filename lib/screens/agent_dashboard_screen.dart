@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import 'select_client_type_screen.dart';
 import 'buy_new_policy_screen.dart';
 import 'clients_list_screen.dart';
+import 'agent_profile_screen.dart';
 
 class AgentDashboardScreen extends StatelessWidget {
   const AgentDashboardScreen({super.key});
@@ -363,6 +364,14 @@ class AgentDashboardScreen extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (context) => const ClientsListScreen(),
+              ),
+            );
+          } else if (index == 4) {
+            // Navigate to Profile screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AgentProfileScreen(),
               ),
             );
           }
