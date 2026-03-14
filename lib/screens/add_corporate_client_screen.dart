@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'client_summary_screen.dart';
+import 'agent_dashboard_screen.dart';
+import 'clients_list_screen.dart';
+import 'reports_screen.dart';
+import 'agent_profile_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -633,6 +637,30 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
         currentIndex: 2,
         selectedFontSize: 11,
         unselectedFontSize: 11,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
+              (route) => false,
+            );
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ClientsListScreen()),
+            );
+          } else if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ReportsScreen()),
+            );
+          } else if (index == 4) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AgentProfileScreen()),
+            );
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined, size: 22),

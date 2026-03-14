@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'agent_dashboard_screen.dart';
+import 'clients_list_screen.dart';
+import 'reports_screen.dart';
+import 'agent_profile_screen.dart';
 
-class ClientSummaryScreen extends StatelessWidget {
+class ClientSummaryScreen extends StatefulWidget {
   final String clientType;
   final Map<String, String> clientData;
   
@@ -9,6 +15,121 @@ class ClientSummaryScreen extends StatelessWidget {
     required this.clientType,
     required this.clientData,
   });
+
+  @override
+  State<ClientSummaryScreen> createState() => _ClientSummaryScreenState();
+}
+
+class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
+  bool _isCreating = false;
+
+  String _convertDateFormat(String dateStr) {
+    // Convert DD/MM/YYYY to YYYY-MM-DD
+    try {
+      final parts = dateStr.split('/');
+      if (parts.length == 3) {
+        final day = parts[0].padLeft(2, '0');
+        final month = parts[1].padLeft(2, '0');
+        final year = parts[2];
+        return '$year-$month-$day';
+      }
+      return dateStr; // Return as-is if format is unexpected
+    } catch (e) {
+      return dateStr; // Return as-is if parsing fails
+    }
+  }
+
+  Future<void> _createCustomer() async {
+    setState(() {
+      _isCreating = true;
+    });
+
+    try {
+      // Convert DOB from DD/MM/YYYY to YYYY-MM-DD
+      final dobFormatted = _convertDateFormat(widget.clientData['dob'] ?? '');
+      
+      final requestBody = {
+        'cust_first_name': widget.clientData['firstName'] ?? '',
+        'cust_middle_name': '', // Not collected in form
+        'cust_last_name': widget.clientData['lastName'] ?? '',
+        'cust_type': widget.clientType == 'individual' ? 'Individual' : 'Corporate',
+        'cust_occupation': '', // Not collected in form
+        'cust_phone_no': widget.clientData['phone'] ?? '',
+        'cust_email': widget.clientData['email'] ?? '',
+        'cust_address': widget.clientData['address'] ?? '',
+        'cust_town': '', // Not collected in form
+        'cust_nationality': 'Nigerian', // Default value
+        'cust_state': widget.clientData['state'] ?? '',
+        'cust_lga': widget.clientData['lga'] ?? '',
+        'cust_dob': dobFormatted,
+        'cust_national_id_name': 'NIN',
+        'cust_national_id_no': widget.clientData['nin'] ?? '',
+      };
+      
+      print('=== CREATE CUSTOMER API REQUEST ===');
+      print('URL: https://eportaltest.rexinsure.com/api/createcustomer');
+      print('Request Body: ${json.encode(requestBody)}');
+      
+      final response = await http.post(
+        Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception('Request timeout');
+        },
+      );
+
+      print('=== CREATE CUSTOMER API RESPONSE ===');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      print('===================================');
+
+      setState(() {
+        _isCreating = false;
+      });
+
+      if (mounted) {
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Customer created successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          
+          // Navigate back to clients list
+          Navigator.popUntil(context, (route) => route.isFirst);
+        } else {
+          final responseData = json.decode(response.body);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(responseData['message'] ?? 'Failed to create customer'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('=== CREATE CUSTOMER API ERROR ===');
+      print('Error: ${e.toString()}');
+      print('=================================');
+      
+      setState(() {
+        _isCreating = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,21 +238,21 @@ class ClientSummaryScreen extends StatelessWidget {
                         const SizedBox(height: 20),
                         
                         // Client Information Fields - Different for individual vs corporate
-                        if (clientType == 'corporate') ...[
-                          _buildInfoRow('Business Name', clientData['businessName'] ?? ''),
-                          _buildInfoRow('Address', clientData['businessAddress'] ?? ''),
-                          _buildInfoRow('Business Sector', clientData['businessSector'] ?? ''),
-                          _buildInfoRow('Phone Number', clientData['phone'] ?? ''),
-                          _buildInfoRow('Email', clientData['email'] ?? ''),
-                          _buildInfoRow('Year of Incorp.', clientData['yearOfIncorporation'] ?? '', isLast: true),
+                        if (widget.clientType == 'corporate') ...[
+                          _buildInfoRow('Business Name', widget.clientData['businessName'] ?? ''),
+                          _buildInfoRow('Address', widget.clientData['businessAddress'] ?? ''),
+                          _buildInfoRow('Business Sector', widget.clientData['businessSector'] ?? ''),
+                          _buildInfoRow('Phone Number', widget.clientData['phone'] ?? ''),
+                          _buildInfoRow('Email', widget.clientData['email'] ?? ''),
+                          _buildInfoRow('Year of Incorp.', widget.clientData['yearOfIncorporation'] ?? '', isLast: true),
                         ] else ...[
-                          _buildInfoRow('First Name', clientData['firstName'] ?? ''),
-                          _buildInfoRow('Last Name', clientData['lastName'] ?? ''),
-                          _buildInfoRow('Email', clientData['email'] ?? ''),
-                          _buildInfoRow('Phone Number', clientData['phone'] ?? ''),
-                          _buildInfoRow('State', clientData['state'] ?? ''),
-                          _buildInfoRow('LGA', clientData['lga'] ?? ''),
-                          _buildInfoRow('Address', clientData['address'] ?? '', isLast: true),
+                          _buildInfoRow('First Name', widget.clientData['firstName'] ?? ''),
+                          _buildInfoRow('Last Name', widget.clientData['lastName'] ?? ''),
+                          _buildInfoRow('Email', widget.clientData['email'] ?? ''),
+                          _buildInfoRow('Phone Number', widget.clientData['phone'] ?? ''),
+                          _buildInfoRow('State', widget.clientData['state'] ?? ''),
+                          _buildInfoRow('LGA', widget.clientData['lga'] ?? ''),
+                          _buildInfoRow('Address', widget.clientData['address'] ?? '', isLast: true),
                         ],
                       ],
                     ),
@@ -144,12 +265,7 @@ class ClientSummaryScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.popUntil(context, (route) => route.isFirst);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Client added successfully')),
-                        );
-                      },
+                      onPressed: _isCreating ? null : _createCustomer,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1E2D64),
                         foregroundColor: Colors.white,
@@ -157,14 +273,24 @@ class ClientSummaryScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: 0,
+                        disabledBackgroundColor: Colors.grey[400],
                       ),
-                      child: const Text(
-                        'Add User',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      child: _isCreating
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              'Add User',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                   ),
                   
@@ -207,6 +333,30 @@ class ClientSummaryScreen extends StatelessWidget {
         currentIndex: 2,
         selectedFontSize: 11,
         unselectedFontSize: 11,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
+              (route) => false,
+            );
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ClientsListScreen()),
+            );
+          } else if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ReportsScreen()),
+            );
+          } else if (index == 4) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AgentProfileScreen()),
+            );
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined, size: 22),

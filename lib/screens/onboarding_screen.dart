@@ -93,6 +93,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             right: 16,
             child: OutlinedButton(
               onPressed: _navigateToHome,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                side: const BorderSide(color: Colors.white, width: 1.5),
+              ),
               child: const Text('Skip'),
             ),
           ),

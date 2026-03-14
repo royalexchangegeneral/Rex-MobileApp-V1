@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart';
 import 'login_screen.dart';
+import 'notification_settings_screen.dart';
+import 'security_settings_screen.dart';
+import 'agent_dashboard_screen.dart';
+import 'clients_list_screen.dart';
+import 'reports_screen.dart';
 
 class AgentProfileScreen extends StatelessWidget {
   const AgentProfileScreen({super.key});
@@ -9,31 +15,38 @@ class AgentProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
     final userName = authProvider.userName ?? 'Agent Name';
     final userEmail = authProvider.userEmail ?? 'agent@example.com';
     final userCode = authProvider.userCode ?? 'AG0000';
+    final userData = authProvider.userData ?? {};
+    
+    // Extract data from userData
+    final custType = userData['CustType'] ?? 'Senior Insurance Agent';
+    final address = userData['Address'] ?? 'Downtown Branch, Lagos';
+    final phone = userData['MobileNo'] ?? '+1 (555) 123-4567';
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Profile',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
           ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
+            icon: Icon(Icons.notifications_outlined, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
             onPressed: () {},
           ),
         ],
@@ -77,9 +90,9 @@ class AgentProfileScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Senior Insurance Agent',
-                          style: TextStyle(
+                        Text(
+                          custType,
+                          style: const TextStyle(
                             fontSize: 13,
                             color: Colors.white70,
                           ),
@@ -103,11 +116,11 @@ class AgentProfileScreen extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -150,7 +163,6 @@ class AgentProfileScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -167,7 +179,7 @@ class AgentProfileScreen extends StatelessWidget {
                     iconColor: Colors.green,
                     iconBgColor: Colors.green.withOpacity(0.1),
                     label: 'Phone',
-                    value: '+1 (555) 123-4567',
+                    value: phone,
                   ),
                   const SizedBox(height: 12),
                   _buildInfoItem(
@@ -175,7 +187,7 @@ class AgentProfileScreen extends StatelessWidget {
                     iconColor: Colors.purple,
                     iconBgColor: Colors.purple.withOpacity(0.1),
                     label: 'Office Location',
-                    value: 'Downtown Branch, Lagos',
+                    value: address,
                   ),
                 ],
               ),
@@ -194,7 +206,6 @@ class AgentProfileScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -233,7 +244,6 @@ class AgentProfileScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -241,22 +251,39 @@ class AgentProfileScreen extends StatelessWidget {
                     context,
                     icon: Icons.notifications_outlined,
                     title: 'Notification Settings',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationSettingsScreen(),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
                   _buildSettingsItem(
                     context,
                     icon: Icons.security_outlined,
                     title: 'Security Settings',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SecuritySettingsScreen(),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
                   _buildSettingsItem(
                     context,
                     icon: Icons.nightlight_outlined,
-                    title: 'User Preferences',
+                    title: 'Dark Theme',
                     onTap: () {},
                     showArrow: false,
+                    hasToggle: true,
+                    toggleValue: themeProvider.isDarkMode,
+                    onToggleChanged: null, // Disabled - set to null
                   ),
                   const SizedBox(height: 12),
                   _buildSettingsItem(
@@ -297,6 +324,25 @@ class AgentProfileScreen extends StatelessWidget {
         currentIndex: 4,
         selectedFontSize: 11,
         unselectedFontSize: 11,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
+              (route) => false,
+            );
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ClientsListScreen()),
+            );
+          } else if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ReportsScreen()),
+            );
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined, size: 22),
@@ -331,7 +377,6 @@ class AgentProfileScreen extends StatelessWidget {
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
           ),
         ),
         const SizedBox(height: 4),
@@ -381,7 +426,6 @@ class AgentProfileScreen extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
                 ),
               ),
             ],
@@ -410,7 +454,7 @@ class AgentProfileScreen extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: iconBgColor,
-                borderRadius: BorderRadius.circular(10),
+                shape: BoxShape.circle,
               ),
               child: Icon(icon, color: iconColor, size: 24),
             ),
@@ -434,7 +478,6 @@ class AgentProfileScreen extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black,
                         ),
                       ),
                       if (percentage != null) ...[
@@ -484,14 +527,17 @@ class AgentProfileScreen extends StatelessWidget {
     required VoidCallback onTap,
     bool showArrow = true,
     bool isLogout = false,
+    bool hasToggle = false,
+    bool toggleValue = false,
+    ValueChanged<bool>? onToggleChanged,
   }) {
     return InkWell(
-      onTap: onTap,
+      onTap: hasToggle ? null : onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey[300]!),
         ),
@@ -509,11 +555,18 @@ class AgentProfileScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: isLogout ? Colors.red : Colors.black,
+                  color: isLogout ? Colors.red : null,
                 ),
               ),
             ),
-            if (showArrow)
+            if (hasToggle)
+              Switch(
+                value: toggleValue,
+                onChanged: onToggleChanged,
+                activeThumbColor: Colors.white,
+                activeTrackColor: const Color(0xFF1E2D64),
+              ),
+            if (showArrow && !hasToggle)
               Icon(
                 Icons.arrow_forward_ios,
                 size: 16,

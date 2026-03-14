@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'client_summary_screen.dart';
+import 'agent_dashboard_screen.dart';
+import 'clients_list_screen.dart';
+import 'reports_screen.dart';
+import 'agent_profile_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -308,6 +312,85 @@ class _AddClientScreenState extends State<AddClientScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}. Please enter details manually'),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _createCustomer() async {
+    try {
+      final requestBody = {
+        'cust_first_name': _firstNameController.text.trim(),
+        'cust_middle_name': '', // Not collected in form
+        'cust_last_name': _lastNameController.text.trim(),
+        'cust_type': widget.clientType == 'individual' ? 'Individual' : 'Corporate',
+        'cust_occupation': '', // Not collected in form
+        'cust_phone_no': _phoneController.text.trim(),
+        'cust_email': _emailController.text.trim(),
+        'cust_address': _addressController.text.trim(),
+        'cust_town': '', // Not collected in form
+        'cust_nationality': 'Nigerian', // Default value
+        'cust_state': _selectedState ?? '',
+        'cust_lga': _selectedLga ?? '',
+        'cust_dob': _dobController.text.trim(),
+        'cust_national_id_name': 'NIN',
+        'cust_national_id_no': _ninController.text.trim(),
+      };
+      
+      print('=== CREATE CUSTOMER API REQUEST ===');
+      print('URL: https://eportaltest.rexinsure.com/api/createcustomer');
+      print('Request Body: ${json.encode(requestBody)}');
+      
+      final response = await http.post(
+        Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception('Request timeout');
+        },
+      );
+
+      print('=== CREATE CUSTOMER API RESPONSE ===');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      print('===================================');
+
+      if (mounted) {
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final responseData = json.decode(response.body);
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Customer created successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          
+          // Navigate back to clients list
+          Navigator.pop(context);
+        } else {
+          final responseData = json.decode(response.body);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(responseData['message'] ?? 'Failed to create customer'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('=== CREATE CUSTOMER API ERROR ===');
+      print('Error: ${e.toString()}');
+      print('=================================');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -839,6 +922,19 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         // Validate all required fields
+                        // Check NIN first (compulsory)
+                        if (_ninController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter NIN')),
+                          );
+                          return;
+                        }
+                        if (_ninController.text.trim().length != 11) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('NIN must be exactly 11 digits')),
+                          );
+                          return;
+                        }
                         if (_firstNameController.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Please enter first name')),
@@ -890,6 +986,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                         
                         // Collect all client data
                         final clientData = {
+                          'nin': _ninController.text,
                           'firstName': _firstNameController.text,
                           'lastName': _lastNameController.text,
                           'email': _emailController.text,
@@ -970,6 +1067,30 @@ class _AddClientScreenState extends State<AddClientScreen> {
         currentIndex: 2,
         selectedFontSize: 11,
         unselectedFontSize: 11,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
+              (route) => false,
+            );
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ClientsListScreen()),
+            );
+          } else if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ReportsScreen()),
+            );
+          } else if (index == 4) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AgentProfileScreen()),
+            );
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined, size: 22),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'select_client_type_screen.dart';
+import 'agent_dashboard_screen.dart';
+import 'reports_screen.dart';
+import 'agent_profile_screen.dart';
 
 class ClientsListScreen extends StatefulWidget {
   const ClientsListScreen({super.key});
@@ -21,26 +24,26 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Clients',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
           ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list, color: Colors.black),
+            icon: Icon(Icons.filter_list, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
             onPressed: () {},
           ),
         ],
@@ -133,9 +136,8 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                     const SizedBox(width: 8),
                     const Text(
                       'Showing 8 of 234 clients',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 13,
-                        color: Colors.black,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -147,7 +149,6 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                       'Next',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.black,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -194,6 +195,25 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
         currentIndex: 2,
         selectedFontSize: 11,
         unselectedFontSize: 11,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
+              (route) => false,
+            );
+          } else if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ReportsScreen()),
+            );
+          } else if (index == 4) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AgentProfileScreen()),
+            );
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined, size: 22),
@@ -254,7 +274,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -274,7 +294,6 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 4),

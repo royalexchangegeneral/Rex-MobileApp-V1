@@ -7,6 +7,7 @@ import 'select_client_type_screen.dart';
 import 'buy_new_policy_screen.dart';
 import 'clients_list_screen.dart';
 import 'agent_profile_screen.dart';
+import 'reports_screen.dart';
 
 class AgentDashboardScreen extends StatelessWidget {
   const AgentDashboardScreen({super.key});
@@ -14,13 +15,13 @@ class AgentDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black),
+            icon: Icon(Icons.menu, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
             onPressed: () {
               Scaffold.of(context).openDrawer();
             },
@@ -33,7 +34,7 @@ class AgentDashboardScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
+            icon: Icon(Icons.notifications_outlined, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
             onPressed: () {},
           ),
         ],
@@ -154,7 +155,6 @@ class AgentDashboardScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
               ),
             ),
             
@@ -164,6 +164,7 @@ class AgentDashboardScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildQuickActionButton(
+                    context,
                     'Add Client',
                     Icons.person_add_outlined,
                     const Color(0xFF1E2D64),
@@ -180,6 +181,7 @@ class AgentDashboardScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildQuickActionButton(
+                    context,
                     'New Policy',
                     Icons.add_circle_outline,
                     const Color(0xFF1E2D64),
@@ -196,6 +198,7 @@ class AgentDashboardScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildQuickActionButton(
+                    context,
                     'File a Claim',
                     Icons.assignment_outlined,
                     const Color(0xFF1E2D64),
@@ -216,7 +219,6 @@ class AgentDashboardScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
                   ),
                 ),
                 TextButton(
@@ -237,6 +239,7 @@ class AgentDashboardScreen extends StatelessWidget {
             
             // Policy List
             _buildPolicyItem(
+              context,
               'Motor Insurance',
               'Policy #MOT-2025-089',
               '28 May, 2025',
@@ -248,6 +251,7 @@ class AgentDashboardScreen extends StatelessWidget {
             const SizedBox(height: 12),
             
             _buildPolicyItem(
+              context,
               'Health Insurance',
               'Policy #HLT-2025-156',
               '15 Jun, 2025',
@@ -264,7 +268,6 @@ class AgentDashboardScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
               ),
             ),
             
@@ -274,11 +277,11 @@ class AgentDashboardScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildPeriodButton('Weekly', false),
+                _buildPeriodButton(context, 'Weekly', false),
                 const SizedBox(width: 8),
-                _buildPeriodButton('Monthly', true),
+                _buildPeriodButton(context, 'Monthly', true),
                 const SizedBox(width: 8),
-                _buildPeriodButton('Yearly', false),
+                _buildPeriodButton(context, 'Yearly', false),
               ],
             ),
             
@@ -304,13 +307,13 @@ class AgentDashboardScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
               ),
             ),
             
             const SizedBox(height: 12),
             
             _buildActivityItem(
+              context,
               'Robert Johnson',
               'Renewed Motor insurance',
               '2 hours ago',
@@ -321,6 +324,7 @@ class AgentDashboardScreen extends StatelessWidget {
             const SizedBox(height: 12),
             
             _buildActivityItem(
+              context,
               'Emily Chen',
               'Filed claim for Motor Insurance',
               '3 hours ago',
@@ -331,6 +335,7 @@ class AgentDashboardScreen extends StatelessWidget {
             const SizedBox(height: 12),
             
             _buildActivityItem(
+              context,
               'Michael Smith',
               'Claim approved for fire insurance',
               '1 day ago',
@@ -341,6 +346,7 @@ class AgentDashboardScreen extends StatelessWidget {
             const SizedBox(height: 12),
             
             _buildActivityItem(
+              context,
               'Laura Martinez',
               'Requested policy details for Royal Group life care',
               '1 day ago',
@@ -364,6 +370,14 @@ class AgentDashboardScreen extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (context) => const ClientsListScreen(),
+              ),
+            );
+          } else if (index == 3) {
+            // Navigate to Reports screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ReportsScreen(),
               ),
             );
           } else if (index == 4) {
@@ -429,13 +443,13 @@ class AgentDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActionButton(String label, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildQuickActionButton(BuildContext context, String label, IconData icon, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -458,6 +472,7 @@ class AgentDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildPolicyItem(
+    BuildContext context,
     String title,
     String policyNumber,
     String renewalDate,
@@ -468,9 +483,9 @@ class AgentDashboardScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[200]!),
       ),
       child: Row(
         children: [
@@ -492,7 +507,6 @@ class AgentDashboardScreen extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -695,6 +709,8 @@ class AgentDashboardScreen extends StatelessWidget {
     bool isSelected = false,
     bool isLogout = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       decoration: BoxDecoration(
@@ -711,7 +727,7 @@ class AgentDashboardScreen extends StatelessWidget {
               ? Colors.red
               : isSelected
                   ? Colors.white
-                  : const Color(0xFF1E2D64),
+                  : (isDark ? Colors.white : const Color(0xFF1E2D64)),
           size: 22,
         ),
         title: Text(
@@ -723,7 +739,7 @@ class AgentDashboardScreen extends StatelessWidget {
                 ? Colors.red
                 : isSelected
                     ? Colors.white
-                    : const Color(0xFF1E2D64),
+                    : (isDark ? Colors.white : const Color(0xFF1E2D64)),
           ),
         ),
         onTap: onTap,
@@ -731,14 +747,14 @@ class AgentDashboardScreen extends StatelessWidget {
     );
   }
   
-  Widget _buildPeriodButton(String label, bool isSelected) {
+  Widget _buildPeriodButton(BuildContext context, String label, bool isSelected) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
       decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF1E2D64) : Colors.white,
+        color: isSelected ? const Color(0xFF1E2D64) : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isSelected ? const Color(0xFF1E2D64) : Colors.grey[300]!,
+          color: isSelected ? const Color(0xFF1E2D64) : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
         ),
       ),
       child: Text(
@@ -807,6 +823,7 @@ class AgentDashboardScreen extends StatelessWidget {
   }
   
   Widget _buildActivityItem(
+    BuildContext context,
     String name,
     String activity,
     String time,
@@ -816,9 +833,9 @@ class AgentDashboardScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[200]!),
       ),
       child: Row(
         children: [
@@ -840,7 +857,6 @@ class AgentDashboardScreen extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 2),
