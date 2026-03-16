@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../utils/app_theme.dart';
 import 'agent_dashboard_screen.dart';
 import 'clients_list_screen.dart';
 import 'reports_screen.dart';
 import 'agent_profile_screen.dart';
+import 'customer_dashboard_screen.dart';
+import 'customer_profile_screen.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -154,7 +159,28 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      floatingActionButton: Provider.of<AuthProvider>(context, listen: false).isCustomer()
+          ? SizedBox(
+              width: 50,
+              height: 50,
+              child: FloatingActionButton(
+                onPressed: () {},
+                backgroundColor: AppTheme.accentOrange,
+                shape: const CircleBorder(),
+                child: const Icon(Icons.add, color: Colors.white, size: 24),
+              ),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: _buildBottomNav(context),
+    );
+  }
+
+  Widget _buildBottomNav(BuildContext context) {
+    final isAgent = Provider.of<AuthProvider>(context, listen: false).isAgent();
+    
+    if (isAgent) {
+      return BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF1E2D64),
         unselectedItemColor: Colors.grey,
@@ -163,49 +189,56 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         unselectedFontSize: 11,
         onTap: (index) {
           if (index == 0) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
-              (route) => false,
-            );
+            Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const AgentDashboardScreen()), (route) => false);
           } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ClientsListScreen()),
-            );
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientsListScreen()));
           } else if (index == 3) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ReportsScreen()),
-            );
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen()));
           } else if (index == 4) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AgentProfileScreen()),
-            );
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const AgentProfileScreen()));
           }
         },
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined, size: 22),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.description_outlined, size: 22),
-            label: 'Policy',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline, size: 22),
-            label: 'Clients',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined, size: 22),
-            label: 'Reports',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline, size: 22),
-            label: 'Profile',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined, size: 22), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.description_outlined, size: 22), label: 'Policy'),
+          BottomNavigationBarItem(icon: Icon(Icons.people_outline, size: 22), label: 'Clients'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined, size: 22), label: 'Reports'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline, size: 22), label: 'Profile'),
+        ],
+      );
+    }
+
+    return BottomAppBar(
+      shape: const CircularNotchedRectangle(),
+      notchMargin: 6,
+      child: SizedBox(
+        height: 50,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildCustomerNavItem(Icons.home_outlined, 'Home', false, () {
+              Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
+            }),
+            _buildCustomerNavItem(Icons.description_outlined, 'Policies', false, () {}),
+            const SizedBox(width: 40),
+            _buildCustomerNavItem(Icons.assignment_outlined, 'Claims', false, () {}),
+            _buildCustomerNavItem(Icons.person_outline, 'Profile', true, () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomerNavItem(IconData icon, String label, bool isSelected, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
+          Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
         ],
       ),
     );

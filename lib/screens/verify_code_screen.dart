@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../utils/app_theme.dart';
 
 class VerifyCodeScreen extends StatefulWidget {
@@ -38,11 +40,6 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     if (value.isNotEmpty && index < 3) {
       _focusNodes[index + 1].requestFocus();
     }
-    
-    // Check if all fields are filled
-    if (_controllers.every((controller) => controller.text.isNotEmpty)) {
-      _verifyCode();
-    }
   }
 
   void _onBackspace(int index) {
@@ -52,22 +49,83 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   }
 
   Future<void> _verifyCode() async {
+    // Validate all fields are filled
+    if (!_controllers.every((c) => c.text.isNotEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter the complete OTP code')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
-    
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
-    
+    await Future.delayed(const Duration(seconds: 1));
     setState(() => _isLoading = false);
     
     if (mounted) {
-      Navigator.pushNamed(context, '/reset-password');
+      final otp = _controllers.map((c) => c.text).join();
+      print('=== NAVIGATING TO RESET PASSWORD ===');
+      print('Email: ${widget.email}');
+      print('OTP: $otp');
+      print('====================================');
+      Navigator.pushNamed(
+        context,
+        '/reset-password',
+        arguments: {'email': widget.email, 'otp': otp},
+      );
     }
   }
 
+  bool _isResending = false;
+
   Future<void> _resendCode() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Code resent to your email')),
-    );
+    setState(() => _isResending = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://eportaltest.rexinsure.com/api/otp'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'Email': widget.email}),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception('Request timeout');
+        },
+      );
+
+      print('=== RESEND OTP RESPONSE ===');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+
+      setState(() => _isResending = false);
+
+      if (mounted) {
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Code resent to your email'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to resend code. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() => _isResending = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -239,20 +297,26 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                       ),
                     ),
                     TextButton(
-                      onPressed: _resendCode,
+                      onPressed: _isResending ? null : _resendCode,
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: const Size(0, 0),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text(
-                        'Resend code',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
-                      ),
+                      child: _isResending
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                            )
+                          : const Text(
+                              'Resend code',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                            ),
                     ),
                   ],
                 ),

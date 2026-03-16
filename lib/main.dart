@@ -68,7 +68,6 @@ class MyApp extends StatelessWidget {
               '/user-portal': (context) => const UserPortalScreen(),
               '/login': (context) => const LoginScreen(),
               '/forgot-password': (context) => const ForgotPasswordScreen(),
-              '/reset-password': (context) => const ResetPasswordScreen(),
               '/explore-services': (context) => const ExploreServicesScreen(),
               '/signup': (context) => const SignupScreen(),
               '/verification-success': (context) => const VerificationSuccessScreen(),
@@ -89,6 +88,15 @@ class MyApp extends StatelessWidget {
                 final email = settings.arguments as String;
                 return MaterialPageRoute(
                   builder: (context) => VerifyCodeScreen(email: email),
+                );
+              }
+              if (settings.name == '/reset-password') {
+                final args = settings.arguments as Map<String, dynamic>?;
+                return MaterialPageRoute(
+                  builder: (context) => ResetPasswordScreen(
+                    email: args?['email']?.toString() ?? '',
+                    otp: args?['otp']?.toString() ?? '',
+                  ),
                 );
               }
               if (settings.name == '/verify-phone') {

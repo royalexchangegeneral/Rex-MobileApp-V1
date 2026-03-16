@@ -7,6 +7,8 @@ import 'new_policy_screen.dart';
 import 'new_claims_screen.dart';
 import 'customer_care_screen.dart';
 import 'policy_details_screen.dart';
+import 'customer_profile_screen.dart';
+import 'my_claims_screen.dart';
 
 class CustomerDashboardScreen extends StatefulWidget {
   const CustomerDashboardScreen({super.key});
@@ -256,7 +258,15 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isSelected = _selectedIndex == index;
     return InkWell(
-      onTap: () => setState(() => _selectedIndex = index),
+      onTap: () {
+        if (index == 2) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
+        } else if (index == 3) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
+        } else {
+          setState(() => _selectedIndex = index);
+        }
+      },
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
         Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),

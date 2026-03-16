@@ -47,68 +47,87 @@ class AuthProvider with ChangeNotifier {
   // API login
   Future<bool> login(String email, String password) async {
     try {
-      debugPrint('Attempting login with email: $email');
+      final requestBody = {
+        'userid': email,
+        'password': password,
+      };
+
+      print('=== LOGIN API REQUEST ===');
+      print('URL: https://eportaltest.rexinsure.com/api/userlogin');
+      print('Request Body: ${json.encode(requestBody)}');
+      print('=========================');
       
       final response = await http.post(
         Uri.parse('https://eportaltest.rexinsure.com/api/userlogin'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'userid': email,
-          'password': password,
-        }),
+        body: json.encode(requestBody),
       ).timeout(const Duration(seconds: 15));
 
-      debugPrint('Response status code: ${response.statusCode}');
-      debugPrint('Response body: ${response.body}');
+      print('=== LOGIN API RESPONSE ===');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      print('==========================');
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
         
-        debugPrint('Parsed data: $data');
-        debugPrint('Statuscode: ${data['Statuscode']}');
-        debugPrint('Status: ${data['Status']}');
+        print('=== PARSED LOGIN DATA ===');
+        print('All keys: ${data.keys.toList()}');
+        print('Statuscode value: "${data['Statuscode']}" (type: ${data['Statuscode'].runtimeType})');
+        print('Status value: "${data['Status']}" (type: ${data['Status'].runtimeType})');
+        print('=========================');
         
-        // Check if login was successful
-        if (data['Statuscode'] == '201' && data['Status'] == 'Active') {
+        // Check if login was successful - accept any success indicator
+        final statusCode = data['Statuscode']?.toString() ?? '';
+        final status = data['Status']?.toString() ?? '';
+        
+        if ((statusCode == '201' || statusCode == '200') && status == 'Active') {
           final userData = data['Data'];
-          final userTypeCode = userData['UserType'];
+          final userTypeCode = userData['UserType']?.toString() ?? '';
           
-          debugPrint('UserType code: $userTypeCode');
+          print('UserType code: $userTypeCode');
           
           // Determine user type based on UserType code
           // 009 = customer, 007/008/010 = agent
           final userType = userTypeCode == '009' ? 'customer' : 'agent';
           
-          debugPrint('Determined user type: $userType');
+          print('Determined user type: $userType');
+          print('Will navigate to: ${userType == "agent" ? "AgentDashboard" : "CustomerDashboard"}');
           
           // Save to SharedPreferences
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('isAuthenticated', true);
-          await prefs.setString('userId', data['Userid']);
-          await prefs.setString('userName', userData['FirstName']);
-          await prefs.setString('userEmail', userData['Email']);
+          await prefs.setString('userId', data['Userid']?.toString() ?? '');
+          await prefs.setString('userName', userData['FirstName']?.toString() ?? '');
+          await prefs.setString('userEmail', userData['Email']?.toString() ?? '');
           await prefs.setString('userType', userType);
-          await prefs.setString('userCode', userData['Usercode']);
-          await prefs.setString('profilePhoto', userData['ProfilePhoto'] ?? '');
+          await prefs.setString('userCode', userData['Usercode']?.toString() ?? '');
+          await prefs.setString('profilePhoto', userData['ProfilePhoto']?.toString() ?? '');
           await prefs.setString('userData', json.encode(userData));
           
           // Update state
           _isAuthenticated = true;
-          _userId = data['Userid'];
-          _userName = userData['FirstName'];
-          _userEmail = userData['Email'];
+          _userId = data['Userid']?.toString();
+          _userName = userData['FirstName']?.toString();
+          _userEmail = userData['Email']?.toString();
           _userType = userType;
-          _userCode = userData['Usercode'];
-          _profilePhoto = userData['ProfilePhoto'];
+          _userCode = userData['Usercode']?.toString();
+          _profilePhoto = userData['ProfilePhoto']?.toString();
           _userData = userData;
           
           notifyListeners();
           return true;
         } else {
-          debugPrint('Login failed - Status check failed');
+          print('=== LOGIN CHECK FAILED ===');
+          print('statusCode check: $statusCode (expected 200 or 201)');
+          print('status check: $status (expected Active)');
+          print('==========================');
         }
       } else {
-        debugPrint('Login failed - Status code not 200');
+        print('=== LOGIN HTTP FAILED ===');
+        print('HTTP Status code: ${response.statusCode} (expected 200 or 201)');
+        print('Response: ${response.body}');
+        print('=========================');
       }
       
       return false;

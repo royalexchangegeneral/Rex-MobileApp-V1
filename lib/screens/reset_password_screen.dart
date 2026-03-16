@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../utils/app_theme.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+  final String email;
+  final String otp;
+
+  const ResetPasswordScreen({super.key, required this.email, required this.otp});
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -27,23 +32,76 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Future<void> _handleResetPassword() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-      
-      setState(() => _isLoading = false);
-      
-      if (mounted) {
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password reset successfully!')),
+
+      try {
+        final requestBody = {
+          'Otp': widget.otp,
+          'Email': widget.email,
+          'Password': _newPasswordController.text,
+          'ConfirmPassword': _confirmPasswordController.text,
+        };
+
+        print('=== PASSWORD RESET API REQUEST ===');
+        print('URL: https://eportaltest.rexinsure.com/api/passwordreset');
+        print('Email being sent: ${widget.email}');
+        print('OTP being sent: ${widget.otp}');
+        print('Request Body: ${json.encode(requestBody)}');
+
+        final response = await http.post(
+          Uri.parse('https://eportaltest.rexinsure.com/api/passwordreset'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(requestBody),
+        ).timeout(
+          const Duration(seconds: 30),
+          onTimeout: () {
+            throw Exception('Request timeout');
+          },
         );
-        
-        // Navigate back to login
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/login',
-          (route) => false,
-        );
+
+        print('=== PASSWORD RESET API RESPONSE ===');
+        print('Status Code: ${response.statusCode}');
+        print('Response Body: ${response.body}');
+        print('===================================');
+
+        setState(() => _isLoading = false);
+
+        if (mounted) {
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Password reset successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              '/login',
+              (route) => false,
+            );
+          } else {
+            final responseData = json.decode(response.body);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(responseData['Message'] ?? responseData['message'] ?? 'Failed to reset password'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        print('=== PASSWORD RESET API ERROR ===');
+        print('Error: ${e.toString()}');
+        print('================================');
+
+        setState(() => _isLoading = false);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }

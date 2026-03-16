@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../utils/app_theme.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -23,18 +25,72 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _handleSendCode() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-      
-      setState(() => _isLoading = false);
-      
-      if (mounted) {
-        Navigator.pushNamed(
-          context,
-          '/verify-code',
-          arguments: _emailController.text,
+
+      try {
+        final requestBody = {
+          'Email': _emailController.text.trim(),
+        };
+
+        print('=== SEND OTP API REQUEST ===');
+        print('URL: https://eportaltest.rexinsure.com/api/otp');
+        print('Request Body: ${json.encode(requestBody)}');
+
+        final response = await http.post(
+          Uri.parse('https://eportaltest.rexinsure.com/api/otp'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(requestBody),
+        ).timeout(
+          const Duration(seconds: 30),
+          onTimeout: () {
+            throw Exception('Request timeout');
+          },
         );
+
+        print('=== SEND OTP API RESPONSE ===');
+        print('Status Code: ${response.statusCode}');
+        print('Response Body: ${response.body}');
+        print('=============================');
+
+        setState(() => _isLoading = false);
+
+        if (mounted) {
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('OTP sent to your email'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pushNamed(
+              context,
+              '/verify-code',
+              arguments: _emailController.text,
+            );
+          } else {
+            final responseData = json.decode(response.body);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(responseData['message'] ?? 'Failed to send OTP'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        print('=== SEND OTP API ERROR ===');
+        print('Error: ${e.toString()}');
+        print('==========================');
+
+        setState(() => _isLoading = false);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }

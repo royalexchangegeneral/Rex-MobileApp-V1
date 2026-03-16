@@ -74,7 +74,7 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
         _isVerifyingCac = false;
       });
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = json.decode(response.body);
         
         // Check if verification was successful
