@@ -9,6 +9,13 @@ import 'customer_care_screen.dart';
 import 'policy_details_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
+import 'faq_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'discover_insurance_screen.dart';
+import 'claims_process_screen.dart';
+import 'my_certificate_screen.dart';
+import 'payments_screen.dart';
+import 'my_policies_screen.dart';
 
 class CustomerDashboardScreen extends StatefulWidget {
   const CustomerDashboardScreen({super.key});
@@ -66,7 +73,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                           Text('Active Policies', style: TextStyle(color: Colors.white70, fontSize: 12)),
                         ]),
                         ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPoliciesScreen())),
                           style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentOrange, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10)),
                           child: const Text('View Policies', style: TextStyle(fontWeight: FontWeight.w600)),
                         ),
@@ -79,8 +86,8 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                       children: [
                         _buildQuickAction(Icons.description_outlined, 'New\nPolicies', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen()))),
                         _buildQuickAction(Icons.assignment_outlined, 'New\nClaims', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewClaimsScreen()))),
-                        _buildQuickAction(Icons.cloud_download_outlined, 'View\nCertificate', onTap: () {}),
-                        _buildQuickAction(Icons.payment_outlined, '\nPayments', onTap: () {}),
+                        _buildQuickAction(Icons.cloud_download_outlined, 'View\nCertificate', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyCertificateScreen()))),
+                        _buildQuickAction(Icons.payment_outlined, '\nPayments', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentsScreen()))),
                       ],
                     ),
                   ],
@@ -119,13 +126,13 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
               // Discover Insurance
               const Text('Discover Insurance', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
               const SizedBox(height: 16),
-              _buildDiscoverCard('Insurance Basics', 'Learn the basic of insurance', Icons.school_outlined, const Color(0xFF4A90D9)),
+              _buildDiscoverCard('Insurance Basics', 'Learn the basic of insurance', Icons.school_outlined, const Color(0xFF4A90D9), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DiscoverInsuranceScreen()))),
               const SizedBox(height: 12),
-              _buildDiscoverCard('Tips & Guides', 'Learn the fundamentals', Icons.lightbulb_outline, const Color(0xFFFFB74D)),
+              // _buildDiscoverCard('Tips & Guides', 'Learn the fundamentals', Icons.lightbulb_outline, const Color(0xFFFFB74D)),
+              // const SizedBox(height: 12),
+              _buildDiscoverCard('Claims Process', 'Get step-by-step guidance', Icons.chat_bubble_outline, const Color(0xFFE91E63), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ClaimsProcessScreen()))),
               const SizedBox(height: 12),
-              _buildDiscoverCard('Claims Process', 'Get step-by-step guidance', Icons.chat_bubble_outline, const Color(0xFFE91E63)),
-              const SizedBox(height: 12),
-              _buildDiscoverCard('FAQ', 'Get answers to questions', Icons.help_outline, const Color(0xFFFFB74D)),
+              _buildDiscoverCard('FAQ', 'Get answers to questions', Icons.help_outline, const Color(0xFFFFB74D), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FaqScreen()))),
               const SizedBox(height: 24),
               // Request Agent
               Container(
@@ -138,7 +145,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                     const SizedBox(height: 8),
                     const Text('Need a personal insurance agent?', style: TextStyle(color: Colors.black87)),
                     const SizedBox(height: 12),
-                    ElevatedButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerCareScreen())), style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: const Text('Request Now')),
+                    ElevatedButton(onPressed: () => _callAgent(), style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: const Text('Request Now')),
                   ],
                 ),
               ),
@@ -151,7 +158,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
         width: 50,
         height: 50,
         child: FloatingActionButton(
-          onPressed: () {},
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
           backgroundColor: AppTheme.accentOrange,
           shape: const CircleBorder(),
           child: const Icon(Icons.add, color: Colors.white, size: 24),
@@ -239,19 +246,22 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
     );
   }
 
-  Widget _buildDiscoverCard(String title, String subtitle, IconData icon, Color iconColor) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFFFAFAFA), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
-      child: Row(children: [
-        Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: iconColor, size: 20)),
-        const SizedBox(width: 10),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
-          Text(subtitle, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
-        ])),
-        Icon(Icons.chevron_right, color: Colors.grey[400], size: 20),
-      ]),
+  Widget _buildDiscoverCard(String title, String subtitle, IconData icon, Color iconColor, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: const Color(0xFFFAFAFA), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
+        child: Row(children: [
+          Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: iconColor, size: 20)),
+          const SizedBox(width: 10),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+            Text(subtitle, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+          ])),
+          Icon(Icons.chevron_right, color: Colors.grey[400], size: 20),
+        ]),
+      ),
     );
   }
 
@@ -259,7 +269,9 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
     final isSelected = _selectedIndex == index;
     return InkWell(
       onTap: () {
-        if (index == 2) {
+        if (index == 1) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPoliciesScreen()));
+        } else if (index == 2) {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
         } else if (index == 3) {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
@@ -271,6 +283,31 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
         Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
         Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
       ]),
+    );
+  }
+
+  Future<void> _callAgent() async {
+    final uri = Uri(scheme: 'tel', path: '+2347080606100');
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && mounted) {
+        _showPhoneNumberDialog();
+      }
+    } catch (_) {
+      if (mounted) _showPhoneNumberDialog();
+    }
+  }
+
+  void _showPhoneNumberDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Call Agent', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        content: const Text('+234 708 0606 100', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+        ],
+      ),
     );
   }
 
@@ -331,7 +368,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                 _buildDrawerItem(Icons.people_outline, 'My Policies', 1),
                 _buildDrawerItem(Icons.add_circle_outline, 'Buy Insurance', 2),
                 _buildDrawerItem(Icons.assignment_outlined, 'Make a Claim', 3),
-                _buildDrawerItem(Icons.share_outlined, 'Refer a Friend', 4),
+                // _buildDrawerItem(Icons.share_outlined, 'Refer a Friend', 4),
                 _buildDrawerItem(Icons.help_outline, 'FAQ', 5),
                 _buildDrawerItem(Icons.phone_outlined, 'Call your Agent', 6),
                 _buildDrawerItem(Icons.logout, 'Log Out', 7, isLogout: true),
@@ -387,6 +424,17 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
           } else {
             setState(() => _drawerSelectedIndex = index);
             Navigator.pop(context);
+            if (index == 1) {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPoliciesScreen()));
+            } else if (index == 2) {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen()));
+            } else if (index == 3) {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const NewClaimsScreen()));
+            } else if (index == 5) {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const FaqScreen()));
+            } else if (index == 6) {
+              _callAgent();
+            }
           }
         },
       ),

@@ -8,6 +8,8 @@ import 'reports_screen.dart';
 import 'agent_profile_screen.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
+import 'my_claims_screen.dart';
+import 'new_policy_screen.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -164,7 +166,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               width: 50,
               height: 50,
               child: FloatingActionButton(
-                onPressed: () {},
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
                 backgroundColor: AppTheme.accentOrange,
                 shape: const CircleBorder(),
                 child: const Icon(Icons.add, color: Colors.white, size: 24),
@@ -221,7 +223,9 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
             }),
             _buildCustomerNavItem(Icons.description_outlined, 'Policies', false, () {}),
             const SizedBox(width: 40),
-            _buildCustomerNavItem(Icons.assignment_outlined, 'Claims', false, () {}),
+            _buildCustomerNavItem(Icons.assignment_outlined, 'Claims', false, () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
+            }),
             _buildCustomerNavItem(Icons.person_outline, 'Profile', true, () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
             }),

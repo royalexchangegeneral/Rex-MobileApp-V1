@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import 'customer_dashboard_screen.dart';
+import 'customer_profile_screen.dart';
+import 'my_claims_screen.dart';
+import 'new_policy_screen.dart';
 
 class PolicyRenewalScreen extends StatefulWidget {
   final String policyType;
@@ -136,7 +140,7 @@ class _PolicyRenewalScreenState extends State<PolicyRenewalScreen> {
         width: 50,
         height: 50,
         child: FloatingActionButton(
-          onPressed: () {},
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
           backgroundColor: AppTheme.accentOrange,
           shape: const CircleBorder(),
           child: const Icon(Icons.add, color: Colors.white, size: 24),
@@ -151,11 +155,17 @@ class _PolicyRenewalScreenState extends State<PolicyRenewalScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(Icons.home_outlined, 'Home', false),
+              _buildNavItem(Icons.home_outlined, 'Home', false, onTap: () {
+                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
+              }),
               _buildNavItem(Icons.description_outlined, 'Policies', true),
               const SizedBox(width: 40),
-              _buildNavItem(Icons.assignment_outlined, 'Claims', false),
-              _buildNavItem(Icons.person_outline, 'Profile', false),
+              _buildNavItem(Icons.assignment_outlined, 'Claims', false, onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
+              }),
+              _buildNavItem(Icons.person_outline, 'Profile', false, onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
+              }),
             ],
           ),
         ),
@@ -182,13 +192,16 @@ class _PolicyRenewalScreenState extends State<PolicyRenewalScreen> {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool isSelected) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 18),
-        Text(label, style: TextStyle(fontSize: 9, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
-      ],
+  Widget _buildNavItem(IconData icon, String label, bool isSelected, {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 18),
+          Text(label, style: TextStyle(fontSize: 9, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+        ],
+      ),
     );
   }
 

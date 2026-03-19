@@ -112,7 +112,7 @@ class AuthProvider with ChangeNotifier {
           _userEmail = userData['Email']?.toString();
           _userType = userType;
           _userCode = userData['Usercode']?.toString();
-          _profilePhoto = userData['ProfilePhoto']?.toString();
+          _profilePhoto = userData['ProfilePhoto'];
           _userData = userData;
           
           notifyListeners();

@@ -3,6 +3,7 @@ import '../utils/app_theme.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'new_claims_screen.dart';
+import 'new_policy_screen.dart';
 
 class MyClaimsScreen extends StatefulWidget {
   const MyClaimsScreen({super.key});
@@ -29,9 +30,11 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
         title: const Text('My Claims', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black)),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -164,21 +167,38 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
           ],
         ),
       ),
-      floatingActionButton: GestureDetector(
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewClaimsScreen())),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppTheme.accentOrange,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 3)),
-            ],
+          // Edit FAB for new claims
+          Positioned(
+            bottom: 16,
+            right: 16,
+            child: GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewClaimsScreen())),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppTheme.accentOrange,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 3)),
+                  ],
+                ),
+                child: const Icon(Icons.edit_note_outlined, color: Colors.white, size: 26),
+              ),
+            ),
           ),
-          child: const Icon(Icons.edit_note_outlined, color: Colors.white, size: 26),
+        ],
+      ),
+      floatingActionButton: SizedBox(
+        width: 50,
+        height: 50,
+        child: FloatingActionButton(
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+          backgroundColor: AppTheme.accentOrange,
+          shape: const CircleBorder(),
+          child: const Icon(Icons.add, color: Colors.white, size: 24),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
         notchMargin: 6,

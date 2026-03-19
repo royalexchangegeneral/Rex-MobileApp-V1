@@ -5,6 +5,9 @@ import 'customer_motor_insurance_screen.dart';
 import 'protection_plans_screen.dart';
 import 'royal_care_screen.dart';
 import 'underwritten_products_screen.dart';
+import 'customer_dashboard_screen.dart';
+import 'customer_profile_screen.dart';
+import 'my_claims_screen.dart';
 
 class NewPolicyScreen extends StatelessWidget {
   final bool isAgent;
@@ -73,8 +76,8 @@ class NewPolicyScreen extends StatelessWidget {
         width: 50,
         height: 50,
         child: FloatingActionButton(
-          onPressed: null,
-          backgroundColor: Colors.grey[300],
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+          backgroundColor: AppTheme.accentOrange,
           shape: const CircleBorder(),
           child: const Icon(Icons.add, color: Colors.white, size: 24),
         ),
@@ -119,11 +122,17 @@ class NewPolicyScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildNavItem(Icons.home_outlined, 'Home', false),
+                    _buildNavItem(Icons.home_outlined, 'Home', false, onTap: () {
+                      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
+                    }),
                     _buildNavItem(Icons.description_outlined, 'Policies', true),
                     const SizedBox(width: 40),
-                    _buildNavItem(Icons.assignment_outlined, 'Claims', false),
-                    _buildNavItem(Icons.person_outline, 'Profile', false),
+                    _buildNavItem(Icons.assignment_outlined, 'Claims', false, onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
+                    }),
+                    _buildNavItem(Icons.person_outline, 'Profile', false, onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
+                    }),
                   ],
                 ),
               ),
@@ -200,13 +209,16 @@ class NewPolicyScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool isSelected) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
-        Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
-      ],
+  Widget _buildNavItem(IconData icon, String label, bool isSelected, {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
+          Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+        ],
+      ),
     );
   }
 

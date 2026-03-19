@@ -5,6 +5,8 @@ import '../providers/auth_provider.dart';
 import 'notification_settings_screen.dart';
 import 'security_settings_screen.dart';
 import 'customer_dashboard_screen.dart';
+import 'my_claims_screen.dart';
+import 'new_policy_screen.dart';
 
 class CustomerProfileScreen extends StatelessWidget {
   const CustomerProfileScreen({super.key});
@@ -229,7 +231,7 @@ class CustomerProfileScreen extends StatelessWidget {
         width: 50,
         height: 50,
         child: FloatingActionButton(
-          onPressed: () {},
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
           backgroundColor: AppTheme.accentOrange,
           shape: const CircleBorder(),
           child: const Icon(Icons.add, color: Colors.white, size: 24),
@@ -249,7 +251,9 @@ class CustomerProfileScreen extends StatelessWidget {
               }),
               _buildNavItem(context, Icons.description_outlined, 'Policies', false, onTap: () {}),
               const SizedBox(width: 40),
-              _buildNavItem(context, Icons.assignment_outlined, 'Claims', false, onTap: () {}),
+              _buildNavItem(context, Icons.assignment_outlined, 'Claims', false, onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
+              }),
               _buildNavItem(context, Icons.person_outline, 'Profile', true, onTap: () {}),
             ],
           ),

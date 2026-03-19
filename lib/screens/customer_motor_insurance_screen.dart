@@ -4,6 +4,9 @@ import '../utils/app_theme.dart';
 import 'private_car_purchase_screen.dart';
 import 'comprehensive_personal_info_screen.dart';
 import 'new_policy_screen.dart';
+import 'customer_dashboard_screen.dart';
+import 'customer_profile_screen.dart';
+import 'my_claims_screen.dart';
 
 class CustomerMotorInsuranceScreen extends StatelessWidget {
   final bool isAgent;
@@ -145,7 +148,7 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
         height: 50,
         child: FloatingActionButton(
           onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewPolicyScreen(isAgent: isAgent))),
-          backgroundColor: AppTheme.primaryNavy,
+          backgroundColor: AppTheme.accentOrange,
           shape: const CircleBorder(),
           child: const Icon(Icons.add, color: Colors.white, size: 24),
         ),
@@ -190,11 +193,17 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(Icons.home_outlined, 'Home', false),
-              _buildNavItem(Icons.description_outlined, 'Policies', true),
+              _buildNavItem(context, Icons.home_outlined, 'Home', false, onTap: () {
+                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
+              }),
+              _buildNavItem(context, Icons.description_outlined, 'Policies', true),
               const SizedBox(width: 40),
-              _buildNavItem(Icons.assignment_outlined, 'Claims', false),
-              _buildNavItem(Icons.person_outline, 'Profile', false),
+              _buildNavItem(context, Icons.assignment_outlined, 'Claims', false, onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
+              }),
+              _buildNavItem(context, Icons.person_outline, 'Profile', false, onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
+              }),
             ],
           ),
         ),
@@ -315,13 +324,16 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool isSelected) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
-        Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
-      ],
+  Widget _buildNavItem(BuildContext context, IconData icon, String label, bool isSelected, {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
+          Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+        ],
+      ),
     );
   }
 
