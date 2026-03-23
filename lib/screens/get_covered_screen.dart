@@ -98,11 +98,11 @@ class GetCoveredScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    const Row(
                       children: [
                         Icon(Icons.help_outline, color: AppTheme.primaryNavy, size: 18),
-                        const SizedBox(width: 8),
-                        const Text(
+                        SizedBox(width: 8),
+                        Text(
                           'Need Help?',
                           style: TextStyle(
                             fontSize: 14,

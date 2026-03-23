@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/user_portal_screen.dart';
 import 'screens/login_screen.dart';

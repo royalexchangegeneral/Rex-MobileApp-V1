@@ -358,7 +358,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
             border: Border.all(color: Colors.grey[400]!, width: 1.5),
           ),
           child: DropdownButtonFormField<String>(
-            value: value,
+            initialValue: value,
             hint: Text(
               hint,
               style: TextStyle(

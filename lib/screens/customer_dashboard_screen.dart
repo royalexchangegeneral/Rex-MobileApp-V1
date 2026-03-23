@@ -5,7 +5,6 @@ import '../providers/auth_provider.dart';
 import 'login_screen.dart';
 import 'new_policy_screen.dart';
 import 'new_claims_screen.dart';
-import 'customer_care_screen.dart';
 import 'policy_details_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
@@ -99,7 +98,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('My Policies', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-                  TextButton(onPressed: () {}, child: const Text('View All', style: TextStyle(color: AppTheme.accentOrange, fontWeight: FontWeight.w600))),
+                  TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPoliciesScreen())), child: const Text('View All', style: TextStyle(color: AppTheme.accentOrange, fontWeight: FontWeight.w600))),
                 ],
               ),
               const SizedBox(height: 12),
@@ -115,7 +114,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('My Claims', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-                  TextButton(onPressed: () {}, child: const Text('View All', style: TextStyle(color: AppTheme.accentOrange, fontWeight: FontWeight.w600))),
+                  TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen())), child: const Text('View All', style: TextStyle(color: AppTheme.accentOrange, fontWeight: FontWeight.w600))),
                 ],
               ),
               const SizedBox(height: 12),

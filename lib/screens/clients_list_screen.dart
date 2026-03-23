@@ -136,7 +136,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                     const SizedBox(width: 8),
                     const Text(
                       'Showing 8 of 234 clients',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),

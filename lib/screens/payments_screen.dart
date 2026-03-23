@@ -172,11 +172,11 @@ class PaymentsScreen extends StatelessWidget {
                   const SnackBar(content: Text('Reference copied'), duration: Duration(seconds: 1)),
                 );
               },
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.copy, size: 13, color: AppTheme.accentOrange),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text('Copy', style: TextStyle(fontSize: 10, color: AppTheme.accentOrange, fontWeight: FontWeight.w600)),
                 ],
               ),

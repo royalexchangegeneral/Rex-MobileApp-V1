@@ -202,10 +202,10 @@ class DiscoverInsuranceScreen extends StatelessWidget {
               Container(
                 height: 180,
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2C3E50),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  image: const DecorationImage(
+                decoration: const BoxDecoration(
+                  color: Color(0xFF2C3E50),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                  image: DecorationImage(
                     image: AssetImage('assets/images/2.png'),
                     fit: BoxFit.cover,
                   ),

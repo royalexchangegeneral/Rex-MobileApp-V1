@@ -314,11 +314,11 @@ class CustomerProfileScreen extends StatelessWidget {
         child: Icon(icon, color: iconColor, size: 20),
       ),
       title: Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF1E2D64))),
-      trailing: Switch(
+      trailing: const Switch(
         value: false,
         onChanged: null,
-        activeColor: Colors.white,
-        activeTrackColor: const Color(0xFF1E2D64),
+        activeThumbColor: Colors.white,
+        activeTrackColor: Color(0xFF1E2D64),
       ),
     );
   }

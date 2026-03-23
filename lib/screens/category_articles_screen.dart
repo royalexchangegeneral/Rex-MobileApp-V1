@@ -19,11 +19,11 @@ class CategoryArticlesScreen extends StatelessWidget {
     required this.articles,
   });
 
-  factory CategoryArticlesScreen.policyBasics() => CategoryArticlesScreen(
+  factory CategoryArticlesScreen.policyBasics() => const CategoryArticlesScreen(
     title: 'Policy Basics',
     icon: Icons.description_outlined,
     color: AppTheme.primaryNavy,
-    articles: const [
+    articles: [
       {'title': 'What is an Insurance Policy?', 'read': '5 min read', 'desc': 'Learn the fundamentals of insurance policies and how they protect you.', 'body': 'An insurance policy is a contract between you and an insurance company. You agree to pay a premium, and in return, the insurer agrees to cover certain financial losses. Policies outline what is covered, what is excluded, the duration of coverage, and the conditions under which claims can be made.\n\nInsurance policies exist to help individuals and businesses manage risk. Instead of bearing the full cost of an unexpected event, you share that risk with the insurer. This means if something goes wrong — like an accident, theft, or natural disaster — you are not left to handle the financial burden alone.\n\nEvery policy has key components: the premium (what you pay), the deductible (what you pay before coverage kicks in), the coverage limit (maximum the insurer will pay), and the terms and conditions that govern the agreement.'},
       {'title': 'Understanding Your Premium', 'read': '4 min read', 'desc': 'How premiums are calculated and what affects your cost.', 'body': 'Your insurance premium is the amount you pay regularly to keep your policy active. It can be paid monthly, quarterly, or annually depending on your agreement with the insurer.\n\nSeveral factors affect your premium: the type of coverage you choose, the value of what you are insuring, your risk profile, and your claims history. For example, a comprehensive motor insurance policy will cost more than a basic third-party cover because it offers wider protection.\n\nTo get the best value, compare different coverage options, ask about available discounts, and ensure you are not over-insured or under-insured. Rex Insurance works with your budget to find the right balance between cost and coverage.'},
       {'title': 'Policy Terms Explained', 'read': '6 min read', 'desc': 'Breaking down common insurance terms in simple language.', 'body': 'Insurance documents can seem complex, but understanding a few key terms makes everything clearer.\n\nPremium: The amount you pay for your insurance coverage.\nDeductible: The portion of a claim you pay out of pocket before the insurer covers the rest.\nCoverage Limit: The maximum amount the insurer will pay for a covered loss.\nExclusion: Specific situations or items not covered by your policy.\nEndorsement: An amendment or addition to your existing policy.\nBeneficiary: The person or entity who receives the insurance payout.\n\nAt Rex Insurance, we explain every term in plain language so you always know exactly what your policy covers and what to expect.'},
@@ -35,11 +35,11 @@ class CategoryArticlesScreen extends StatelessWidget {
     ],
   );
 
-  factory CategoryArticlesScreen.claimsGuide() => CategoryArticlesScreen(
+  factory CategoryArticlesScreen.claimsGuide() => const CategoryArticlesScreen(
     title: 'Claims Guide',
     icon: Icons.assignment_outlined,
     color: AppTheme.accentOrange,
-    articles: const [
+    articles: [
       {'title': 'How to File a Claim', 'read': '5 min read', 'desc': 'Step-by-step process for filing your insurance claim.', 'body': 'Filing a claim with Rex Insurance is straightforward:\n\n1. Report the incident to us as soon as possible. You can call, visit our office, or use the app.\n\n2. Fill out the claim form with accurate details about what happened.\n\n3. Attach supporting documents such as police reports, photos of damage, receipts, or medical reports.\n\n4. Submit your claim and receive a reference number for tracking.\n\nOur claims team will guide you through each step to ensure nothing is missed. The sooner you report, the faster we can process your claim.'},
       {'title': 'Documents You Need for a Claim', 'read': '4 min read', 'desc': 'Essential documents required when making a claim.', 'body': 'Having the right documents ready speeds up your claim. Depending on the type of claim, you may need:\n\n- Completed claim form\n- Copy of your insurance policy\n- Police report (for theft or accidents)\n- Photos or videos of the damage\n- Repair estimates or invoices\n- Medical reports (for personal injury claims)\n- Proof of ownership for damaged items\n\nRex Insurance will tell you exactly what is needed for your specific claim type. Keep copies of all documents for your records.'},
       {'title': 'The Claims Assessment Process', 'read': '6 min read', 'desc': 'What happens after you submit your claim.', 'body': 'After you submit your claim, our team begins the assessment process:\n\n1. Acknowledgement: We confirm receipt of your claim and assign a claims handler.\n\n2. Investigation: We review the documents, may inspect the damage, and verify the details.\n\n3. Evaluation: We determine the claim amount based on your policy coverage and the extent of the loss.\n\n4. Decision: Your claim is either approved, partially approved, or declined with a clear explanation.\n\n5. Settlement: Approved claims are paid out as quickly as possible.\n\nThroughout this process, you can contact us for updates on your claim status.'},
@@ -49,11 +49,11 @@ class CategoryArticlesScreen extends StatelessWidget {
     ],
   );
 
-  factory CategoryArticlesScreen.motorInsurance() => CategoryArticlesScreen(
+  factory CategoryArticlesScreen.motorInsurance() => const CategoryArticlesScreen(
     title: 'Motor Insurance',
     icon: Icons.directions_car_outlined,
-    color: const Color(0xFF4A90D9),
-    articles: const [
+    color: Color(0xFF4A90D9),
+    articles: [
       {'title': 'Third-Party Motor Insurance', 'read': '5 min read', 'desc': 'Understanding the basics of third-party vehicle coverage.', 'body': 'Third-party motor insurance is the minimum legal requirement for vehicle owners in Nigeria. It covers damage or injury you cause to other people, their vehicles, or their property in an accident.\n\nThis policy does not cover damage to your own vehicle. It is the most affordable option and is suitable for those who want basic legal compliance.\n\nIf you cause an accident, the insurer pays the third party for their losses, protecting you from potentially large out-of-pocket expenses.'},
       {'title': 'Comprehensive Motor Cover', 'read': '6 min read', 'desc': 'Full protection for your vehicle against all risks.', 'body': 'Comprehensive motor insurance provides the widest level of protection for your vehicle. It covers:\n\n- Damage to your own vehicle from accidents\n- Theft of your vehicle\n- Fire damage\n- Third-party liability (injury or damage to others)\n- Natural disasters and flooding\n\nWhile it costs more than third-party cover, comprehensive insurance gives you peace of mind knowing your vehicle is fully protected against a wide range of risks.'},
       {'title': 'What to Do After an Accident', 'read': '4 min read', 'desc': 'Immediate steps to take following a road accident.', 'body': 'If you are involved in a road accident:\n\n1. Ensure everyone is safe. Call emergency services if anyone is injured.\n2. Do not move the vehicles unless they are blocking traffic dangerously.\n3. Take photos of the scene, damage to all vehicles, and any injuries.\n4. Exchange information with the other driver (name, phone, insurance details).\n5. File a police report at the nearest station.\n6. Notify Rex Insurance as soon as possible with all the details.\n\nDo not admit fault at the scene. Let the insurance companies and authorities determine liability.'},
@@ -62,11 +62,11 @@ class CategoryArticlesScreen extends StatelessWidget {
     ],
   );
 
-  factory CategoryArticlesScreen.propertyCover() => CategoryArticlesScreen(
+  factory CategoryArticlesScreen.propertyCover() => const CategoryArticlesScreen(
     title: 'Property Cover',
     icon: Icons.home_outlined,
-    color: const Color(0xFFE91E63),
-    articles: const [
+    color: Color(0xFFE91E63),
+    articles: [
       {'title': 'Home Insurance Basics', 'read': '5 min read', 'desc': 'Protecting your home from fire, theft and natural disasters.', 'body': 'Home insurance protects your most valuable asset — your home. It covers damage or loss caused by events such as fire, theft, flooding, and storms.\n\nA standard home insurance policy covers the structure of your building and can be extended to include the contents inside. This means your furniture, electronics, and personal belongings can also be protected.\n\nWhether you own or rent, home insurance gives you financial security if the unexpected happens.'},
       {'title': 'Office & Business Property Cover', 'read': '6 min read', 'desc': 'Insurance solutions for your business premises and equipment.', 'body': 'Business property insurance protects your office, shop, warehouse, or factory against damage and loss. Coverage typically includes:\n\n- Building structure damage from fire, flood, or storms\n- Equipment and machinery breakdown\n- Stock and inventory loss\n- Business interruption (loss of income while repairs are made)\n\nFor business owners, property insurance is essential. A single incident can cause significant financial loss, and having the right cover ensures your business can recover quickly.'},
       {'title': 'Valuables & Contents Insurance', 'read': '4 min read', 'desc': 'Covering your personal belongings inside your property.', 'body': 'Contents insurance covers the items inside your home or office — furniture, electronics, clothing, jewellery, and other personal belongings.\n\nIf your belongings are damaged, destroyed, or stolen, contents insurance helps you replace them without bearing the full cost yourself.\n\nWhen taking out contents insurance, make an inventory of your valuable items and their estimated replacement cost. This helps ensure you have adequate coverage.'},

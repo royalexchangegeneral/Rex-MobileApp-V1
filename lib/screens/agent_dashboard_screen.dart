@@ -898,7 +898,7 @@ class LineChartPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     
     final path = Path();
-    final maxValue = 1000.0;
+    const maxValue = 1000.0;
     final stepX = size.width / (dataPoints.length - 1);
     
     for (int i = 0; i < dataPoints.length; i++) {

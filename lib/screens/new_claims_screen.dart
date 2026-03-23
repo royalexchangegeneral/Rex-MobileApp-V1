@@ -33,7 +33,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
   final _descriptionController = TextEditingController();
   final _witnessNameController = TextEditingController();
   final _witnessAddressController = TextEditingController();
-  List<File> _photos = [];
+  final List<File> _photos = [];
   final ImagePicker _picker = ImagePicker();
   // Step 4
   bool _confirmAccuracy = false;

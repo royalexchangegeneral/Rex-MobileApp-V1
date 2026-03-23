@@ -54,8 +54,6 @@ class AppTheme {
       primary: primaryBlue,
       secondary: accentOrange,
       surface: white,
-      background: white,
-      onBackground: Colors.black,
       onSurface: Colors.black,
     ),
     
@@ -177,8 +175,6 @@ class AppTheme {
       primary: primaryBlue,
       secondary: accentOrange,
       surface: darkGrey,
-      background: darkBackground,
-      onBackground: white,
       onSurface: white,
     ),
     
