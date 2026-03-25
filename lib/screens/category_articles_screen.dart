@@ -334,7 +334,7 @@ class _ArticleDetailScreenState extends State<_ArticleDetailScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Previous', style: TextStyle(fontSize: 9, color: Colors.grey[400])),
+                                  Text('Previous', style: TextStyle(fontSize: 9, color: Colors.black)),
                                   const SizedBox(height: 2),
                                   Text(
                                     widget.articles[_currentIndex - 1]['title']!,
@@ -370,7 +370,7 @@ class _ArticleDetailScreenState extends State<_ArticleDetailScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Text('Next', style: TextStyle(fontSize: 9, color: Colors.grey[400])),
+                                  Text('Next', style: TextStyle(fontSize: 9, color: Colors.black)),
                                   const SizedBox(height: 2),
                                   Text(
                                     widget.articles[_currentIndex + 1]['title']!,
