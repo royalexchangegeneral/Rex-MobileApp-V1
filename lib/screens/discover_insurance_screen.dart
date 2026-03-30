@@ -5,6 +5,7 @@ import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
 import 'new_policy_screen.dart';
 import 'category_articles_screen.dart';
+import 'video_player_screen.dart';
 
 class DiscoverInsuranceScreen extends StatelessWidget {
   const DiscoverInsuranceScreen({super.key});
@@ -197,43 +198,46 @@ class DiscoverInsuranceScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Image placeholder with "New" badge
-          Stack(
-            children: [
-              Container(
-                height: 180,
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF2C3E50),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/2.png'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      shape: BoxShape.circle,
+          GestureDetector(
+            onTap: () => _openYouTubeVideo(context),
+            child: Stack(
+              children: [
+                Container(
+                  height: 180,
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF2C3E50),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/2.png'),
+                      fit: BoxFit.cover,
                     ),
-                    child: const Icon(Icons.play_arrow, color: Colors.white, size: 32),
+                  ),
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.play_arrow, color: Colors.white, size: 32),
+                    ),
                   ),
                 ),
-              ),
-              Positioned(
-                top: 10,
-                right: 10,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryNavy,
-                    borderRadius: BorderRadius.circular(6),
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryNavy,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text('New', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
                   ),
-                  child: const Text('New', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(14),
@@ -251,7 +255,10 @@ class DiscoverInsuranceScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('12 min', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
-                    const Text('Watch Now', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                    GestureDetector(
+                      onTap: () => _openYouTubeVideo(context),
+                      child: const Text('Watch Now', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                    ),
                   ],
                 ),
               ],
@@ -290,6 +297,18 @@ class DiscoverInsuranceScreen extends StatelessWidget {
             const SizedBox(height: 8),
             const Text('View', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.accentOrange)),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _openYouTubeVideo(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const VideoPlayerScreen(
+          videoId: 'Jzq8seU_p2I',
+          title: 'Understanding Your Insurance Policy',
         ),
       ),
     );

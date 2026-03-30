@@ -7,6 +7,8 @@ import 'new_policy_screen.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
+import 'customer_renewal_screen.dart';
+import 'quote_screen.dart';
 
 class CustomerMotorInsuranceScreen extends StatelessWidget {
   final bool isAgent;
@@ -39,11 +41,11 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               title: 'Private Car',
               subtitle: 'For sum insured/benefit up to',
               amount: '₦ 1,000,000.00',
-              premium: '₦5,000',
+              premium: '₦15,000',
               premiumPeriod: 'yearly',
               bgColor: const Color(0xFFE3EDF7),
               iconBgColor: const Color(0xFF3D5A80),
-              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen())),
+              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen(price: 'N15,000'))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -51,11 +53,11 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               title: 'Private Bus',
               subtitle: 'For sum insured/benefit up to',
               amount: '₦ 1,000,000.00',
-              premium: '₦7500',
+              premium: '₦20,000',
               premiumPeriod: 'yearly',
               bgColor: const Color(0xFFF5E6DC),
               iconBgColor: const Color(0xFFBFA58A),
-              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen(vehicleType: 'Private Bus', price: '₦7,500'))),
+              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen(vehicleType: 'Private Bus', price: '₦20,000'))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -63,11 +65,11 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               title: 'Commercial Bus',
               subtitle: 'For sum insured/benefit up to',
               amount: '₦ 1,000,000.00',
-              premium: '₦7500',
+              premium: '₦20,000',
               premiumPeriod: 'yearly',
               bgColor: const Color(0xFFE0F5F0),
               iconBgColor: const Color(0xFF2A9D8F),
-              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen(vehicleType: 'Commercial Bus', price: '₦7,500'))),
+              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen(vehicleType: 'Commercial Bus', price: '₦20,000'))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -75,11 +77,11 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               title: 'Motorcycle',
               subtitle: 'For sum insured/benefit up to',
               amount: '₦ 1,000,000.00',
-              premium: '₦1500',
+              premium: '₦3,000',
               premiumPeriod: 'yearly',
               bgColor: const Color(0xFFFFF9DB),
               iconBgColor: const Color(0xFF6B705C),
-              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen(vehicleType: 'Motorcycle', price: '₦1,500'))),
+              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen(vehicleType: 'Motorcycle', price: '₦3,000'))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -87,11 +89,11 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               title: 'Tricycle (Keke)',
               subtitle: 'For sum insured/benefit up to',
               amount: '₦ 1,000,000.00',
-              premium: '₦2500',
+              premium: '₦5,000',
               premiumPeriod: 'yearly',
               bgColor: const Color(0xFFF5E6DC),
               iconBgColor: const Color(0xFFE07A5F),
-              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen(vehicleType: 'Tricycle (Keke)', price: '₦2,500'))),
+              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen(vehicleType: 'Tricycle (Keke)', price: '₦5,000'))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -99,8 +101,8 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               title: 'Motor Comprehensive (Private & Commercial)',
               subtitle: 'Coverage up to',
               amount: '₦3,000,000',
-              premium: '3%',
-              premiumPeriod: '+ ₦15,000/m',
+              premium: '5%',
+              premiumPeriod: 'of sum insured',
               bgColor: const Color(0xFFE3EDF7),
               iconBgColor: const Color(0xFF3D5A80),
               onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ComprehensivePersonalInfoScreen())),
@@ -137,7 +139,7 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               amount: 'For sum insured/benefit more than above',
               bgColor: const Color(0xFFE0F5F0),
               iconBgColor: const Color(0xFF2A9D8F),
-              onGetQuote: () {},
+              onGetQuote: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QuoteScreen(insuranceType: 'Royal Auto Plan (Gold)'))),
             ),
             const SizedBox(height: 20),
           ],
@@ -286,17 +288,12 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Premium', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
-                        Row(
-                          children: [
-                            _buildNairaText(premium, fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black),
-                            const SizedBox(width: 2),
-                            _buildNairaText(premiumPeriod, fontSize: 10, fontWeight: FontWeight.normal, color: Colors.grey[600]!),
-                          ],
-                        ),
+                        const SizedBox(height: 2),
+                        Text(premium.contains('%') ? '$premium $premiumPeriod' : '$premium / $premiumPeriod', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
                       ],
                     ),
                     OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerRenewalScreen())),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.primaryNavy,
                         side: const BorderSide(color: AppTheme.primaryNavy),

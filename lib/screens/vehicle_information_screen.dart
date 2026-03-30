@@ -1,27 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../utils/app_theme.dart';
 import 'private_motor_details_screen.dart';
 
 class VehicleInformationScreen extends StatefulWidget {
   final String vehicleType;
   final String price;
+  final Map<String, String> personalInfo;
   
   const VehicleInformationScreen({
     super.key,
     this.vehicleType = 'Private Car',
     this.price = 'N15,000',
+    this.personalInfo = const {},
   });
 
   @override
-  State<VehicleInformationScreen> createState() =>
-      _VehicleInformationScreenState();
+  State<VehicleInformationScreen> createState() => _VehicleInformationScreenState();
 }
 
 class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _regNumberController = TextEditingController();
   bool _isVerifying = false;
   bool _isVerified = false;
+  Map<String, dynamic>? _vehicleData;
 
   @override
   void dispose() {
@@ -30,37 +33,78 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
   }
 
   Future<void> _handleVerify() async {
-    if (_regNumberController.text.isEmpty) {
+    final regNo = _regNumberController.text.trim();
+    if (regNo.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a registration number')),
+      );
       return;
     }
 
-    // Start verifying
-    setState(() {
-      _isVerifying = true;
-    });
+    setState(() { _isVerifying = true; _isVerified = false; _vehicleData = null; });
 
-    // Simulate verification process
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final requestBody = {
+        'Intcode': 'Testcode',
+        'Password': 'royal1234',
+        'RegNo': regNo,
+      };
 
-    // Show verified state
-    setState(() {
-      _isVerifying = false;
-      _isVerified = true;
-    });
+      print('=== VEHICLE VERIFICATION REQUEST ===');
+      print('URL: https://eportaltest.rexinsure.com/api/vehicleVerification');
+      print('Payload: ${json.encode(requestBody)}');
+      print('====================================');
 
-    // Wait a moment then navigate to summary
-    await Future.delayed(const Duration(seconds: 1));
+      final response = await http.post(
+        Uri.parse('https://eportaltest.rexinsure.com/api/vehicleVerification'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      ).timeout(const Duration(seconds: 15));
 
-    if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PrivateMotorDetailsScreen(
-            vehicleType: widget.vehicleType,
-            price: widget.price,
-          ),
-        ),
-      );
+      print('=== VEHICLE VERIFICATION RESPONSE ===');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      print('=====================================');
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'Successful' && data['data'] != null && (data['data'] as List).isNotEmpty) {
+          setState(() {
+            _isVerifying = false;
+            _isVerified = true;
+            _vehicleData = Map<String, dynamic>.from(data['data'][0]);
+          });
+
+          await Future.delayed(const Duration(milliseconds: 800));
+          if (mounted) {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => PrivateMotorDetailsScreen(
+              vehicleType: widget.vehicleType,
+              price: widget.price,
+              personalInfo: widget.personalInfo,
+              vehicleData: _vehicleData!,
+            )));
+          }
+        } else {
+          setState(() { _isVerifying = false; });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data['message']?.toString() ?? 'Vehicle not found'), backgroundColor: Colors.red),
+          );
+        }
+      } else {
+        setState(() { _isVerifying = false; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Server error. Please try again.'), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() { _isVerifying = false; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -69,241 +113,108 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          widget.vehicleType,
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        backgroundColor: Colors.white, elevation: 0,
+        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
+        title: Text(widget.vehicleType, style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600)),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          // Progress indicator
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Text(
-                      'Step 2 of 3',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryNavy,
-                      ),
-                    ),
+      body: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(children: [
+                    Text('Step 2 of 3', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
                     Spacer(),
-                    Text(
-                      'Vehicle Information',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryNavy,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryNavy,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Container(
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryNavy,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Container(
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Form
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Reg Number',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _regNumberController,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 14,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'enter your reg. no.',
-                        hintStyle: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 14,
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[400]!, width: 1.5),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[400]!, width: 1.5),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                  ],
-                ),
+                    Text('Vehicle Information', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+                  ]),
+                  const SizedBox(height: 12),
+                  Row(children: List.generate(3, (i) => Expanded(child: Container(
+                    height: 4, margin: EdgeInsets.only(right: i < 2 ? 4 : 0),
+                    decoration: BoxDecoration(color: i < 2 ? AppTheme.primaryNavy : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                  )))),
+                ],
               ),
             ),
-          ),
-
-          // Buttons
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isVerifying || _isVerified ? null : _handleVerify,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _isVerified ? Colors.green : AppTheme.primaryNavy,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      disabledBackgroundColor: _isVerifying 
-                          ? AppTheme.primaryNavy.withOpacity(0.7)
-                          : Colors.green,
-                      disabledForegroundColor: Colors.white,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Reg Number', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87)),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _regNumberController,
+                    textCapitalization: TextCapitalization.characters,
+                    style: const TextStyle(color: Colors.black, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'enter your reg. no.',
+                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                      filled: true, fillColor: Colors.white,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[400]!, width: 1.5)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[400]!, width: 1.5)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
-                    child: _isVerifying
-                        ? const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              ),
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(24, 0, 24, 32 + MediaQuery.of(context).padding.bottom),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isVerifying || _isVerified ? null : _handleVerify,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _isVerified ? Colors.green : AppTheme.primaryNavy,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        disabledBackgroundColor: _isVerifying ? AppTheme.primaryNavy.withValues(alpha: 0.7) : Colors.green,
+                        disabledForegroundColor: Colors.white,
+                      ),
+                      child: _isVerifying
+                          ? const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                              SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white))),
                               SizedBox(width: 12),
-                              Text(
-                                'Verifying RegNo',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          )
-                        : _isVerified
-                            ? const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
+                              Text('Verifying RegNo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                            ])
+                          : _isVerified
+                              ? const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                                   Icon(Icons.check_circle, color: Colors.white),
                                   SizedBox(width: 8),
-                                  Text(
-                                    'Registration No Verified',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : const Text(
-                                'Verify',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.primaryNavy,
-                      side: const BorderSide(color: AppTheme.primaryNavy, width: 1.5),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Back',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                                  Text('Registration No Verified', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                                ])
+                              : const Text('Verify', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primaryNavy,
+                        side: const BorderSide(color: AppTheme.primaryNavy, width: 1.5),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

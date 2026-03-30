@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../providers/auth_provider.dart';
 import 'quote_success_screen.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
@@ -24,6 +26,22 @@ class _QuoteScreenState extends State<QuoteScreen> {
   final _phoneController = TextEditingController();
   final _sumInsuredController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final userData = auth.userData;
+      if (userData != null) {
+        final firstName = userData['FirstName']?.toString() ?? '';
+        final lastName = userData['LastName']?.toString() ?? '';
+        _nameController.text = '$firstName $lastName'.trim();
+        _emailController.text = userData['Email']?.toString() ?? '';
+        _phoneController.text = userData['Phone']?.toString() ?? userData['PhoneNo']?.toString() ?? userData['Phoneno']?.toString() ?? userData['MobileNo']?.toString() ?? userData['Mobile']?.toString() ?? userData['PhoneNumber']?.toString() ?? userData['Telephone']?.toString() ?? '';
+      }
+    });
+  }
 
   @override
   void dispose() {

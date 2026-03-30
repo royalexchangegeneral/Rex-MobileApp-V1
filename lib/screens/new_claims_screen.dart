@@ -7,7 +7,8 @@ import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
 
 class NewClaimsScreen extends StatefulWidget {
-  const NewClaimsScreen({super.key});
+  final String? policyNumber;
+  const NewClaimsScreen({super.key, this.policyNumber});
   @override
   State<NewClaimsScreen> createState() => _NewClaimsScreenState();
 }
@@ -17,6 +18,12 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
 
   // Step 1
   final _policyNoController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.policyNumber != null) _policyNoController.text = widget.policyNumber!;
+  }
   // Step 2
   final _claimantNameController = TextEditingController();
   final _phoneController = TextEditingController();

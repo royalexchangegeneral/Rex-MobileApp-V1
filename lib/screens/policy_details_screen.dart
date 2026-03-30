@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
 import 'new_claims_screen.dart';
+import 'help_support_screen.dart';
+import 'service_request_screen.dart';
 import 'policy_renewal_screen.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
@@ -28,7 +30,7 @@ class PolicyDetailsScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Back', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text('Policy Details', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
         actions: [
           IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.black), onPressed: () {}),
@@ -122,9 +124,9 @@ class PolicyDetailsScreen extends StatelessWidget {
             Row(
               children: [
                 Expanded(child: _buildQuickAction(Icons.refresh, 'Renew Policy', const Color(0xFFE8F4FD), const Color(0xFF4A90D9), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PolicyRenewalScreen(policyType: policyType, policyNumber: policyNumber))))),
-                Expanded(child: _buildQuickAction(Icons.edit_document, 'Update Policy', const Color(0xFFFFF5E6), const Color(0xFFFFB74D))),
-                Expanded(child: _buildQuickAction(Icons.assignment, 'File Claim', const Color(0xFFF3E8FF), const Color(0xFF9C27B0))),
-                Expanded(child: _buildQuickAction(Icons.headset_mic, 'Support', const Color(0xFFE8F4FD), const Color(0xFF4A90D9))),
+                Expanded(child: _buildQuickAction(Icons.edit_document, 'Update Policy', const Color(0xFFFFF5E6), const Color(0xFFFFB74D), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceRequestScreen())))),
+                Expanded(child: _buildQuickAction(Icons.assignment, 'File Claim', const Color(0xFFF3E8FF), const Color(0xFF9C27B0), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewClaimsScreen(policyNumber: policyNumber))))),
+                Expanded(child: _buildQuickAction(Icons.headset_mic, 'Support', const Color(0xFFE8F4FD), const Color(0xFF4A90D9), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen())))),
               ],
             ),
             const SizedBox(height: 24),
@@ -254,7 +256,7 @@ class PolicyDetailsScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewClaimsScreen())),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewClaimsScreen(policyNumber: policyNumber))),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryNavy,
                   foregroundColor: Colors.white,

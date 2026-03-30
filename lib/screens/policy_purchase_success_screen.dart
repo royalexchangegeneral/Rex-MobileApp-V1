@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
 import 'signup_screen.dart';
+import 'customer_dashboard_screen.dart';
 
 class PolicyPurchaseSuccessScreen extends StatelessWidget {
   const PolicyPurchaseSuccessScreen({super.key});
@@ -112,8 +113,11 @@ class PolicyPurchaseSuccessScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Navigate to homepage
-                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()),
+                      (route) => false,
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryNavy,

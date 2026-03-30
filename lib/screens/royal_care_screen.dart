@@ -5,6 +5,9 @@ import 'new_policy_screen.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
+import 'royal_personal_care_screen.dart';
+import 'royal_group_care_screen.dart';
+import 'royal_family_care_screen.dart';
 
 class RoyalCareScreen extends StatelessWidget {
   final bool isAgent;
@@ -39,27 +42,27 @@ class RoyalCareScreen extends StatelessWidget {
               svgIcon: 'assets/icons/svg3474.svg',
               trailingSvgIcon: 'assets/icons/svg3474.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () {},
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalPersonalCareScreen())),
             ),
             const SizedBox(height: 12),
             _buildRoyalCareCard(
               title: 'Royal Group Care',
               subtitle: 'Protect your Assets',
               iconBgColor: const Color(0xFFFCE4EC),
-              svgIcon: 'assets/icons/svg3474.svg',
-              trailingSvgIcon: 'assets/icons/svg3474.svg',
+              svgIcon: 'assets/icons/Capa_1 2.svg',
+              trailingSvgIcon: 'assets/icons/Capa_1 2.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () {},
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalGroupCareScreen())),
             ),
             const SizedBox(height: 12),
             _buildRoyalCareCard(
               title: 'Royal Family Care',
               subtitle: 'Protect your tools',
               iconBgColor: const Color(0xFFFFF5E6),
-              svgIcon: 'assets/icons/svg3474.svg',
-              trailingSvgIcon: 'assets/icons/svg3474.svg',
+              svgIcon: 'assets/icons/Layer_1.svg',
+              trailingSvgIcon: 'assets/icons/Layer_1.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () {},
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalFamilyCareScreen())),
             ),
             const SizedBox(height: 20),
           ],

@@ -6,7 +6,9 @@ import 'my_claims_screen.dart';
 import 'new_policy_screen.dart';
 
 class FaqScreen extends StatefulWidget {
-  const FaqScreen({super.key});
+  final String? initialCategory;
+  final String? initialSearch;
+  const FaqScreen({super.key, this.initialCategory, this.initialSearch});
 
   @override
   State<FaqScreen> createState() => _FaqScreenState();
@@ -17,6 +19,18 @@ class _FaqScreenState extends State<FaqScreen> {
   final List<String> _filters = ['All', 'policy', 'Claims', 'Account', 'Quotes'];
   final _searchController = TextEditingController();
   int _expandedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialCategory != null) {
+      final idx = _filters.indexWhere((f) => f.toLowerCase() == widget.initialCategory!.toLowerCase());
+      if (idx >= 0) _selectedFilter = idx;
+    }
+    if (widget.initialSearch != null) {
+      _searchController.text = widget.initialSearch!;
+    }
+  }
 
   final List<Map<String, String>> _faqs = [
     {

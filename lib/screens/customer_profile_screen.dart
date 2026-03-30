@@ -7,6 +7,7 @@ import 'security_settings_screen.dart';
 import 'customer_dashboard_screen.dart';
 import 'my_claims_screen.dart';
 import 'new_policy_screen.dart';
+import 'help_support_screen.dart';
 
 class CustomerProfileScreen extends StatelessWidget {
   const CustomerProfileScreen({super.key});
@@ -194,7 +195,7 @@ class CustomerProfileScreen extends StatelessWidget {
                     'Help and support',
                     const Color(0xFFE8EAF6),
                     const Color(0xFF1E2D64),
-                    onTap: () {},
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen())),
                   ),
                 ],
               ),

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../providers/auth_provider.dart';
 import 'comprehensive_vehicle_info_screen.dart';
 
 class ComprehensivePersonalInfoScreen extends StatefulWidget {
@@ -10,28 +14,54 @@ class ComprehensivePersonalInfoScreen extends StatefulWidget {
 }
 
 class _ComprehensivePersonalInfoScreenState extends State<ComprehensivePersonalInfoScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _occupationController = TextEditingController();
   final _addressController = TextEditingController();
+  
   String? _selectedState;
   String? _selectedLGA;
+  List<Map<String, dynamic>> _lgaList = [];
+  bool _isLoadingLgas = false;
 
-  final List<String> _states = ['Lagos', 'Abuja', 'Rivers', 'Kano', 'Oyo', 'Kaduna', 'Enugu', 'Delta', 'Ogun', 'Edo'];
-  final Map<String, List<String>> _lgas = {
-    'Lagos': ['Kosofe', 'Ikeja', 'Surulere', 'Eti-Osa', 'Alimosho', 'Agege'],
-    'Abuja': ['Abaji', 'Bwari', 'Gwagwalada', 'Kuje', 'Kwali', 'Municipal'],
-    'Rivers': ['Port Harcourt', 'Obio-Akpor', 'Eleme', 'Oyigbo'],
-    'Kano': ['Kano Municipal', 'Fagge', 'Dala', 'Gwale'],
-    'Oyo': ['Ibadan North', 'Ibadan South', 'Ogbomoso', 'Oyo East'],
-    'Kaduna': ['Kaduna North', 'Kaduna South', 'Zaria', 'Chikun'],
-    'Enugu': ['Enugu East', 'Enugu North', 'Enugu South', 'Nsukka'],
-    'Delta': ['Warri', 'Asaba', 'Ughelli', 'Sapele'],
-    'Ogun': ['Abeokuta', 'Ijebu Ode', 'Sagamu', 'Ota'],
-    'Edo': ['Benin City', 'Ekpoma', 'Auchi', 'Uromi'],
+  final Map<String, int> _stateIdMap = {
+    'Abia': 1, 'Adamawa': 2, 'Akwa Ibom': 3, 'Anambra': 4, 'Bauchi': 5,
+    'Bayelsa': 6, 'Benue': 7, 'Borno': 8, 'Cross River': 9, 'Delta': 10,
+    'Ebonyi': 11, 'Edo': 12, 'Ekiti': 13, 'Enugu': 14, 'Federal Capital Territory': 15,
+    'Gombe': 16, 'Imo': 17, 'Jigawa': 18, 'Kaduna': 19, 'Kano': 20,
+    'Katsina': 21, 'Kebbi': 22, 'Kogi': 23, 'Kwara': 24, 'Lagos': 25,
+    'Nasarawa': 26, 'Niger': 27, 'Ogun': 28, 'Ondo': 29, 'Osun': 30,
+    'Oyo': 31, 'Plateau': 32, 'Rivers': 33, 'Sokoto': 34, 'Taraba': 35,
+    'Yobe': 36, 'Zamfara': 37,
   };
+
+  final List<String> _nigerianStates = const [
+    'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue',
+    'Borno', 'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu',
+    'Federal Capital Territory', 'Gombe', 'Imo', 'Jigawa', 'Kaduna', 'Kano',
+    'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos', 'Nasarawa', 'Niger', 'Ogun',
+    'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final userData = auth.userData;
+      if (userData != null) {
+        _firstNameController.text = userData['FirstName']?.toString() ?? '';
+        _lastNameController.text = userData['LastName']?.toString() ?? userData['Lastname']?.toString() ?? userData['Surname']?.toString() ?? '';
+        _emailController.text = userData['Email']?.toString() ?? '';
+        _phoneController.text = userData['Phone']?.toString() ?? userData['PhoneNo']?.toString() ?? userData['Phoneno']?.toString() ?? userData['MobileNo']?.toString() ?? userData['Mobile']?.toString() ?? userData['PhoneNumber']?.toString() ?? userData['Telephone']?.toString() ?? '';
+        _occupationController.text = userData['Occupation']?.toString() ?? '';
+        _addressController.text = userData['Address']?.toString() ?? '';
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -44,6 +74,35 @@ class _ComprehensivePersonalInfoScreenState extends State<ComprehensivePersonalI
     super.dispose();
   }
 
+  Future<void> _fetchLgas(String stateName) async {
+    final stateId = _stateIdMap[stateName];
+    if (stateId == null) return;
+    setState(() { _isLoadingLgas = true; _lgaList = []; _selectedLGA = null; });
+    try {
+      final response = await http.get(
+        Uri.parse('https://eportal.rexinsure.com/api/get-lga?state_id=$stateId'),
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = json.decode(response.body);
+        List<Map<String, dynamic>> lgaList = [];
+        if (data is List) {
+          lgaList = List<Map<String, dynamic>>.from(data);
+        } else if (data is Map && data['data'] is List) {
+          lgaList = List<Map<String, dynamic>>.from(data['data']);
+        } else if (data is Map && data['lgas'] is List) {
+          lgaList = List<Map<String, dynamic>>.from(data['lgas']);
+        }
+        setState(() { _lgaList = lgaList; _isLoadingLgas = false; });
+      } else {
+        setState(() => _isLoadingLgas = false);
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load LGAs: ${response.statusCode}')));
+      }
+    } catch (e) {
+      setState(() => _isLoadingLgas = false);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading LGAs: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,104 +113,124 @@ class _ComprehensivePersonalInfoScreenState extends State<ComprehensivePersonalI
         title: Text(widget.vehicleType, style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600)),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(children: [
-                  Text('Step 1 of 5', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
-                  Spacer(),
-                  Text('Personal information', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
-                ]),
-                const SizedBox(height: 12),
-                Row(children: List.generate(5, (i) => Expanded(child: Container(height: 4, margin: EdgeInsets.only(right: i < 4 ? 4 : 0), decoration: BoxDecoration(color: i < 1 ? AppTheme.primaryNavy : Colors.grey[300], borderRadius: BorderRadius.circular(2)))))),
-              ],
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+      body: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTextField('First Name', _firstNameController, 'enter first name'),
-                  const SizedBox(height: 16),
-                  _buildTextField('Last Name', _lastNameController, 'enter last name'),
-                  const SizedBox(height: 16),
-                  _buildTextField('Email Address', _emailController, 'enter your email address', keyboardType: TextInputType.emailAddress),
-                  const SizedBox(height: 16),
-                  _buildTextField('Phone Number', _phoneController, 'enter your phone number', keyboardType: TextInputType.phone),
-                  const SizedBox(height: 16),
-                  _buildTextField('Occupation', _occupationController, 'enter your occupation'),
-                  const SizedBox(height: 16),
-                  _buildTextField('Address', _addressController, 'enter your address', maxLines: 3),
-                  const SizedBox(height: 16),
-                  _buildDropdown('State', _selectedState, _states, (val) => setState(() { _selectedState = val; _selectedLGA = null; })),
-                  const SizedBox(height: 16),
-                  _buildDropdown('LGA', _selectedLGA, _selectedState != null ? _lgas[_selectedState] ?? [] : [], (val) => setState(() => _selectedLGA = val)),
-                  const SizedBox(height: 40),
+                  const Row(children: [
+                    Text('Step 1 of 5', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+                    Spacer(),
+                    Text('Personal information', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+                  ]),
+                  const SizedBox(height: 12),
+                  Row(children: List.generate(5, (i) => Expanded(child: Container(height: 4, margin: EdgeInsets.only(right: i < 4 ? 4 : 0), decoration: BoxDecoration(color: i < 1 ? AppTheme.primaryNavy : Colors.grey[300], borderRadius: BorderRadius.circular(2)))))),
                 ],
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: SizedBox(width: double.infinity, child: ElevatedButton(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (ctx) => ComprehensiveVehicleInfoScreen(vehicleType: widget.vehicleType))),
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-              child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            )),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTextField('First Name', _firstNameController, 'enter first name'),
+                    const SizedBox(height: 16),
+                    _buildTextField('Last Name', _lastNameController, 'enter last name'),
+                    const SizedBox(height: 16),
+                    _buildTextField('Email Address', _emailController, 'enter your email address', keyboardType: TextInputType.emailAddress),
+                    const SizedBox(height: 16),
+                    _buildTextField('Phone Number', _phoneController, 'enter your phone number', keyboardType: TextInputType.phone),
+                    const SizedBox(height: 16),
+                    _buildTextField('Occupation', _occupationController, 'enter your occupation'),
+                    const SizedBox(height: 16),
+                    _buildTextField('Address', _addressController, 'enter your address', maxLines: 3),
+                    const SizedBox(height: 16),
+                    const Text('State', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87)),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(8)),
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedState,
+                        hint: Text('select your state', style: TextStyle(color: Colors.grey[400], fontSize: 14)),
+                        decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4)),
+                        icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[400]),
+                        items: _nigerianStates.map((s) => DropdownMenuItem(value: s, child: Text(s, style: const TextStyle(fontSize: 14)))).toList(),
+                        onChanged: (val) { setState(() => _selectedState = val); if (val != null) _fetchLgas(val); },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('LGA', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87)),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(8)),
+                      child: _isLoadingLgas
+                          ? const Padding(padding: EdgeInsets.all(14), child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))))
+                          : DropdownButtonFormField<String>(
+                              value: _selectedLGA,
+                              hint: Text(_selectedState == null ? 'select state first' : 'select your LGA', style: TextStyle(color: Colors.grey[400], fontSize: 14)),
+                              decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4)),
+                              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[400]),
+                              items: _lgaList.map((lga) {
+                                final name = lga['name']?.toString() ?? lga['lga_name']?.toString() ?? lga['LGA']?.toString() ?? '';
+                                return DropdownMenuItem(value: name, child: Text(name, style: const TextStyle(fontSize: 14)));
+                              }).toList(),
+                              onChanged: (val) => setState(() => _selectedLGA = val),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(24, 24, 24, 32 + MediaQuery.of(context).padding.bottom),
+              child: SizedBox(width: double.infinity, child: ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    final personalInfo = {
+                      'firstName': _firstNameController.text.trim(),
+                      'lastName': _lastNameController.text.trim(),
+                      'email': _emailController.text.trim(),
+                      'phone': _phoneController.text.trim(),
+                      'occupation': _occupationController.text.trim(),
+                      'address': _addressController.text.trim(),
+                      'state': _selectedState ?? '',
+                      'lga': _selectedLGA ?? '',
+                    };
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => ComprehensiveVehicleInfoScreen(vehicleType: widget.vehicleType, personalInfo: personalInfo)));
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              )),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, String hint, {TextInputType? keyboardType, int maxLines = 1, bool isDropdown = false}) {
+  Widget _buildTextField(String label, TextEditingController controller, String hint, {TextInputType? keyboardType, int maxLines = 1}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87)),
         const SizedBox(height: 8),
         TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          maxLines: maxLines,
+          controller: controller, keyboardType: keyboardType, maxLines: maxLines,
           style: const TextStyle(color: Colors.black, fontSize: 14),
           decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey[400]),
-            filled: true,
-            fillColor: Colors.white,
-            suffixIcon: isDropdown ? Icon(Icons.keyboard_arrow_down, color: Colors.grey[400]) : null,
+            hintText: hint, hintStyle: TextStyle(color: Colors.grey[400]),
+            filled: true, fillColor: Colors.white,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDropdown(String label, String? value, List<String> items, Function(String?) onChanged) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87)),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(8)),
-          child: DropdownButtonFormField<String>(
-            initialValue: value,
-            hint: Text('select your ${label.toLowerCase()}', style: TextStyle(color: Colors.grey[400], fontSize: 14)),
-            decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4)),
-            icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[400]),
-            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 14)))).toList(),
-            onChanged: onChanged,
           ),
         ),
       ],

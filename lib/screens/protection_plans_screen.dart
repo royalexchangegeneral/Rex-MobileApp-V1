@@ -5,6 +5,11 @@ import 'new_policy_screen.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
+import 'home_protection_plan_screen.dart';
+import 'shop_protection_plan_screen.dart';
+import 'parcel_protection_plan_screen.dart';
+import 'drivers_riders_protection_screen.dart';
+import 'student_protection_plan_screen.dart';
 
 class ProtectionPlansScreen extends StatelessWidget {
   final bool isAgent;
@@ -39,7 +44,7 @@ class ProtectionPlansScreen extends StatelessWidget {
               svgIcon: 'assets/icons/p1.svg',
               trailingSvgIcon: 'assets/icons/Group.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () {},
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeProtectionPlanScreen())),
             ),
             const SizedBox(height: 12),
             _buildProtectionCard(
@@ -49,7 +54,7 @@ class ProtectionPlansScreen extends StatelessWidget {
               svgIcon: 'assets/icons/p2.svg',
               trailingSvgIcon: 'assets/icons/svg1824.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () {},
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ShopProtectionPlanScreen())),
             ),
             const SizedBox(height: 12),
             _buildProtectionCard(
@@ -59,7 +64,7 @@ class ProtectionPlansScreen extends StatelessWidget {
               svgIcon: 'assets/icons/p3.svg',
               trailingSvgIcon: 'assets/icons/svg4053.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () {},
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ParcelProtectionPlanScreen())),
             ),
             const SizedBox(height: 12),
             _buildProtectionCard(
@@ -69,7 +74,7 @@ class ProtectionPlansScreen extends StatelessWidget {
               svgIcon: 'assets/icons/p4.svg',
               trailingSvgIcon: 'assets/icons/svg4728.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () {},
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriversRidersProtectionScreen())),
             ),
             const SizedBox(height: 12),
             _buildProtectionCard(
@@ -79,7 +84,7 @@ class ProtectionPlansScreen extends StatelessWidget {
               svgIcon: 'assets/icons/p5.svg',
               trailingSvgIcon: 'assets/icons/graduation-hat_11174463 1.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () {},
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StudentProtectionPlanScreen())),
             ),
             const SizedBox(height: 20),
           ],
