@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
 import 'login_screen.dart';
@@ -15,6 +17,7 @@ import 'claims_process_screen.dart';
 import 'my_certificate_screen.dart';
 import 'payments_screen.dart';
 import 'my_policies_screen.dart';
+import 'notifications_screen.dart';
 
 class CustomerDashboardScreen extends StatefulWidget {
   const CustomerDashboardScreen({super.key});
@@ -26,6 +29,24 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _drawerSelectedIndex = 0;
+  int _notifCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchNotifCount();
+  }
+
+  Future<void> _fetchNotifCount() async {
+    try {
+      final r = await http.get(Uri.parse('https://eportaltest.rexinsure.com/api/notifications')).timeout(const Duration(seconds: 10));
+      if (r.statusCode == 200 || r.statusCode == 201) {
+        final d = json.decode(r.body);
+        List<dynamic> list = d is List ? d : (d is Map && d['data'] is List ? d['data'] : []);
+        if (mounted) setState(() => _notifCount = list.length);
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +71,12 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
           ),
         ),
         centerTitle: true,
-        actions: [IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.black), onPressed: () {})],
+        actions: [
+          Stack(children: [
+            IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.black), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())).then((_) => _fetchNotifCount())),
+            if (_notifCount > 0) Positioned(right: 8, top: 8, child: Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle), child: Text('$_notifCount', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)))),
+          ]),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(

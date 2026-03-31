@@ -8,6 +8,7 @@ import 'new_policy_screen.dart';
 import 'faq_screen.dart';
 import 'customer_care_screen.dart';
 import 'office_locations_screen.dart';
+import 'live_chat_screen.dart';
 
 class HelpSupportScreen extends StatefulWidget {
   const HelpSupportScreen({super.key});
@@ -33,8 +34,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(backgroundColor: Colors.white, elevation: 0,
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-        title: const Text('Help & Support', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)), centerTitle: true,
-        actions: [IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.black), onPressed: () {})]),
+        title: const Text('Help & Support', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)), centerTitle: true),
       body: SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           // Search
@@ -77,7 +77,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
           const Text('Contact Us', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
           const SizedBox(height: 12),
           _contactItem(Icons.headset_mic_outlined, 'Customer Support', 'Get help anytime', const Color(0xFFE3F2FD), const Color(0xFF1565C0), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerCareScreen()))),
-          _contactItem(Icons.chat_bubble_outlined, 'Live Chat', 'Available 24/7', const Color(0xFFE0F7FA), const Color(0xFF00ACC1), () {}),
+          _contactItem(Icons.chat_bubble_outlined, 'Live Chat', 'Available 24/7', const Color(0xFFE0F7FA), const Color(0xFF00ACC1), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveChatScreen()))),
           _contactItem(Icons.phone_outlined, 'Call Us', 'Mon-Fri, 9AM-6PM', const Color(0xFFE8F5E9), const Color(0xFF2E7D32), () => _callAgent()),
           _contactItem(Icons.email_outlined, 'Email Support', 'Response within 24hr', const Color(0xFFF3E5F5), const Color(0xFF7B1FA2), () {}),
           _contactItem(Icons.location_on_outlined, 'Walk-In', 'Locate offices near you.', const Color(0xFFFFF8E1), const Color(0xFFB8860B), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OfficeLocationsScreen()))),

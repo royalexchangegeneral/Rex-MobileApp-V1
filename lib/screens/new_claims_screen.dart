@@ -94,7 +94,6 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: _prevStep),
         title: const Text('New Claims', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
         centerTitle: true,
-        actions: [IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.black), onPressed: () {})],
       ),
       body: Column(
         children: [

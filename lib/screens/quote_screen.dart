@@ -65,9 +65,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
         ),
         title: const Text('Quote', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
-        actions: [
-          IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.black), onPressed: () {}),
-        ],
+        actions: const [],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

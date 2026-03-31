@@ -52,9 +52,7 @@ class PaymentsScreen extends StatelessWidget {
         ),
         title: const Text('Payments', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
         centerTitle: true,
-        actions: [
-          IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.black), onPressed: () {}),
-        ],
+        actions: const [],
       ),
       body: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
