@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
+import '../widgets/agent_bottom_nav.dart';
+import '../providers/auth_provider.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
@@ -7,27 +12,67 @@ import 'new_policy_screen.dart';
 import 'new_ticket_screen.dart';
 import 'service_request_screen.dart';
 import 'complaint_screen.dart';
+import 'track_ticket_screen.dart';
 
 class CustomerCareScreen extends StatefulWidget {
-  const CustomerCareScreen({super.key});
+  final bool isAgentFlow;
+  const CustomerCareScreen({super.key, this.isAgentFlow = false});
   @override
   State<CustomerCareScreen> createState() => _CustomerCareScreenState();
 }
 
 class _CustomerCareScreenState extends State<CustomerCareScreen> {
   final _searchController = TextEditingController();
+  bool _loading = false;
+  List<Map<String, dynamic>> _tickets = [];
 
   final List<Map<String, dynamic>> _categories = [
     {'icon': Icons.headset_mic_outlined, 'title': 'Service Request', 'sub': 'General service inquiries', 'bg': const Color(0xFFE3F2FD), 'ic': const Color(0xFF1565C0)},
     {'icon': Icons.warning_amber_outlined, 'title': 'Complaint', 'sub': 'File a formal complaint', 'bg': const Color(0xFFFCE4EC), 'ic': const Color(0xFFE53935)},
   ];
 
-  final List<Map<String, dynamic>> _tickets = [
-    {'id': '#TK001223', 'title': 'Claim status update', 'time': 'Created 25 mins ago', 'status': 'Open', 'color': Colors.green},
-    {'id': '#TK001234', 'title': 'Policy premium inquiry', 'time': 'Created 2 days ago', 'status': 'Pending', 'color': Colors.orange},
-    {'id': '#TK001223', 'title': 'Claim status update', 'time': 'Created 6 days ago', 'status': 'Resolved', 'color': Colors.green},
-    {'id': '#TK001223', 'title': 'Claim status update', 'time': 'Created 6 days ago', 'status': 'Resolved', 'color': Colors.green},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchTickets());
+  }
+
+  Future<void> _fetchTickets() async {
+    setState(() => _loading = true);
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final userCode = auth.userCode ?? auth.userId ?? '';
+      final userId = int.tryParse(userCode) ?? 0;
+
+      final url = 'https://eportaltest.rexinsure.com/api/support/tickets?userId=$userId';
+      print('Fetching tickets with payload: userId=$userId');
+      print('Request URL: $url');
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 15));
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['data'] is List) {
+          _tickets = (data['data'] as List).map((e) => Map<String, dynamic>.from(e)).toList();
+        } else {
+          _tickets = [];
+        }
+      } else {
+        _tickets = [];
+      }
+    } catch (e) {
+      print('Error fetching tickets: $e');
+      _tickets = [];
+    } finally {
+      setState(() => _loading = false);
+    }
+  }
 
   @override
   void dispose() { _searchController.dispose(); super.dispose(); }
@@ -59,24 +104,36 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
           const SizedBox(height: 24),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             const Text('Recent Tickets', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-            GestureDetector(onTap: () {}, child: const Text('View all', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.accentOrange))),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TrackTicketScreen(tickets: _tickets, isAgentFlow: widget.isAgentFlow),
+                  ),
+                );
+              },
+              child: const Text('View all', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.accentOrange)),
+            ),
           ]),
           const SizedBox(height: 14),
-          ...List.generate(_tickets.length, (i) => Padding(padding: const EdgeInsets.only(bottom: 10), child: _buildTicketCard(_tickets[i]))),
+          if (_loading)
+            const Center(child: CircularProgressIndicator())
+          else
+            ...List.generate(_tickets.length, (i) => Padding(padding: const EdgeInsets.only(bottom: 10), child: _buildTicketCard(_tickets[i]))),
           const SizedBox(height: 16),
-          SizedBox(width: double.infinity, child: ElevatedButton.icon(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewTicketScreen())),
-            icon: const Icon(Icons.add_circle_outline, size: 20),
-            label: const Text('Create New Ticket', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+          SizedBox(width: double.infinity, child: ElevatedButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewTicketScreen(isAgentFlow: widget.isAgentFlow))),
+            child: const Text('Create New Ticket', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
           )),
           const SizedBox(height: 80),
         ])),
-      floatingActionButton: SizedBox(width: 50, height: 50, child: FloatingActionButton(
+      floatingActionButton: widget.isAgentFlow ? null : SizedBox(width: 50, height: 50, child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
         backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), child: const Icon(Icons.add, color: Colors.white, size: 24))),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
+      bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
         child: SizedBox(height: 50, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
           _nav(Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
           _nav(Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 40),
@@ -89,11 +146,11 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
   Widget _buildCategoryItem(IconData icon, String title, String sub, Color bg, Color ic) {
     return GestureDetector(onTap: () {
       if (title == 'Service Request') {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const ServiceRequestScreen()));
+        Navigator.push(context, MaterialPageRoute(builder: (_) => ServiceRequestScreen(isAgentFlow: widget.isAgentFlow)));
       } else if (title == 'Complaint') {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const ComplaintScreen()));
+        Navigator.push(context, MaterialPageRoute(builder: (_) => ComplaintScreen(isAgentFlow: widget.isAgentFlow)));
       } else {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const NewTicketScreen()));
+        Navigator.push(context, MaterialPageRoute(builder: (_) => NewTicketScreen(isAgentFlow: widget.isAgentFlow)));
       }
     }, child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
@@ -109,20 +166,42 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
   }
 
   Widget _buildTicketCard(Map<String, dynamic> t) {
-    final isResolved = t['status'] == 'Resolved';
-    final isPending = t['status'] == 'Pending';
+    final status = (t['status'] as String?)?.toUpperCase() ?? 'OPEN';
+    final displayStatus = status == 'OPEN' ? 'Open' : status;
+    final isResolved = displayStatus == 'Resolved';
+    final isPending = displayStatus == 'Pending';
     final statusColor = isResolved ? Colors.green : isPending ? Colors.orange : Colors.green;
     final statusBg = isResolved ? const Color(0xFFE8F5E9) : isPending ? const Color(0xFFFFF3E0) : const Color(0xFFE8F5E9);
+
+    final createdAt = t['created_at'] as String?;
+    String timeText = 'Unknown';
+    if (createdAt != null) {
+      try {
+        final date = DateTime.parse(createdAt);
+        final now = DateTime.now();
+        final diff = now.difference(date);
+        if (diff.inDays > 0) {
+          timeText = 'Created ${diff.inDays} day${diff.inDays > 1 ? 's' : ''} ago';
+        } else if (diff.inHours > 0) {
+          timeText = 'Created ${diff.inHours} hour${diff.inHours > 1 ? 's' : ''} ago';
+        } else {
+          timeText = 'Created ${diff.inMinutes} min${diff.inMinutes > 1 ? 's' : ''} ago';
+        }
+      } catch (e) {
+        timeText = createdAt;
+      }
+    }
+
     return Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
       child: Row(children: [
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(t['id'], style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+          Text('#TK${t['id']}', style: TextStyle(fontSize: 11, color: Colors.grey[500])),
           const SizedBox(height: 2),
-          Text(t['title'], style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
-          Text(t['time'], style: TextStyle(fontSize: 10, color: Colors.grey[400])),
+          Text(t['category'] ?? 'Unknown', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+          Text(timeText, style: TextStyle(fontSize: 10, color: Colors.grey[400])),
         ])),
         Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(14), border: Border.all(color: statusColor)),
-          child: Text(t['status'], style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: statusColor))),
+          child: Text(displayStatus, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: statusColor))),
       ]));
   }
 

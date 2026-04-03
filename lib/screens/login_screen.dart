@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../services/biometric_service.dart';
 import 'customer_dashboard_screen.dart';
 import 'agent_dashboard_screen.dart';
 
@@ -20,6 +21,43 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberMe = true;
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _biometricAvailable = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometric();
+  }
+
+  Future<void> _checkBiometric() async {
+    final available = await BiometricService.isAvailable();
+    final enabled = await BiometricService.isEnabled();
+    final hasCreds = await BiometricService.hasStoredCredentials();
+    if (mounted) setState(() => _biometricAvailable = available && enabled && hasCreds);
+  }
+
+  Future<void> _handleBiometricLogin() async {
+    final authenticated = await BiometricService.authenticate();
+    if (!authenticated) return;
+
+    final creds = await BiometricService.getCredentials();
+    if (creds == null) return;
+
+    setState(() => _isLoading = true);
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.login(creds['email']!, creds['password']!);
+    setState(() => _isLoading = false);
+
+    if (success && mounted) {
+      if (authProvider.isAgent()) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AgentDashboardScreen()));
+      } else {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()));
+      }
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Biometric login failed. Please login manually.'), backgroundColor: Colors.red));
+    }
+  }
 
   @override
   void dispose() {
@@ -41,6 +79,13 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
       
       if (success && mounted) {
+        // Check if biometric is available but not yet enabled — prompt user
+        final bioAvailable = await BiometricService.isAvailable();
+        final bioEnabled = await BiometricService.isEnabled();
+        if (bioAvailable && !bioEnabled && mounted) {
+          await _promptBiometricSetup();
+        }
+        if (!mounted) return;
         // Route based on user type
         if (authProvider.isAgent()) {
           Navigator.pushReplacement(
@@ -60,6 +105,30 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor: Colors.red,
           ),
         );
+      }
+    }
+  }
+
+  Future<void> _promptBiometricSetup() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Enable Biometric Login', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        content: const Text('Would you like to use fingerprint or Face ID for faster login next time?', style: TextStyle(fontSize: 14)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Not Now')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E2D64), foregroundColor: Colors.white),
+            child: const Text('Enable'),
+          ),
+        ],
+      ),
+    );
+    if (result == true) {
+      await BiometricService.enable(_emailController.text, _passwordController.text);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Biometric login enabled'), backgroundColor: Colors.green));
       }
     }
   }
@@ -289,7 +358,32 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 
-                const SizedBox(height: 32),
+                const SizedBox(height: 16),
+                
+                // Biometric Login Button
+                if (_biometricAvailable)
+                  Center(
+                    child: GestureDetector(
+                      onTap: _isLoading ? null : _handleBiometricLogin,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.fingerprint, color: AppTheme.primaryBlue, size: 28),
+                            const SizedBox(width: 10),
+                            Text('Login with Biometrics', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryBlue)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                
+                const SizedBox(height: 16),
                 
                 // Sign Up Link
                 Center(

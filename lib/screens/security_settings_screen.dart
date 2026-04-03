@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../services/biometric_service.dart';
 import '../utils/app_theme.dart';
 import 'agent_dashboard_screen.dart';
 import 'clients_list_screen.dart';
@@ -21,6 +22,44 @@ class SecuritySettingsScreen extends StatefulWidget {
 class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
   bool _twoFactorAuth = false;
   bool _biometricLogin = false;
+  bool _biometricAvailable = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBiometricState();
+  }
+
+  Future<void> _loadBiometricState() async {
+    final available = await BiometricService.isAvailable();
+    final enabled = await BiometricService.isEnabled();
+    if (mounted) setState(() { _biometricAvailable = available; _biometricLogin = enabled; });
+  }
+
+  Future<void> _toggleBiometric(bool value) async {
+    if (value) {
+      // Need stored credentials to enable — check if they exist
+      final hasCreds = await BiometricService.hasStoredCredentials();
+      if (!hasCreds) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please login with your password first to enable biometric login'), backgroundColor: Colors.orange));
+        }
+        return;
+      }
+      final authenticated = await BiometricService.authenticate();
+      if (authenticated) {
+        // Re-enable with existing stored creds
+        final creds = await BiometricService.getCredentials();
+        if (creds != null) {
+          await BiometricService.enable(creds['email']!, creds['password']!);
+          setState(() => _biometricLogin = true);
+        }
+      }
+    } else {
+      await BiometricService.disable();
+      setState(() => _biometricLogin = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,12 +81,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_outlined, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
-            onPressed: () {},
-          ),
-        ],
+        actions: const [],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -143,14 +177,10 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
               iconColor: const Color(0xFF1E2D64),
               iconBgColor: const Color(0xFF1E2D64).withValues(alpha: 0.1),
               title: 'Biometric Login',
-              subtitle: 'Use fingerprint and Face ID to login',
+              subtitle: _biometricLogin ? 'Enabled - Fingerprint / Face ID' : 'Use fingerprint and Face ID to login',
               hasToggle: true,
               toggleValue: _biometricLogin,
-              onToggleChanged: (value) {
-                setState(() {
-                  _biometricLogin = value;
-                });
-              },
+              onToggleChanged: _biometricAvailable ? (value) => _toggleBiometric(value) : null,
             ),
             
             const SizedBox(height: 32),

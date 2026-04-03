@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
@@ -8,7 +9,8 @@ import 'new_ticket_screen.dart';
 import 'office_locations_screen.dart';
 
 class ServiceRequestScreen extends StatelessWidget {
-  const ServiceRequestScreen({super.key});
+  final bool isAgentFlow;
+  const ServiceRequestScreen({super.key, this.isAgentFlow = false});
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,11 +48,11 @@ class ServiceRequestScreen extends StatelessWidget {
           _item(context, Icons.sync_outlined, 'Duplicate Transactions', 'Deletion/reversal (Agents)', const Color(0xFFFFF3E0), const Color(0xFFE8923E)),
           const SizedBox(height: 80),
         ])),
-      floatingActionButton: SizedBox(width: 50, height: 50, child: FloatingActionButton(
+      floatingActionButton: isAgentFlow ? null : SizedBox(width: 50, height: 50, child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
         backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), child: const Icon(Icons.add, color: Colors.white, size: 24))),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
+      bottomNavigationBar: isAgentFlow ? buildAgentBottomNav(context, currentIndex: 1) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
         child: SizedBox(height: 50, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
           _nav(context, Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
           _nav(context, Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 40),
@@ -66,9 +68,9 @@ class ServiceRequestScreen extends StatelessWidget {
     return Padding(padding: const EdgeInsets.only(bottom: 10), child: GestureDetector(
       onTap: () {
         if (title == 'Office Address') {
-          Navigator.push(ctx, MaterialPageRoute(builder: (_) => const OfficeLocationsScreen()));
+          Navigator.push(ctx, MaterialPageRoute(builder: (_) => OfficeLocationsScreen(isAgentFlow: isAgentFlow)));
         } else {
-          Navigator.push(ctx, MaterialPageRoute(builder: (_) => NewTicketScreen(initialCategory: title)));
+          Navigator.push(ctx, MaterialPageRoute(builder: (_) => NewTicketScreen(initialCategory: title, isAgentFlow: isAgentFlow)));
         }
       },
       child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),

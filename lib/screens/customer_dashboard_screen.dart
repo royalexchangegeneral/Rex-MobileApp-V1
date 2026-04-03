@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
 import 'login_screen.dart';
@@ -18,6 +16,8 @@ import 'my_certificate_screen.dart';
 import 'payments_screen.dart';
 import 'my_policies_screen.dart';
 import 'notifications_screen.dart';
+import '../providers/notifications_provider.dart';
+import '../providers/policy_provider.dart';
 
 class CustomerDashboardScreen extends StatefulWidget {
   const CustomerDashboardScreen({super.key});
@@ -29,23 +29,14 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _drawerSelectedIndex = 0;
-  int _notifCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _fetchNotifCount();
-  }
-
-  Future<void> _fetchNotifCount() async {
-    try {
-      final r = await http.get(Uri.parse('https://eportaltest.rexinsure.com/api/notifications')).timeout(const Duration(seconds: 10));
-      if (r.statusCode == 200 || r.statusCode == 201) {
-        final d = json.decode(r.body);
-        List<dynamic> list = d is List ? d : (d is Map && d['data'] is List ? d['data'] : []);
-        if (mounted) setState(() => _notifCount = list.length);
-      }
-    } catch (_) {}
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<NotificationsProvider>(context, listen: false).fetchNotifications(context);
+      Provider.of<PolicyProvider>(context, listen: false).fetchPolicies(context);
+    });
   }
 
   @override
@@ -72,10 +63,12 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
         ),
         centerTitle: true,
         actions: [
-          Stack(children: [
-            IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.black), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())).then((_) => _fetchNotifCount())),
-            if (_notifCount > 0) Positioned(right: 8, top: 8, child: Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle), child: Text('$_notifCount', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)))),
-          ]),
+          Consumer<NotificationsProvider>(
+            builder: (context, notifProvider, child) => Stack(children: [
+              IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.black), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())).then((_) => notifProvider.fetchNotifications(context))),
+              if (notifProvider.unreadCount > 0) Positioned(right: 8, top: 8, child: Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle), child: Text('${notifProvider.unreadCount}', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)))),
+            ]),
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -93,9 +86,9 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text('320', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-                          Text('Active Policies', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Consumer<PolicyProvider>(builder: (_, pp, __) => Text('${pp.activePolicies}', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold))),
+                          const Text('Active Policies', style: TextStyle(color: Colors.white70, fontSize: 12)),
                         ]),
                         ElevatedButton(
                           onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPoliciesScreen())),
@@ -128,12 +121,29 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              // Policy Cards
-              _buildPolicyCard('Motor Insurance', 'Policy #MOT-2025-089', '28 May, 2025', Icons.directions_car, const Color(0xFF1A3A5C), 'Active', Colors.green, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PolicyDetailsScreen(policyType: 'Motor Insurance', policyNumber: 'MOT-2025-089')))),
-              const SizedBox(height: 12),
-              _buildPolicyCard('Fire Insurance', 'Policy #FIR-2025-089', '28 May, 2025', Icons.local_fire_department, const Color(0xFFFF6B6B), 'Active', Colors.green),
-              const SizedBox(height: 12),
-              _buildPolicyCard('Marine Insurance', 'Policy #AUT-2025-089', '28 May, 2025', Icons.directions_boat, const Color(0xFF1A3A5C), 'Active', Colors.green),
+              // Policy Cards from API
+              Consumer<PolicyProvider>(builder: (_, pp, __) {
+                if (pp.loading) return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
+                if (pp.policies.isEmpty) return Padding(padding: const EdgeInsets.all(20), child: Center(child: Text('No policies found', style: TextStyle(color: Colors.grey[500]))));
+                final displayPolicies = pp.policies.take(3).toList();
+                return Column(children: displayPolicies.map((p) {
+                  final isActive = p['status'] == 'Active';
+                  final icon = p['policyClass'].toString().toLowerCase().contains('motor') ? Icons.directions_car
+                    : p['policyClass'].toString().toLowerCase().contains('shop') ? Icons.store
+                    : p['policyClass'].toString().toLowerCase().contains('personal') ? Icons.person
+                    : Icons.description;
+                  return Padding(padding: const EdgeInsets.only(bottom: 12), child: _buildPolicyCard(
+                    '${p['policyClass']} Insurance',
+                    'Policy #${p['policyId']}',
+                    p['endDate'] ?? '',
+                    icon,
+                    const Color(0xFF1A3A5C),
+                    isActive ? 'Active' : 'Expired',
+                    isActive ? Colors.green : Colors.grey,
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PolicyDetailsScreen(policyType: '${p['policyClass']} Insurance', policyNumber: p['policyId'] ?? '', policyData: p))),
+                  ));
+                }).toList());
+              }),
               const SizedBox(height: 24),
               // My Claims Header
               Row(
@@ -144,9 +154,28 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              _buildClaimCard('Third-party Claim', 'Claim #CLM-2025-089', Icons.directions_car, const Color(0xFF1A3A5C), 'In Progress', const Color(0xFFFF9800)),
-              const SizedBox(height: 12),
-              _buildClaimCard('Personal Accident', 'Claim #CLM-2025-089', Icons.directions_car, const Color(0xFF1A3A5C), 'Completed', Colors.green),
+              Consumer<PolicyProvider>(builder: (_, pp, __) {
+                if (pp.loading) return const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator()));
+                if (pp.claims.isEmpty) return Padding(padding: const EdgeInsets.all(12), child: Center(child: Text('No claims found', style: TextStyle(color: Colors.grey[500], fontSize: 12))));
+                final displayClaims = pp.claims.take(3).toList();
+                return Column(children: displayClaims.map((c) {
+                  final claimId = c['ClaimID']?.toString() ?? '';
+                  final claimType = c['ClaimType']?.toString() ?? c['PolicyClass']?.toString() ?? 'Claim';
+                  final claimStatus = c['ClaimStatus']?.toString() ?? c['Status']?.toString() ?? 'Pending';
+                  final statusColor = claimStatus.toLowerCase().contains('complet') || claimStatus.toLowerCase().contains('settled') ? Colors.green
+                    : claimStatus.toLowerCase().contains('progress') || claimStatus.toLowerCase().contains('process') ? const Color(0xFFFF9800)
+                    : claimStatus.toLowerCase().contains('reject') || claimStatus.toLowerCase().contains('denied') ? Colors.red
+                    : Colors.grey;
+                  return Padding(padding: const EdgeInsets.only(bottom: 12), child: _buildClaimCard(
+                    claimType,
+                    'Claim #$claimId',
+                    Icons.assignment_outlined,
+                    const Color(0xFF1A3A5C),
+                    claimStatus,
+                    statusColor,
+                  ));
+                }).toList());
+              }),
               const SizedBox(height: 24),
               // Discover Insurance
               const Text('Discover Insurance', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),

@@ -5,13 +5,15 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:math';
 import '../utils/app_theme.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
 import 'new_policy_screen.dart';
 
 class OfficeLocationsScreen extends StatefulWidget {
-  const OfficeLocationsScreen({super.key});
+  final bool isAgentFlow;
+  const OfficeLocationsScreen({super.key, this.isAgentFlow = false});
   @override
   State<OfficeLocationsScreen> createState() => _OfficeLocationsScreenState();
 }
@@ -145,11 +147,11 @@ class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
           }),
           const SizedBox(height: 80),
         ])),
-      floatingActionButton: SizedBox(width: 50, height: 50, child: FloatingActionButton(
+      floatingActionButton: widget.isAgentFlow ? null : SizedBox(width: 50, height: 50, child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
         backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), child: const Icon(Icons.add, color: Colors.white, size: 24))),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
+      bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
         child: SizedBox(height: 50, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
           _nav(Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
           _nav(Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 40),

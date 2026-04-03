@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
@@ -8,7 +9,8 @@ import 'new_policy_screen.dart';
 class FaqScreen extends StatefulWidget {
   final String? initialCategory;
   final String? initialSearch;
-  const FaqScreen({super.key, this.initialCategory, this.initialSearch});
+  final bool isAgentFlow;
+  const FaqScreen({super.key, this.initialCategory, this.initialSearch, this.isAgentFlow = false});
 
   @override
   State<FaqScreen> createState() => _FaqScreenState();
@@ -244,7 +246,7 @@ class _FaqScreenState extends State<FaqScreen> {
           ),
         ],
       ),
-      floatingActionButton: SizedBox(
+      floatingActionButton: widget.isAgentFlow ? null : SizedBox(
         width: 50,
         height: 50,
         child: FloatingActionButton(
@@ -255,7 +257,7 @@ class _FaqScreenState extends State<FaqScreen> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
+      bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(
         shape: const CircularNotchedRectangle(),
         notchMargin: 6,
         child: SizedBox(

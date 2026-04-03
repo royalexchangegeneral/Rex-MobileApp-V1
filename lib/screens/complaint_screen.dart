@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
@@ -7,7 +8,8 @@ import 'new_policy_screen.dart';
 import 'new_ticket_screen.dart';
 
 class ComplaintScreen extends StatelessWidget {
-  const ComplaintScreen({super.key});
+  final bool isAgentFlow;
+  const ComplaintScreen({super.key, this.isAgentFlow = false});
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,11 +50,11 @@ class ComplaintScreen extends StatelessWidget {
             ])),
           const SizedBox(height: 80),
         ])),
-      floatingActionButton: SizedBox(width: 50, height: 50, child: FloatingActionButton(
+      floatingActionButton: isAgentFlow ? null : SizedBox(width: 50, height: 50, child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
         backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), child: const Icon(Icons.add, color: Colors.white, size: 24))),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
+      bottomNavigationBar: isAgentFlow ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
         child: SizedBox(height: 50, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
           _nav(context, Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
           _nav(context, Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 40),
@@ -64,7 +66,7 @@ class ComplaintScreen extends StatelessWidget {
 
   Widget _item(BuildContext ctx, IconData icon, String title, String sub, Color bg, Color ic) {
     return Padding(padding: const EdgeInsets.only(bottom: 12), child: GestureDetector(
-      onTap: () => Navigator.push(ctx, MaterialPageRoute(builder: (_) => NewTicketScreen(initialCategory: title))),
+      onTap: () => Navigator.push(ctx, MaterialPageRoute(builder: (_) => NewTicketScreen(initialCategory: title, isAgentFlow: isAgentFlow))),
       child: Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: bg, shape: BoxShape.circle), child: Icon(icon, color: ic, size: 20)),

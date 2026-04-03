@@ -30,6 +30,8 @@ dependencies:
   webview_flutter: ^4.4.2
   geolocator: ^11.0.0
   geocoding: ^3.0.0
+  local_auth: ^2.1.8
+  flutter_secure_storage: ^9.0.0
 
 dev_dependencies:
   flutter_test:

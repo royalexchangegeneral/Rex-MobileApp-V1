@@ -174,12 +174,7 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
+        actions: const [],
       ),
       body: Column(
         children: [

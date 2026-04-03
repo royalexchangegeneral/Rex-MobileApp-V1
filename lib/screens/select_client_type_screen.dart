@@ -29,12 +29,7 @@ class SelectClientTypeScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_outlined, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
-            onPressed: () {},
-          ),
-        ],
+        actions: const [],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

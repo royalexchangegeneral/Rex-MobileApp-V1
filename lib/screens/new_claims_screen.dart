@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../utils/app_theme.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
 
 class NewClaimsScreen extends StatefulWidget {
   final String? policyNumber;
-  const NewClaimsScreen({super.key, this.policyNumber});
+  final bool isAgentFlow;
+  const NewClaimsScreen({super.key, this.policyNumber, this.isAgentFlow = false});
   @override
   State<NewClaimsScreen> createState() => _NewClaimsScreenState();
 }
@@ -133,12 +135,12 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           ),
         ],
       ),
-      floatingActionButton: SizedBox(
+      floatingActionButton: widget.isAgentFlow ? null : SizedBox(
         width: 50, height: 50,
         child: FloatingActionButton(onPressed: () {}, backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), child: const Icon(Icons.add, color: Colors.white, size: 24)),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
+      bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 1) : BottomAppBar(
         shape: const CircularNotchedRectangle(), notchMargin: 6,
         child: SizedBox(
           height: 50,

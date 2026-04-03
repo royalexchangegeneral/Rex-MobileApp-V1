@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/notifications_provider.dart';
 import '../utils/app_theme.dart';
 import 'agent_dashboard_screen.dart';
 import 'clients_list_screen.dart';
@@ -10,6 +11,7 @@ import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
 import 'new_policy_screen.dart';
+import 'notifications_screen.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -66,11 +68,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               title: 'Push Notifications',
               subtitle: 'Get notified about updates',
               value: _pushNotifications,
-              onChanged: (value) {
-                setState(() {
-                  _pushNotifications = value;
-                });
-              },
+              onChanged: null,
             ),
             
             const SizedBox(height: 12),
@@ -83,11 +81,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               title: 'Email Notification',
               subtitle: 'Receive email updates',
               value: _emailNotifications,
-              onChanged: (value) {
-                setState(() {
-                  _emailNotifications = value;
-                });
-              },
+              onChanged: null,
             ),
             
             const SizedBox(height: 12),
@@ -100,11 +94,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               title: 'SMS Notifications',
               subtitle: 'Get text messages',
               value: _smsNotifications,
-              onChanged: (value) {
-                setState(() {
-                  _smsNotifications = value;
-                });
-              },
+              onChanged: null,
             ),
             
             const SizedBox(height: 32),
@@ -121,7 +111,10 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                   ),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    final isAgent = Provider.of<AuthProvider>(context, listen: false).isAgent();
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationsScreen(isAgentFlow: isAgent)));
+                  },
                   child: const Text(
                     'view all',
                     style: TextStyle(
@@ -136,26 +129,26 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
             
             const SizedBox(height: 16),
             
-            // Recent Notifications List
-            _buildRecentNotificationItem(
-              icon: Icons.description_outlined,
-              iconColor: Colors.blue,
-              iconBgColor: Colors.blue.withValues(alpha: 0.1),
-              title: 'Policy Renewal Reminder',
-              subtitle: 'Your insurance policy is\ndue for renewal in30days.',
-              time: '2h ago',
-            ),
-            
-            const SizedBox(height: 12),
-            
-            _buildRecentNotificationItem(
-              icon: Icons.check,
-              iconColor: Colors.orange,
-              iconBgColor: Colors.orange.withValues(alpha: 0.1),
-              title: 'Claim Approved',
-              subtitle: 'Automatic Check',
-              time: '5days ago',
-            ),
+            // Recent Notifications from API
+            Consumer<NotificationsProvider>(builder: (_, notifProvider, __) {
+              if (notifProvider.loading) return const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator()));
+              if (notifProvider.notifications.isEmpty) return Padding(padding: const EdgeInsets.all(12), child: Center(child: Text('No notifications', style: TextStyle(color: Colors.grey[500], fontSize: 12))));
+              final displayNotifs = notifProvider.notifications.take(5).toList();
+              return Column(children: displayNotifs.map((n) {
+                final title = n['title']?.toString() ?? '';
+                final desc = n['description']?.toString() ?? n['message']?.toString() ?? '';
+                final time = n['created_at']?.toString() ?? '';
+                final isRead = notifProvider.readIds.contains(n['id']);
+                return Padding(padding: const EdgeInsets.only(bottom: 12), child: _buildRecentNotificationItem(
+                  icon: isRead ? Icons.check : Icons.notifications_outlined,
+                  iconColor: isRead ? Colors.green : Colors.blue,
+                  iconBgColor: isRead ? Colors.green.withValues(alpha: 0.1) : Colors.blue.withValues(alpha: 0.1),
+                  title: title,
+                  subtitle: desc,
+                  time: time,
+                ));
+              }).toList());
+            }),
             
             const SizedBox(height: 100),
           ],
@@ -255,7 +248,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     required String title,
     required String subtitle,
     required bool value,
-    required ValueChanged<bool> onChanged,
+    required ValueChanged<bool>? onChanged,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),

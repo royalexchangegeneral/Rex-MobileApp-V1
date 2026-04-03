@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/agent_policy_provider.dart';
 import 'login_screen.dart';
 import 'notification_settings_screen.dart';
 import 'security_settings_screen.dart';
@@ -44,12 +45,7 @@ class AgentProfileScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_outlined, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
-            onPressed: () {},
-          ),
-        ],
+        actions: const [],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -135,13 +131,13 @@ class AgentProfileScreen extends StatelessWidget {
                             height: 40,
                             color: Colors.grey[300],
                           ),
-                          _buildStatItem('248', 'Active Clients'),
+                          Consumer<AgentPolicyProvider>(builder: (_, ap, __) => _buildStatItem('${ap.totalClients}', 'Active Clients')),
                           Container(
                             width: 1,
                             height: 40,
                             color: Colors.grey[300],
                           ),
-                          _buildStatItem('453', 'Active Policies'),
+                          Consumer<AgentPolicyProvider>(builder: (_, ap, __) => _buildStatItem('${ap.activePolicies}', 'Active Policies')),
                         ],
                       ),
                     ),

@@ -5,6 +5,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:convert';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
@@ -14,8 +15,9 @@ import 'policy_purchase_success_screen.dart';
 class PolicyRenewalScreen extends StatelessWidget {
   final String policyType;
   final String policyNumber;
+  final bool isAgentFlow;
 
-  const PolicyRenewalScreen({super.key, required this.policyType, required this.policyNumber});
+  const PolicyRenewalScreen({super.key, required this.policyType, required this.policyNumber, this.isAgentFlow = false});
 
   static const String _paystackSecretKey = 'sk_test_dd6287962b39d4040217583eb0c2abef0d1239b5';
 
@@ -211,13 +213,13 @@ class PolicyRenewalScreen extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: SizedBox(width: 50, height: 50, child: FloatingActionButton(
+      floatingActionButton: isAgentFlow ? null : SizedBox(width: 50, height: 50, child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
         backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 24),
       )),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
+      floatingActionButtonLocation: isAgentFlow ? null : FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: isAgentFlow ? buildAgentBottomNav(context, currentIndex: 1) : BottomAppBar(
         shape: const CircularNotchedRectangle(), notchMargin: 6,
         child: SizedBox(height: 50, child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,

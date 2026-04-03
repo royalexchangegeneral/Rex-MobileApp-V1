@@ -34,6 +34,8 @@
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We need your location to find the nearest Rex Insurance office.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>We use Face ID to securely log you into your RexVerse account.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

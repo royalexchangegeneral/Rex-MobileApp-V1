@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'select_client_type_screen.dart';
 import 'new_policy_screen.dart';
-import 'agent_dashboard_screen.dart';
-import 'clients_list_screen.dart';
-import 'reports_screen.dart';
-import 'agent_profile_screen.dart';
 
 class SelectClientScreen extends StatefulWidget {
   const SelectClientScreen({super.key});
-
   @override
   State<SelectClientScreen> createState() => _SelectClientScreenState();
 }
@@ -16,371 +16,173 @@ class SelectClientScreen extends StatefulWidget {
 class _SelectClientScreenState extends State<SelectClientScreen> {
   int _selectedFilterIndex = 0;
   final _searchController = TextEditingController();
+  bool _loading = false;
+  List<Map<String, dynamic>> _customers = [];
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchCustomers());
+  }
+
+  Future<void> _fetchCustomers() async {
+    setState(() => _loading = true);
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final agentCode = auth.userCode ?? '';
+      final r = await http.post(
+        Uri.parse('https://eportaltest.rexinsure.com/api/agent/customers'),
+        headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+        body: json.encode({'agent_code': agentCode}),
+      ).timeout(const Duration(seconds: 15));
+      if (r.statusCode == 200 || r.statusCode == 201) {
+        final d = json.decode(r.body);
+        if (d['status'] == 'success' && d['data'] is List) {
+          _customers = (d['data'] as List).map((e) => Map<String, dynamic>.from(e)).toList();
+        }
+      }
+    } catch (e) { print('Fetch customers error: $e'); }
+    setState(() => _loading = false);
+  }
+
+  List<Map<String, dynamic>> get _filtered {
+    var list = _customers;
+    final query = _searchController.text.toLowerCase().trim();
+    if (_selectedFilterIndex == 1) list = list.where((c) => c['cust_type']?.toString().toLowerCase() == 'individual').toList();
+    if (_selectedFilterIndex == 2) list = list.where((c) => c['cust_type']?.toString().toLowerCase() == 'corporate').toList();
+    if (query.isNotEmpty) {
+      list = list.where((c) {
+        final name = '${c['cust_first_name'] ?? ''} ${c['cust_last_name'] ?? ''}'.toLowerCase();
+        final email = (c['cust_email'] ?? '').toString().toLowerCase();
+        final phone = (c['cust_phone'] ?? '').toString().toLowerCase();
+        return name.contains(query) || email.contains(query) || phone.contains(query);
+      }).toList();
+    }
+    return list;
+  }
+
+  @override
+  void dispose() { _searchController.dispose(); super.dispose(); }
+
+  String _getInitials(Map<String, dynamic> c) {
+    final f = (c['cust_first_name'] ?? '').toString();
+    final l = (c['cust_last_name'] ?? '').toString();
+    return '${f.isNotEmpty ? f[0] : ''}${l.isNotEmpty ? l[0] : ''}'.toUpperCase();
+  }
+
+  String _getName(Map<String, dynamic> c) {
+    final f = c['cust_first_name']?.toString() ?? '';
+    final m = c['cust_middle_name']?.toString() ?? '';
+    final l = c['cust_last_name']?.toString() ?? '';
+    return '$f ${m.isNotEmpty ? "$m " : ""}$l'.trim();
   }
 
   @override
   Widget build(BuildContext context) {
+    final customers = _filtered;
+    final individualCount = _customers.where((c) => c['cust_type']?.toString().toLowerCase() == 'individual').length;
+    final corporateCount = _customers.where((c) => c['cust_type']?.toString().toLowerCase() == 'corporate').length;
+    final recent = _customers.take(4).toList();
+    final colors = [const Color(0xFF1E2D64), const Color(0xFFFF6B35), const Color(0xFFE63946), const Color(0xFF0066FF)];
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Select Clients',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Recent Section
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Recent',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 72,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      _buildRecentClientCard('MA', 'Mariam Akande', '3 Policies', const Color(0xFF1E2D64)),
-                      _buildRecentClientCard('JR', 'John Ross', '8 Policies', const Color(0xFFFF6B35)),
-                      _buildRecentClientCard('AE', 'Amaka Eugene', '4 Policies', const Color(0xFFE63946)),
-                      _buildRecentClientCard('CD', 'Caleb David', '4 Policies', const Color(0xFF0066FF)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'search name, id or policy',
-                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-                prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
-                filled: true,
-                fillColor: Colors.grey[100],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Filter Tabs
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildFilterChip('All 23', 0),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Active(12)', 1),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Inactive(3)', 2),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Has claims', 3),
-                ],
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Client List
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: 4,
-              itemBuilder: (context, index) {
-                return _buildClientCard(
-                  'Sarah Corner',
-                  'emily.parker@email.com',
-                  '+234 (8135) 123-4567',
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+      backgroundColor: Colors.white,
+      appBar: AppBar(backgroundColor: Colors.white, elevation: 0,
+        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
+        title: const Text('Select Client', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)), centerTitle: true),
+      body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // Recent
+        if (recent.isNotEmpty) Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Recent', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black)),
+          const SizedBox(height: 12),
+          SizedBox(height: 72, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(recent.length, (i) {
+            final c = recent[i];
+            return _buildRecentCard(c, colors[i % colors.length]);
+          }))),
+        ])),
+        // Search
+        Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: TextField(
+          controller: _searchController, onChanged: (_) => setState(() {}),
+          style: const TextStyle(fontSize: 13, color: Colors.black),
+          decoration: InputDecoration(hintText: 'Search name, email or phone', hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+            prefixIcon: Icon(Icons.search, color: Colors.grey[400]), filled: true, fillColor: Colors.grey[100],
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12)))),
+        const SizedBox(height: 16),
+        // Filters
+        Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
+          _chip('All (${_customers.length})', 0), const SizedBox(width: 8),
+          _chip('Individual ($individualCount)', 1), const SizedBox(width: 8),
+          _chip('Corporate ($corporateCount)', 2),
+        ]))),
+        const SizedBox(height: 16),
+        // List
+        Expanded(child: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : customers.isEmpty
+            ? Center(child: Text('No clients found', style: TextStyle(color: Colors.grey[500], fontSize: 13)))
+            : ListView.builder(padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: customers.length,
+                itemBuilder: (_, i) => _buildClientCard(customers[i]))),
+      ]),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // Navigate to add new client
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const SelectClientTypeScreen(),
-            ),
-          );
-        },
+        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SelectClientTypeScreen())),
         backgroundColor: const Color(0xFFFF6B35),
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'New client',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF1E2D64),
-        unselectedItemColor: Colors.grey,
-        currentIndex: 2,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
-              (route) => false,
-            );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ClientsListScreen()),
-            );
-          } else if (index == 3) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ReportsScreen()),
-            );
-          } else if (index == 4) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AgentProfileScreen()),
-            );
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined, size: 22),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.description_outlined, size: 22),
-            label: 'Policy',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline, size: 22),
-            label: 'Clients',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined, size: 22),
-            label: 'Reports',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline, size: 22),
-            label: 'Profile',
-          ),
-        ],
-      ),
+        label: const Text('New client', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+      bottomNavigationBar: buildAgentBottomNav(context, currentIndex: 2),
     );
   }
 
-  Widget _buildRecentClientCard(String initials, String name, String policies, Color color) {
+  Widget _buildRecentCard(Map<String, dynamic> c, Color color) {
+    final initials = _getInitials(c);
+    final name = _getName(c);
     return GestureDetector(
-      onTap: () {
-        // Navigate to NewPolicyScreen with isAgent=true
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const NewPolicyScreen(isAgent: true),
-          ),
-        );
-      },
-      child: Container(
-        width: 85,
-        margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-        decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[200]!),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Center(
-                child: Text(
-                  initials,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 9,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              name,
-              style: const TextStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-                height: 1.0,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 1),
-            Text(
-              policies,
-              style: TextStyle(
-                fontSize: 7,
-                color: Colors.grey[600],
-                height: 1.0,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen(isAgent: true))),
+      child: Container(width: 85, margin: const EdgeInsets.only(right: 10), padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
+        child: Column(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
+          Container(width: 28, height: 28, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+            child: Center(child: Text(initials, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 9)))),
+          const SizedBox(height: 3),
+          Text(name, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.black, height: 1.0), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 1),
+          Text(c['cust_type']?.toString() ?? '', style: TextStyle(fontSize: 7, color: Colors.grey[600], height: 1.0), maxLines: 1),
+        ])));
   }
 
-  Widget _buildFilterChip(String label, int index) {
-    final isSelected = _selectedFilterIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedFilterIndex = index;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1E2D64) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF1E2D64) : Colors.grey[300]!,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.white : Colors.black,
-          ),
-        ),
-      ),
-    );
+  Widget _chip(String label, int index) {
+    final sel = _selectedFilterIndex == index;
+    return GestureDetector(onTap: () => setState(() => _selectedFilterIndex = index),
+      child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(color: sel ? const Color(0xFF1E2D64) : Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: sel ? const Color(0xFF1E2D64) : Colors.grey[300]!)),
+        child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: sel ? Colors.white : Colors.black))));
   }
 
-  Widget _buildClientCard(String name, String email, String phone) {
+  Widget _buildClientCard(Map<String, dynamic> c) {
+    final name = _getName(c);
+    final email = c['cust_email']?.toString() ?? '';
+    final phone = c['cust_phone']?.toString() ?? '';
+    final type = c['cust_type']?.toString() ?? '';
+    final isCorporate = type.toLowerCase() == 'corporate';
     return GestureDetector(
-      onTap: () {
-        // Navigate to NewPolicyScreen with isAgent=true
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const NewPolicyScreen(isAgent: true),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: Colors.grey[300],
-              backgroundImage: const AssetImage('assets/images/onboarding1.png'),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    email,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    phone,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen(isAgent: true))),
+      child: Container(margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
+        child: Row(children: [
+          CircleAvatar(radius: 24, backgroundColor: isCorporate ? const Color(0xFFE8EAF6) : const Color(0xFFE3F2FD),
+            child: Icon(isCorporate ? Icons.business : Icons.person, color: const Color(0xFF1E2D64), size: 24)),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Expanded(child: Text(name.isNotEmpty ? name : 'Unknown', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black))),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(color: isCorporate ? const Color(0xFFEDE7F6) : const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(10)),
+                child: Text(type, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: isCorporate ? const Color(0xFF7B1FA2) : const Color(0xFF2E7D32)))),
+            ]),
+            const SizedBox(height: 4),
+            if (email.isNotEmpty) Text(email, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+            if (phone.isNotEmpty) Text(phone, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+          ])),
+        ])));
   }
 }

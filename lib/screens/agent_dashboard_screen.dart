@@ -3,14 +3,36 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../providers/agent_policy_provider.dart';
+import '../providers/notifications_provider.dart';
 import 'select_client_type_screen.dart';
 import 'buy_new_policy_screen.dart';
 import 'clients_list_screen.dart';
 import 'agent_profile_screen.dart';
 import 'reports_screen.dart';
+import 'agent_policies_screen.dart';
+import 'policy_details_screen.dart';
+import 'notifications_screen.dart';
+import 'my_claims_screen.dart';
+import 'new_claims_screen.dart';
 
-class AgentDashboardScreen extends StatelessWidget {
+class AgentDashboardScreen extends StatefulWidget {
   const AgentDashboardScreen({super.key});
+
+  @override
+  State<AgentDashboardScreen> createState() => _AgentDashboardScreenState();
+}
+
+class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<AgentPolicyProvider>(context, listen: false).fetchAgentPolicies(context);
+      Provider.of<AgentPolicyProvider>(context, listen: false).fetchCustomerCount(context);
+      Provider.of<NotificationsProvider>(context, listen: false).fetchNotifications(context);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +55,14 @@ class AgentDashboardScreen extends StatelessWidget {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_outlined, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
-            onPressed: () {},
+          Consumer<NotificationsProvider>(
+            builder: (context, notifProvider, child) => Stack(children: [
+              IconButton(
+                icon: Icon(Icons.notifications_outlined, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen(isAgentFlow: true))).then((_) => notifProvider.fetchNotifications(context)),
+              ),
+              if (notifProvider.unreadCount > 0) Positioned(right: 8, top: 8, child: Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle), child: Text('${notifProvider.unreadCount}', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)))),
+            ]),
           ),
         ],
       ),
@@ -127,19 +154,19 @@ class AgentDashboardScreen extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Expanded(child: _buildStatItem('124', 'Total Client')),
+                        Expanded(child: Consumer<AgentPolicyProvider>(builder: (_, ap, __) => _buildStatItem('${ap.totalClients}', 'Total Client'))),
                         Container(
                           width: 1,
                           height: 30,
                           color: Colors.white.withOpacity(0.2),
                         ),
-                        Expanded(child: _buildStatItem('4', 'Pending Claims')),
+                        Expanded(child: _buildStatItem('0', 'Pending Claims')),
                         Container(
                           width: 1,
                           height: 30,
                           color: Colors.white.withOpacity(0.2),
                         ),
-                        Expanded(child: _buildStatItem('132', 'Active Policies')),
+                        Expanded(child: Consumer<AgentPolicyProvider>(builder: (_, ap, __) => _buildStatItem('${ap.activePolicies}', 'Active Policies'))),
                       ],
                     ),
                   ),
@@ -202,7 +229,9 @@ class AgentDashboardScreen extends StatelessWidget {
                     'File a Claim',
                     Icons.assignment_outlined,
                     const Color(0xFF1E2D64),
-                    () {},
+                    () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NewClaimsScreen(isAgentFlow: true)));
+                    },
                   ),
                 ),
               ],
@@ -222,7 +251,7 @@ class AgentDashboardScreen extends StatelessWidget {
                   ),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AgentPoliciesScreen())),
                   child: const Text(
                     'View All',
                     style: TextStyle(
@@ -237,73 +266,118 @@ class AgentDashboardScreen extends StatelessWidget {
             
             const SizedBox(height: 12),
             
-            // Policy List
-            _buildPolicyItem(
-              context,
-              'Motor Insurance',
-              'Policy #MOT-2025-089',
-              '28 May, 2025',
-              'Active',
-              Icons.directions_car_outlined,
-              const Color(0xFF4CAF50),
-            ),
-            
-            const SizedBox(height: 12),
-            
-            _buildPolicyItem(
-              context,
-              'Health Insurance',
-              'Policy #HLT-2025-156',
-              '15 Jun, 2025',
-              'Active',
-              Icons.favorite_outline,
-              const Color(0xFF4CAF50),
-            ),
+            // Policy List from API
+            Consumer<AgentPolicyProvider>(builder: (_, ap, __) {
+              if (ap.loading) return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
+              if (ap.policies.isEmpty) return Padding(padding: const EdgeInsets.all(20), child: Center(child: Text('No policies found', style: TextStyle(color: Colors.grey[500], fontSize: 12))));
+              final displayPolicies = ap.policies.take(5).toList();
+              return Column(children: displayPolicies.map((p) {
+                final isActive = p['status'] == 'Active';
+                final policyClass = p['policyClass']?.toString() ?? '';
+                final icon = policyClass.toLowerCase().contains('motor') || policyClass.toLowerCase().contains('comprehensive') ? Icons.directions_car_outlined
+                  : policyClass.toLowerCase().contains('shop') ? Icons.store_outlined
+                  : policyClass.toLowerCase().contains('home') ? Icons.home_outlined
+                  : policyClass.toLowerCase().contains('personal') ? Icons.person_outline
+                  : policyClass.toLowerCase().contains('family') ? Icons.family_restroom_outlined
+                  : policyClass.toLowerCase().contains('student') ? Icons.school_outlined
+                  : policyClass.toLowerCase().contains('parcel') ? Icons.local_shipping_outlined
+                  : policyClass.toLowerCase().contains('driver') ? Icons.two_wheeler_outlined
+                  : Icons.description_outlined;
+                return Padding(padding: const EdgeInsets.only(bottom: 12), child: _buildPolicyItem(
+                  context,
+                  '$policyClass Insurance',
+                  'Policy #${p['policyId']}',
+                  p['endDate'] ?? '',
+                  isActive ? 'Active' : 'Expired',
+                  icon,
+                  isActive ? const Color(0xFF4CAF50) : Colors.grey,
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PolicyDetailsScreen(
+                    policyType: '$policyClass Insurance',
+                    policyNumber: p['policyId']?.toString() ?? '',
+                    policyData: p,
+                    isAgentFlow: true,
+                  ))),
+                ));
+              }).toList());
+            }),
             
             const SizedBox(height: 24),
             
-            // Earnings History
+            // Policy Analytics
             const Text(
-              'Earnings History',
+              'Policy Analytics',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Time Period Selector
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildPeriodButton(context, 'Weekly', false),
-                const SizedBox(width: 8),
-                _buildPeriodButton(context, 'Monthly', true),
-                const SizedBox(width: 8),
-                _buildPeriodButton(context, 'Yearly', false),
-              ],
             ),
             
             const SizedBox(height: 16),
             
             // Chart Container
-            Container(
-              height: 220,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[200]!),
-              ),
-              child: _buildEarningsChart(),
-            ),
+            Consumer<AgentPolicyProvider>(builder: (_, ap, __) {
+              final monthData = ap.getPolicyCountsByMonth();
+              final labels = monthData.keys.toList();
+              final values = monthData.values.toList();
+              final maxVal = values.isEmpty ? 1.0 : (values.reduce((a, b) => a > b ? a : b)).toDouble();
+              final yMax = maxVal < 5 ? 5.0 : maxVal;
+              final dataPoints = values.map((v) => v.toDouble()).toList();
+
+              return Container(
+                height: 220,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(
+                            width: 30,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text('${yMax.toInt()}', style: TextStyle(fontSize: 9, color: Colors.grey[600])),
+                                Text('${(yMax * 0.75).toInt()}', style: TextStyle(fontSize: 9, color: Colors.grey[600])),
+                                Text('${(yMax * 0.5).toInt()}', style: TextStyle(fontSize: 9, color: Colors.grey[600])),
+                                Text('${(yMax * 0.25).toInt()}', style: TextStyle(fontSize: 9, color: Colors.grey[600])),
+                                Text('0', style: TextStyle(fontSize: 9, color: Colors.grey[600])),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: CustomPaint(
+                              painter: LineChartPainter(dataPoints, maxValue: yMax),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 38),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: labels.map((m) => Text(m, style: TextStyle(fontSize: 9, color: Colors.grey[600]))).toList(),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
             
             const SizedBox(height: 24),
             
-            // Recent Activities
+            // Recent Notifications
             const Text(
-              'Recent Activities',
+              'Recent Notifications',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -312,47 +386,22 @@ class AgentDashboardScreen extends StatelessWidget {
             
             const SizedBox(height: 12),
             
-            _buildActivityItem(
-              context,
-              'Robert Johnson',
-              'Renewed Motor insurance',
-              '2 hours ago',
-              Icons.check_circle_outline,
-              const Color(0xFF2196F3),
-            ),
-            
-            const SizedBox(height: 12),
-            
-            _buildActivityItem(
-              context,
-              'Emily Chen',
-              'Filed claim for Motor Insurance',
-              '3 hours ago',
-              Icons.warning_amber_outlined,
-              const Color(0xFFFFA726),
-            ),
-            
-            const SizedBox(height: 12),
-            
-            _buildActivityItem(
-              context,
-              'Michael Smith',
-              'Claim approved for fire insurance',
-              '1 day ago',
-              Icons.check_circle,
-              const Color(0xFF4CAF50),
-            ),
-            
-            const SizedBox(height: 12),
-            
-            _buildActivityItem(
-              context,
-              'Laura Martinez',
-              'Requested policy details for Royal Group life care',
-              '1 day ago',
-              Icons.info_outline,
-              const Color(0xFF2196F3),
-            ),
+            Consumer<NotificationsProvider>(builder: (_, notifProvider, __) {
+              if (notifProvider.loading) return const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator()));
+              if (notifProvider.notifications.isEmpty) return Padding(padding: const EdgeInsets.all(12), child: Center(child: Text('No notifications', style: TextStyle(color: Colors.grey[500], fontSize: 12))));
+              final displayNotifs = notifProvider.notifications.take(4).toList();
+              return Column(children: displayNotifs.map((n) {
+                final title = n['title']?.toString() ?? '';
+                final desc = n['description']?.toString() ?? n['message']?.toString() ?? '';
+                final time = n['created_at']?.toString() ?? '';
+                final isRead = notifProvider.readIds.contains(n['id']);
+                return Padding(padding: const EdgeInsets.only(bottom: 12), child: _buildActivityItem(
+                  context, title, desc, time,
+                  isRead ? Icons.check_circle : Icons.notifications_outlined,
+                  isRead ? const Color(0xFF4CAF50) : const Color(0xFF2196F3),
+                ));
+              }).toList());
+            }),
             
             const SizedBox(height: 24),
           ],
@@ -364,7 +413,14 @@ class AgentDashboardScreen extends StatelessWidget {
         unselectedItemColor: Colors.grey,
         currentIndex: 0,
         onTap: (index) {
-          if (index == 2) {
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AgentPoliciesScreen(),
+              ),
+            );
+          } else if (index == 2) {
             // Navigate to Clients screen
             Navigator.push(
               context,
@@ -478,9 +534,12 @@ class AgentDashboardScreen extends StatelessWidget {
     String renewalDate,
     String status,
     IconData icon,
-    Color statusColor,
-  ) {
-    return Container(
+    Color statusColor, {
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
@@ -561,6 +620,7 @@ class AgentDashboardScreen extends StatelessWidget {
             ],
           ),
         ],
+      ),
       ),
     );
   }
@@ -660,6 +720,7 @@ class AgentDashboardScreen extends StatelessWidget {
                   title: 'Policies',
                   onTap: () {
                     Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const AgentPoliciesScreen()));
                   },
                 ),
                 _buildDrawerItem(
@@ -668,6 +729,7 @@ class AgentDashboardScreen extends StatelessWidget {
                   title: 'Claims',
                   onTap: () {
                     Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen(isAgentFlow: true)));
                   },
                 ),
                 _buildDrawerItem(
@@ -747,81 +809,6 @@ class AgentDashboardScreen extends StatelessWidget {
     );
   }
   
-  Widget _buildPeriodButton(BuildContext context, String label, bool isSelected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF1E2D64) : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isSelected ? const Color(0xFF1E2D64) : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
-        ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: isSelected ? Colors.white : Colors.grey[700],
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildEarningsChart() {
-    // Mock chart data points
-    final List<double> dataPoints = [400, 500, 800, 600, 450, 600, 500, 700];
-    final List<String> months = ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
-    
-    return Column(
-      children: [
-        // Y-axis labels and chart
-        Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Y-axis labels
-              SizedBox(
-                width: 40,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('\$1k', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
-                    Text('\$800', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
-                    Text('\$600', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
-                    Text('\$400', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
-                    Text('\$200', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
-                    Text('0', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Chart area
-              Expanded(
-                child: CustomPaint(
-                  painter: LineChartPainter(dataPoints),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        // X-axis labels
-        Padding(
-          padding: const EdgeInsets.only(left: 48),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: months.map((month) => Text(
-              month,
-              style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-            )).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-  
   Widget _buildActivityItem(
     BuildContext context,
     String name,
@@ -886,35 +873,61 @@ class AgentDashboardScreen extends StatelessWidget {
 // Custom painter for line chart
 class LineChartPainter extends CustomPainter {
   final List<double> dataPoints;
+  final double maxValue;
   
-  LineChartPainter(this.dataPoints);
+  LineChartPainter(this.dataPoints, {this.maxValue = 1000.0});
   
   @override
   void paint(Canvas canvas, Size size) {
+    if (dataPoints.length < 2) return;
+    
     final paint = Paint()
       ..color = const Color(0xFF1E2D64)
       ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
+
+    // Fill gradient
+    final fillPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0x331E2D64), Color(0x001E2D64)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..style = PaintingStyle.fill;
     
     final path = Path();
-    const maxValue = 1000.0;
+    final fillPath = Path();
     final stepX = size.width / (dataPoints.length - 1);
+    final effectiveMax = maxValue == 0 ? 1.0 : maxValue;
     
     for (int i = 0; i < dataPoints.length; i++) {
       final x = i * stepX;
-      final y = size.height - (dataPoints[i] / maxValue * size.height);
-      
+      final y = size.height - (dataPoints[i] / effectiveMax * size.height);
       if (i == 0) {
         path.moveTo(x, y);
+        fillPath.moveTo(x, size.height);
+        fillPath.lineTo(x, y);
       } else {
         path.lineTo(x, y);
+        fillPath.lineTo(x, y);
       }
     }
     
+    fillPath.lineTo(size.width, size.height);
+    fillPath.close();
+    canvas.drawPath(fillPath, fillPaint);
     canvas.drawPath(path, paint);
+
+    // Draw dots
+    final dotPaint = Paint()..color = const Color(0xFF1E2D64)..style = PaintingStyle.fill;
+    for (int i = 0; i < dataPoints.length; i++) {
+      final x = i * stepX;
+      final y = size.height - (dataPoints[i] / effectiveMax * size.height);
+      canvas.drawCircle(Offset(x, y), 3, dotPaint);
+    }
   }
   
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

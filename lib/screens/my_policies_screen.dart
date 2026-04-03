@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
+import '../providers/policy_provider.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
@@ -18,48 +20,24 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
   final List<String> _filters = ['All', 'Renewal', 'Active', 'Expired'];
   final _searchController = TextEditingController();
 
-  final List<Map<String, dynamic>> _policies = [
-    {
-      'title': 'Third Party Motor',
-      'vehicle': 'Honda Civic 2022',
-      'policyNo': 'Policy #FIR-2025-089',
-      'status': 'Active',
-      'statusColor': Colors.green,
-      'renewalLabel': 'Renewal',
-      'renewalDate': '23 June, 2026',
-      'premium': '₦540,000 / yearly',
-    },
-    {
-      'title': 'Motor (private car)',
-      'vehicle': 'Honda Civic 2022',
-      'policyNo': 'Policy #FIR-2025-089',
-      'status': 'Renewal Due',
-      'statusColor': Colors.red,
-      'renewalLabel': 'Expiry date',
-      'renewalDate': '23 June, 2026',
-      'premium': '₦540,000 / yearly',
-    },
-    {
-      'title': 'Fire Insurance',
-      'vehicle': 'Residential Property',
-      'policyNo': 'Policy #FIR-2025-045',
-      'status': 'Active',
-      'statusColor': Colors.green,
-      'renewalLabel': 'Renewal',
-      'renewalDate': '15 Aug, 2026',
-      'premium': '₦320,000 / yearly',
-    },
-    {
-      'title': 'Marine Insurance',
-      'vehicle': 'Cargo Shipment',
-      'policyNo': 'Policy #MAR-2025-012',
-      'status': 'Expired',
-      'statusColor': Colors.grey,
-      'renewalLabel': 'Expired on',
-      'renewalDate': '10 Jan, 2025',
-      'premium': '₦180,000 / yearly',
-    },
-  ];
+  List<Map<String, dynamic>> get _policies {
+    final pp = Provider.of<PolicyProvider>(context, listen: false);
+    return pp.policies.map((p) {
+      final isActive = p['status'] == 'Active';
+      final isExpired = p['status'] == 'Expired';
+      return {
+        'title': p['policyClass'] ?? '',
+        'vehicle': p['insured'] ?? '',
+        'policyNo': 'Policy #${p['policyId'] ?? ''}',
+        'status': p['status'] ?? 'Unknown',
+        'statusColor': isActive ? Colors.green : isExpired ? Colors.grey : Colors.red,
+        'renewalLabel': isExpired ? 'Expired on' : 'Renewal',
+        'renewalDate': p['endDate'] ?? '',
+        'premium': '₦${p['premium'] ?? '0'} / yearly',
+        'rawData': p,
+      };
+    }).toList();
+  }
 
   List<Map<String, dynamic>> get _filteredPolicies {
     final query = _searchController.text.toLowerCase().trim();
@@ -67,7 +45,7 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
 
     // Filter by tab
     if (_selectedFilter == 1) {
-      policies = policies.where((p) => p['status'] == 'Renewal Due').toList();
+      policies = policies.where((p) => p['status'] == 'Expired').toList();
     } else if (_selectedFilter == 2) {
       policies = policies.where((p) => p['status'] == 'Active').toList();
     } else if (_selectedFilter == 3) {
@@ -333,6 +311,7 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PolicyDetailsScreen(
                 policyType: policy['title'],
                 policyNumber: policy['policyNo'].replaceAll('Policy #', ''),
+                policyData: policy['rawData'] as Map<String, dynamic>?,
               ))),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryNavy,

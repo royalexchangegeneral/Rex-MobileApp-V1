@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/app_theme.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
@@ -9,9 +10,11 @@ import 'faq_screen.dart';
 import 'customer_care_screen.dart';
 import 'office_locations_screen.dart';
 import 'live_chat_screen.dart';
+import 'new_ticket_screen.dart';
 
 class HelpSupportScreen extends StatefulWidget {
-  const HelpSupportScreen({super.key});
+  final bool isAgentFlow;
+  const HelpSupportScreen({super.key, this.isAgentFlow = false});
   @override
   State<HelpSupportScreen> createState() => _HelpSupportScreenState();
 }
@@ -41,14 +44,14 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
           TextField(controller: _searchController, style: const TextStyle(fontSize: 13, color: Colors.black),
             onSubmitted: (query) {
               if (query.trim().isNotEmpty) {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => FaqScreen(initialSearch: query.trim())));
+                Navigator.push(context, MaterialPageRoute(builder: (_) => FaqScreen(initialSearch: query.trim(), isAgentFlow: widget.isAgentFlow)));
               }
             },
             decoration: InputDecoration(hintText: 'Search help', hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
               suffixIcon: GestureDetector(
                 onTap: () {
                   if (_searchController.text.trim().isNotEmpty) {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => FaqScreen(initialSearch: _searchController.text.trim())));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => FaqScreen(initialSearch: _searchController.text.trim(), isAgentFlow: widget.isAgentFlow)));
                   }
                 },
                 child: Icon(Icons.search, color: Colors.grey[400]),
@@ -62,30 +65,30 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
           const Text('How can we help you', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
           const SizedBox(height: 16),
           Row(children: [
-            Expanded(child: _helpCard(Icons.assignment_outlined, 'Claims', 'File and Track Claims', const Color(0xFFE8EAF6), const Color(0xFF1E2D64), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FaqScreen(initialCategory: 'Claims'))))),
+            Expanded(child: _helpCard(Icons.assignment_outlined, 'Claims', 'File and Track Claims', const Color(0xFFE8EAF6), const Color(0xFF1E2D64), () => Navigator.push(context, MaterialPageRoute(builder: (_) => FaqScreen(initialCategory: 'Claims', isAgentFlow: widget.isAgentFlow))))),
             const SizedBox(width: 12),
-            Expanded(child: _helpCard(Icons.description_outlined, 'Get Quote', 'Compare Rates,\nSave Smarter', const Color(0xFFEDE7F6), const Color(0xFF7C4DFF), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FaqScreen(initialCategory: 'Quotes'))))),
+            Expanded(child: _helpCard(Icons.description_outlined, 'Get Quote', 'Compare Rates,\nSave Smarter', const Color(0xFFEDE7F6), const Color(0xFF7C4DFF), () => Navigator.push(context, MaterialPageRoute(builder: (_) => FaqScreen(initialCategory: 'Quotes', isAgentFlow: widget.isAgentFlow))))),
           ]),
           const SizedBox(height: 12),
           Row(children: [
-            Expanded(child: _helpCard(Icons.policy_outlined, 'Policies', 'Policy Information', const Color(0xFFFCE4EC), const Color(0xFFE91E63), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FaqScreen(initialCategory: 'policy'))))),
+            Expanded(child: _helpCard(Icons.policy_outlined, 'Policies', 'Policy Information', const Color(0xFFFCE4EC), const Color(0xFFE91E63), () => Navigator.push(context, MaterialPageRoute(builder: (_) => FaqScreen(initialCategory: 'policy', isAgentFlow: widget.isAgentFlow))))),
             const SizedBox(width: 12),
-            Expanded(child: _helpCard(Icons.settings_outlined, 'Account', 'Account Settings', const Color(0xFFF3E5F5), const Color(0xFF9C27B0), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FaqScreen(initialCategory: 'Account'))))),
+            Expanded(child: _helpCard(Icons.settings_outlined, 'Account', 'Account Settings', const Color(0xFFF3E5F5), const Color(0xFF9C27B0), () => Navigator.push(context, MaterialPageRoute(builder: (_) => FaqScreen(initialCategory: 'Account', isAgentFlow: widget.isAgentFlow))))),
           ]),
           const SizedBox(height: 28),
           // Contact Us
           const Text('Contact Us', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
           const SizedBox(height: 12),
-          _contactItem(Icons.headset_mic_outlined, 'Customer Support', 'Get help anytime', const Color(0xFFE3F2FD), const Color(0xFF1565C0), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerCareScreen()))),
+          _contactItem(Icons.headset_mic_outlined, 'Customer Support', 'Get help anytime', const Color(0xFFE3F2FD), const Color(0xFF1565C0), () => Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerCareScreen(isAgentFlow: widget.isAgentFlow)))),
           _contactItem(Icons.chat_bubble_outlined, 'Live Chat', 'Available 24/7', const Color(0xFFE0F7FA), const Color(0xFF00ACC1), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveChatScreen()))),
           _contactItem(Icons.phone_outlined, 'Call Us', 'Mon-Fri, 9AM-6PM', const Color(0xFFE8F5E9), const Color(0xFF2E7D32), () => _callAgent()),
-          _contactItem(Icons.email_outlined, 'Email Support', 'Response within 24hr', const Color(0xFFF3E5F5), const Color(0xFF7B1FA2), () {}),
-          _contactItem(Icons.location_on_outlined, 'Walk-In', 'Locate offices near you.', const Color(0xFFFFF8E1), const Color(0xFFB8860B), () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OfficeLocationsScreen()))),
+          _contactItem(Icons.email_outlined, 'Email Support', 'Response within 24hr', const Color(0xFFF3E5F5), const Color(0xFF7B1FA2), () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewTicketScreen(initialCategory: 'Email Support', isAgentFlow: widget.isAgentFlow)))),
+          _contactItem(Icons.location_on_outlined, 'Walk-In', 'Locate offices near you.', const Color(0xFFFFF8E1), const Color(0xFFB8860B), () => Navigator.push(context, MaterialPageRoute(builder: (_) => OfficeLocationsScreen(isAgentFlow: widget.isAgentFlow)))),
           const SizedBox(height: 24),
           // FAQs
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             const Text('FAQs', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-            GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FaqScreen())),
+            GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FaqScreen(isAgentFlow: widget.isAgentFlow))),
               child: const Text('View all', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.accentOrange))),
           ]),
           const SizedBox(height: 12),
@@ -113,11 +116,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
           }),
           const SizedBox(height: 80),
         ])),
-      floatingActionButton: SizedBox(width: 50, height: 50, child: FloatingActionButton(
+      floatingActionButton: widget.isAgentFlow ? null : SizedBox(width: 50, height: 50, child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
         backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), child: const Icon(Icons.add, color: Colors.white, size: 24))),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
+      bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
         child: SizedBox(height: 50, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
           _nav(Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
           _nav(Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 40),
