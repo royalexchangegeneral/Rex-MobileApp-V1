@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
-import 'package:webview_flutter/webview_flutter.dart';
-import 'dart:convert';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../services/payment_service.dart';
 import '../widgets/agent_bottom_nav.dart';
+import '../widgets/paystack_webview.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
@@ -15,44 +14,36 @@ import 'policy_purchase_success_screen.dart';
 class PolicyRenewalScreen extends StatelessWidget {
   final String policyType;
   final String policyNumber;
+  final String premium;
   final bool isAgentFlow;
+  final Map<String, dynamic>? policyData;
 
-  const PolicyRenewalScreen({super.key, required this.policyType, required this.policyNumber, this.isAgentFlow = false});
-
-  static const String _paystackSecretKey = 'sk_test_dd6287962b39d4040217583eb0c2abef0d1239b5';
+  const PolicyRenewalScreen({super.key, required this.policyType, required this.policyNumber, this.premium = '0', this.isAgentFlow = false, this.policyData});
 
   Future<void> _initiatePayment(BuildContext context, String email) async {
-    final ref = 'REX_RENEW_${DateTime.now().millisecondsSinceEpoch}';
-    final amountInKobo = 1500000; // 15000 * 100
+    final cleaned = premium.replaceAll(RegExp(r'[^0-9.]'), '');
+    final amount = double.tryParse(cleaned) ?? 0;
 
     showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator(color: Colors.white)));
 
-    try {
-      final response = await http.post(
-        Uri.parse('https://api.paystack.co/transaction/initialize'),
-        headers: {'Authorization': 'Bearer $_paystackSecretKey', 'Content-Type': 'application/json'},
-        body: json.encode({'email': email, 'amount': amountInKobo, 'reference': ref, 'currency': 'NGN', 'callback_url': 'https://rexinsure.com/payment-callback'}),
-      ).timeout(const Duration(seconds: 15));
+    final result = await PaymentService.initiateRenewal(
+      email: email,
+      premium: amount.toInt(),
+      policyNumber: policyNumber,
+    );
 
-      if (!context.mounted) return;
-      Navigator.pop(context);
+    if (!context.mounted) return;
+    Navigator.pop(context);
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['status'] == true) {
-          final authUrl = data['data']['authorization_url'];
-          final result = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => _PaystackWebView(url: authUrl, callbackUrl: 'https://rexinsure.com/payment-callback')));
-          if (result == true && context.mounted) {
-            Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const PolicyPurchaseSuccessScreen()), (route) => false);
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(data['message'] ?? 'Payment failed'), backgroundColor: Colors.red));
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to initialize payment'), backgroundColor: Colors.red));
+    if (result.success && result.authorizationUrl != null) {
+      final payResult = await Navigator.push<PaymentVerifyResult>(context, MaterialPageRoute(builder: (_) => PaystackWebView(url: result.authorizationUrl!)));
+      if (payResult != null && payResult.success && context.mounted) {
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => PolicyPurchaseSuccessScreen(isLoggedIn: true, isAgent: isAgentFlow, reference: payResult.reference, message: payResult.message)), (route) => false);
+      } else if (payResult != null && !payResult.success && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(payResult.message ?? 'Payment verification failed'), backgroundColor: Colors.red));
       }
-    } catch (e) {
-      if (context.mounted) { Navigator.pop(context); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red)); }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.message ?? 'Payment failed'), backgroundColor: Colors.red));
     }
   }
 
@@ -63,25 +54,24 @@ class PolicyRenewalScreen extends StatelessWidget {
     final email = userData?['Email']?.toString() ?? 'customer@rexinsure.com';
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-        title: const Text('Renewal', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
+        elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+        title: Text('Renewal', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
       ),
       body: Column(
         children: [
           // Step indicator
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+            padding: EdgeInsets.fromLTRB(24, 8, 24, 0),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
-                    const Text('Summary', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black)),
+                    Text('Summary', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -101,16 +91,16 @@ class PolicyRenewalScreen extends StatelessWidget {
                   // Policy Information
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(12)),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Policy Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Policy Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 14),
                         _buildInfoRow('Policy Number', policyNumber),
                         _buildInfoRow('Product', policyType),
-                        _buildInfoRow('Premium', 'N15,000'),
+                        _buildInfoRow('Premium', '₦$premium'),
                         _buildInfoRow('Start Date', '2/04/2025'),
                         _buildInfoRow('End Date', '2/04/2026'),
                       ],
@@ -121,21 +111,29 @@ class PolicyRenewalScreen extends StatelessWidget {
                   // Personal Information
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(12)),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Personal Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Personal Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 14),
-                        _buildInfoRow('First Name', userData?['FirstName']?.toString() ?? '-'),
-                        _buildInfoRow('Last Name', userData?['LastName']?.toString() ?? userData?['Lastname']?.toString() ?? '-'),
-                        _buildInfoRow('Email', userData?['Email']?.toString() ?? '-'),
-                        _buildInfoRow('Phone Number', userData?['Phone']?.toString() ?? userData?['PhoneNo']?.toString() ?? '-'),
-                        _buildInfoRow('Occupation', userData?['Occupation']?.toString() ?? '-'),
-                        _buildInfoRow('State', userData?['State']?.toString() ?? '-'),
-                        _buildInfoRow('LGA', userData?['LGA']?.toString() ?? '-'),
-                        _buildInfoRow('Address', userData?['Address']?.toString() ?? '-'),
+                        if (isAgentFlow && policyData != null) ...[
+                          _buildInfoRow('Insured', policyData!['insured']?.toString() ?? policyData!['customerName']?.toString() ?? '-'),
+                          _buildInfoRow('Policy Class', policyData!['policyClass']?.toString() ?? '-'),
+                          _buildInfoRow('Sum Insured', '₦${policyData!['sumInsured']?.toString() ?? '0'}'),
+                          _buildInfoRow('Start Date', policyData!['startDate']?.toString() ?? '-'),
+                          _buildInfoRow('End Date', policyData!['endDate']?.toString() ?? '-'),
+                        ] else ...[
+                          _buildInfoRow('First Name', userData?['FirstName']?.toString() ?? '-'),
+                          _buildInfoRow('Last Name', userData?['LastName']?.toString() ?? userData?['Lastname']?.toString() ?? '-'),
+                          _buildInfoRow('Email', userData?['Email']?.toString() ?? '-'),
+                          _buildInfoRow('Phone Number', userData?['Phone']?.toString() ?? userData?['PhoneNo']?.toString() ?? '-'),
+                          _buildInfoRow('Occupation', userData?['Occupation']?.toString() ?? '-'),
+                          _buildInfoRow('State', userData?['State']?.toString() ?? '-'),
+                          _buildInfoRow('LGA', userData?['LGA']?.toString() ?? '-'),
+                          _buildInfoRow('Address', userData?['Address']?.toString() ?? '-'),
+                        ],
                       ],
                     ),
                   ),
@@ -144,12 +142,12 @@ class PolicyRenewalScreen extends StatelessWidget {
                   // Vehicle Information
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(12)),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Vehicle Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Vehicle Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 14),
                         _buildInfoRow('Reg Number', 'AB 789 CD'),
                         _buildInfoRow('Chassis No.', '1HGCMBB2633A123456'),
@@ -177,7 +175,7 @@ class PolicyRenewalScreen extends StatelessWidget {
                 onPressed: () {
                   showModalBottomSheet(
                     context: context,
-                    backgroundColor: Colors.white,
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
                     builder: (ctx) => Container(
                       padding: const EdgeInsets.all(24),
@@ -185,16 +183,16 @@ class PolicyRenewalScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
                           InkWell(
                             onTap: () { Navigator.pop(ctx); _initiatePayment(context, email); },
                             child: Container(
-                              padding: const EdgeInsets.all(16),
+                              padding: EdgeInsets.all(16),
                               decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(8)),
                               child: Row(children: [
                                 Container(width: 40, height: 40, decoration: BoxDecoration(color: Colors.cyan[50], borderRadius: BorderRadius.circular(8)), child: Icon(Icons.payment, color: Colors.cyan[600], size: 24)),
-                                const SizedBox(width: 16),
-                                const Text('Pay with Paystack', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black)),
+                                SizedBox(width: 16),
+                                Text('Pay with Paystack', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
                                 const Spacer(),
                                 Icon(Icons.radio_button_checked, color: AppTheme.primaryNavy, size: 22),
                               ]),
@@ -213,20 +211,21 @@ class PolicyRenewalScreen extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: isAgentFlow ? null : SizedBox(width: 50, height: 50, child: FloatingActionButton(
+      floatingActionButton: isAgentFlow ? null : Transform.translate(offset: const Offset(0, 15), child: SizedBox(width: 52, height: 52, child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
         backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 24),
-      )),
+        elevation: 1,
+        child: const Icon(Icons.add, color: Colors.white, size: 30),
+      ))),
       floatingActionButtonLocation: isAgentFlow ? null : FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: isAgentFlow ? buildAgentBottomNav(context, currentIndex: 1) : BottomAppBar(
-        shape: const CircularNotchedRectangle(), notchMargin: 6,
-        child: SizedBox(height: 50, child: Row(
+        shape: const CircularNotchedRectangle(), notchMargin: 4,
+        child: SizedBox(height: 44, child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildNavItem(Icons.home_outlined, 'Home', false, onTap: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false)),
             _buildNavItem(Icons.description_outlined, 'Policies', true),
-            const SizedBox(width: 40),
+            const SizedBox(width: 48),
             _buildNavItem(Icons.assignment_outlined, 'Claims', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()))),
             _buildNavItem(Icons.person_outline, 'Profile', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()))),
           ],
@@ -237,12 +236,12 @@ class PolicyRenewalScreen extends StatelessWidget {
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(flex: 2, child: Text(label, style: TextStyle(fontSize: 13, color: Colors.grey[600]))),
-          Expanded(flex: 3, child: Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87), textAlign: TextAlign.right)),
+          Expanded(flex: 3, child: Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87), textAlign: TextAlign.right)),
         ],
       ),
     );
@@ -259,39 +258,4 @@ class PolicyRenewalScreen extends StatelessWidget {
   }
 }
 
-class _PaystackWebView extends StatefulWidget {
-  final String url;
-  final String callbackUrl;
-  const _PaystackWebView({required this.url, required this.callbackUrl});
-  @override
-  State<_PaystackWebView> createState() => _PaystackWebViewState();
-}
 
-class _PaystackWebViewState extends State<_PaystackWebView> {
-  late final WebViewController _controller;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(NavigationDelegate(
-        onPageStarted: (_) => setState(() => _isLoading = true),
-        onPageFinished: (_) => setState(() => _isLoading = false),
-        onNavigationRequest: (request) {
-          if (request.url.startsWith(widget.callbackUrl)) { Navigator.pop(context, true); return NavigationDecision.prevent; }
-          return NavigationDecision.navigate;
-        },
-      ))
-      ..loadRequest(Uri.parse(widget.url));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.white, elevation: 0, leading: IconButton(icon: const Icon(Icons.close, color: Colors.black), onPressed: () => Navigator.pop(context, false)), title: const Text('Payment', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)), centerTitle: true),
-      body: Stack(children: [WebViewWidget(controller: _controller), if (_isLoading) const Center(child: CircularProgressIndicator())]),
-    );
-  }
-}

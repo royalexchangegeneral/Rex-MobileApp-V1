@@ -43,12 +43,10 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.white,
       drawer: _buildDrawer(),
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.menu, color: Colors.black), onPressed: () => _scaffoldKey.currentState?.openDrawer()),
+        leading: IconButton(icon: Icon(Icons.menu, color: Theme.of(context).colorScheme.onSurface), onPressed: () => _scaffoldKey.currentState?.openDrawer()),
         title: Image.asset(
           'assets/images/image 4.png',
           height: 22,
@@ -65,8 +63,8 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
         actions: [
           Consumer<NotificationsProvider>(
             builder: (context, notifProvider, child) => Stack(children: [
-              IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.black), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())).then((_) => notifProvider.fetchNotifications(context))),
-              if (notifProvider.unreadCount > 0) Positioned(right: 8, top: 8, child: Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle), child: Text('${notifProvider.unreadCount}', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)))),
+              IconButton(icon: Icon(Icons.notifications_outlined, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())).then((_) => notifProvider.fetchNotifications(context))),
+              if (notifProvider.unreadCount > 0) Positioned(right: 8, top: 8, child: Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle), child: Text('${notifProvider.unreadCount}', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)))),
             ]),
           ),
         ],
@@ -88,7 +86,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                       children: [
                         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Consumer<PolicyProvider>(builder: (_, pp, __) => Text('${pp.activePolicies}', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold))),
-                          const Text('Active Policies', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          Text('Active Policies', style: TextStyle(color: Colors.white70, fontSize: 12)),
                         ]),
                         ElevatedButton(
                           onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPoliciesScreen())),
@@ -111,12 +109,12 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               // My Policies Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('My Policies', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                  Text('My Policies', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                   TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPoliciesScreen())), child: const Text('View All', style: TextStyle(color: AppTheme.accentOrange, fontWeight: FontWeight.w600))),
                 ],
               ),
@@ -144,12 +142,12 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                   ));
                 }).toList());
               }),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               // My Claims Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('My Claims', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                  Text('My Claims', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                   TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen())), child: const Text('View All', style: TextStyle(color: AppTheme.accentOrange, fontWeight: FontWeight.w600))),
                 ],
               ),
@@ -176,9 +174,9 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                   ));
                 }).toList());
               }),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               // Discover Insurance
-              const Text('Discover Insurance', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+              Text('Discover Insurance', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 16),
               _buildDiscoverCard('Insurance Basics', 'Learn the basic of insurance', Icons.school_outlined, const Color(0xFF4A90D9), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DiscoverInsuranceScreen()))),
               const SizedBox(height: 12),
@@ -197,7 +195,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                   children: [
                     const Row(children: [Icon(Icons.support_agent, color: AppTheme.primaryNavy), SizedBox(width: 8), Text('Request Agent', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy))]),
                     const SizedBox(height: 8),
-                    const Text('Need a personal insurance agent?', style: TextStyle(color: Colors.black87)),
+                    Text('Need a personal insurance agent?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
                     const SizedBox(height: 12),
                     ElevatedButton(onPressed: () => _callAgent(), style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: const Text('Request Now')),
                   ],
@@ -208,28 +206,31 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
           ),
         ),
       ),
-      floatingActionButton: SizedBox(
-        width: 50,
-        height: 50,
-        child: FloatingActionButton(
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-          backgroundColor: AppTheme.accentOrange,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: Colors.white, size: 24),
+      floatingActionButton: Transform.translate(
+        offset: const Offset(0, 15),
+        child: SizedBox(
+          width: 52, height: 52,
+          child: FloatingActionButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+            backgroundColor: AppTheme.accentOrange,
+            shape: const CircleBorder(),
+            elevation: 1,
+            child: const Icon(Icons.add, color: Colors.white, size: 28),
+          ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
-        notchMargin: 6,
+        notchMargin: 4,
         child: SizedBox(
-          height: 50,
+          height: 56,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(Icons.home_outlined, 'Home', 0),
               _buildNavItem(Icons.description_outlined, 'Policies', 1),
-              const SizedBox(width: 40),
+              const SizedBox(width: 48),
               _buildNavItem(Icons.assignment_outlined, 'Claims', 2),
               _buildNavItem(Icons.person_outline, 'Profile', 3),
             ],
@@ -263,15 +264,15 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12),
         decoration: BoxDecoration(color: const Color(0xFFFAFAFA), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
         child: Column(
           children: [
             Row(children: [
-              Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: iconColor, size: 20)),
-              const SizedBox(width: 10),
+              Container(padding: EdgeInsets.all(8), decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: iconColor, size: 20)),
+              SizedBox(width: 10),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                 Text(policyNumber, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
               ])),
               Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3), decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(16)), child: Text(status, style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.w600))),
@@ -286,13 +287,13 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
 
   Widget _buildClaimCard(String title, String claimNumber, IconData icon, Color iconColor, String status, Color statusColor) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(color: const Color(0xFFFAFAFA), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
       child: Row(children: [
-        Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: iconColor, size: 20)),
-        const SizedBox(width: 10),
+        Container(padding: EdgeInsets.all(8), decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: iconColor, size: 20)),
+        SizedBox(width: 10),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+          Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
           Text(claimNumber, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
         ])),
         Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3), decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(16)), child: Text(status, style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.w600))),
@@ -304,13 +305,13 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12),
         decoration: BoxDecoration(color: const Color(0xFFFAFAFA), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
         child: Row(children: [
-          Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: iconColor, size: 20)),
-          const SizedBox(width: 10),
+          Container(padding: EdgeInsets.all(8), decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: iconColor, size: 20)),
+          SizedBox(width: 10),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+            Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             Text(subtitle, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
           ])),
           Icon(Icons.chevron_right, color: Colors.grey[400], size: 20),

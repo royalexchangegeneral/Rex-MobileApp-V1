@@ -37,10 +37,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Consumer<NotificationsProvider>(
       builder: (context, notifProvider, child) {
         final list = _filtered(notifProvider.notifications, notifProvider.readIds);
-        return Scaffold(backgroundColor: Colors.white,
-          appBar: AppBar(backgroundColor: Colors.white, elevation: 0,
-            leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-            title: const Text('Notification', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)), centerTitle: true),
+        return Scaffold(
+          appBar: AppBar(elevation: 0,
+            leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+            title: Text('Notification', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)), centerTitle: true),
           body: notifProvider.loading ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), padding: const EdgeInsets.all(16),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -54,14 +54,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               else ...list.map((n) => _card(n, notifProvider)),
               const SizedBox(height: 80),
             ])),
-          floatingActionButton: _isAgent ? null : SizedBox(width: 50, height: 50, child: FloatingActionButton(
+          floatingActionButton: _isAgent ? null : Transform.translate(offset: const Offset(0, 15), child: SizedBox(width: 52, height: 52, child: FloatingActionButton(
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-            backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), child: const Icon(Icons.add, color: Colors.white, size: 24))),
+            backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), elevation: 1, child: const Icon(Icons.add, color: Colors.white, size: 30)))),
           floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-          bottomNavigationBar: _isAgent ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
-            child: SizedBox(height: 50, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+          bottomNavigationBar: _isAgent ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 4,
+            child: SizedBox(height: 44, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
               _nav(Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
-              _nav(Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 40),
+              _nav(Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 48),
               _nav(Icons.assignment_outlined, 'Claims', false, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()))),
               _nav(Icons.person_outline, 'Profile', true, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()))),
             ]))),
@@ -82,14 +82,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       onTap: () {
         if (unread) notifProvider.markAsRead(context, id);
       },
-      child: Container(padding: const EdgeInsets.all(14),
+      child: Container(padding: EdgeInsets.all(14),
         decoration: BoxDecoration(color: unread ? const Color(0xFFF8F9FF) : Colors.grey[50], borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppTheme.primaryNavy.withValues(alpha: 0.1), shape: BoxShape.circle),
+          Container(padding: EdgeInsets.all(8), decoration: BoxDecoration(color: AppTheme.primaryNavy.withValues(alpha: 0.1), shape: BoxShape.circle),
             child: Icon(_iconFor(title), color: AppTheme.primaryNavy, size: 18)),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+            Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             if (msg.isNotEmpty) ...[const SizedBox(height: 4), Text(msg, style: TextStyle(fontSize: 12, color: Colors.grey[700], height: 1.4))],
             const SizedBox(height: 6),
             Text(time, style: TextStyle(fontSize: 10, color: Colors.grey[500])),

@@ -155,14 +155,18 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         ),
       ),
       floatingActionButton: Provider.of<AuthProvider>(context, listen: false).isCustomer()
-          ? SizedBox(
-              width: 50,
-              height: 50,
-              child: FloatingActionButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-                backgroundColor: AppTheme.accentOrange,
-                shape: const CircleBorder(),
-                child: const Icon(Icons.add, color: Colors.white, size: 24),
+          ? Transform.translate(
+              offset: const Offset(0, 15),
+              child: SizedBox(
+                width: 52,
+                height: 52,
+                child: FloatingActionButton(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+                  backgroundColor: AppTheme.accentOrange,
+                  shape: const CircleBorder(),
+                  elevation: 1,
+                  child: const Icon(Icons.add, color: Colors.white, size: 30),
+                ),
               ),
             )
           : null,
@@ -205,9 +209,9 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
     return BottomAppBar(
       shape: const CircularNotchedRectangle(),
-      notchMargin: 6,
+      notchMargin: 4,
       child: SizedBox(
-        height: 50,
+        height: 60,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -215,7 +219,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
             }),
             _buildCustomerNavItem(Icons.description_outlined, 'Policies', false, () {}),
-            const SizedBox(width: 40),
+            const SizedBox(width: 48),
             _buildCustomerNavItem(Icons.assignment_outlined, 'Claims', false, () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
             }),
@@ -251,7 +255,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     required ValueChanged<bool>? onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
@@ -309,7 +313,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     required String time,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),

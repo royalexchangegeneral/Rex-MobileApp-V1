@@ -87,28 +87,27 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
     final corporateCount = _customers.where((c) => c['cust_type']?.toString().toLowerCase() == 'corporate').length;
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-        title: const Text('Clients', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+        elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+        title: Text('Clients', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         centerTitle: true,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
               controller: _searchController,
               onChanged: (_) => setState(() {}),
-              style: const TextStyle(fontSize: 13, color: Colors.black),
+              style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: 'Search name, email or phone',
                 hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
                 prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
-                filled: true, fillColor: Colors.grey[100],
+                filled: true, fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
@@ -135,14 +134,14 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
               : customers.isEmpty
                 ? Center(child: Text('No clients found', style: TextStyle(color: Colors.grey[500], fontSize: 13)))
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: 16),
                     itemCount: customers.length,
                     itemBuilder: (context, index) => _buildClientCard(customers[index]),
                   ),
           ),
           Container(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            decoration: BoxDecoration(color: Colors.grey[100], border: Border(top: BorderSide(color: Colors.grey[300]!))),
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 16),
+            decoration: BoxDecoration(color: Colors.grey[100], border: Border(top: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!))),
             child: Row(children: [
               Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFF1E2D64), shape: BoxShape.circle)),
               const SizedBox(width: 8),
@@ -200,10 +199,10 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
           backgroundColor: isCorporate ? const Color(0xFFE8EAF6) : const Color(0xFFE3F2FD),
           child: Icon(isCorporate ? Icons.business : Icons.person, color: const Color(0xFF1E2D64), size: 24),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Expanded(child: Text(name.isNotEmpty ? name : 'Unknown', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black))),
+            Expanded(child: Text(name.isNotEmpty ? name : 'Unknown', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface))),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(color: isCorporate ? const Color(0xFFEDE7F6) : const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(10)),

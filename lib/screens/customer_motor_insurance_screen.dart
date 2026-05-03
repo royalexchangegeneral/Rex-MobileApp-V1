@@ -9,27 +9,28 @@ import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
 import 'customer_renewal_screen.dart';
 import 'quote_screen.dart';
+import 'royal_auto_purchase_screen.dart';
 
 class CustomerMotorInsuranceScreen extends StatelessWidget {
   final bool isAgent;
+  final Map<String, dynamic>? clientData;
+  final String agentCode;
   
-  const CustomerMotorInsuranceScreen({super.key, this.isAgent = false});
+  const CustomerMotorInsuranceScreen({super.key, this.isAgent = false, this.clientData, this.agentCode = ''});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Motor Insurance', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text('Motor Insurance', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
         actions: [
-          IconButton(icon: const Icon(Icons.tune, color: Colors.black), onPressed: () {}),
+          IconButton(icon: Icon(Icons.tune, color: Theme.of(context).colorScheme.onSurface), onPressed: () {}),
         ],
       ),
       body: SingleChildScrollView(
@@ -45,7 +46,7 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               premiumPeriod: 'yearly',
               bgColor: const Color(0xFFE3EDF7),
               iconBgColor: const Color(0xFF3D5A80),
-              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen(price: 'N15,000'))),
+              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PrivateCarPurchaseScreen(clientData: clientData, price: 'N15,000', isLoggedIn: true, isAgent: isAgent, agentCode: agentCode))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -57,7 +58,7 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               premiumPeriod: 'yearly',
               bgColor: const Color(0xFFF5E6DC),
               iconBgColor: const Color(0xFFBFA58A),
-              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen(vehicleType: 'Private Bus', price: '₦20,000'))),
+              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PrivateCarPurchaseScreen(clientData: clientData, vehicleType: 'Private Bus', price: '₦20,000', isLoggedIn: true, isAgent: isAgent, agentCode: agentCode))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -69,7 +70,7 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               premiumPeriod: 'yearly',
               bgColor: const Color(0xFFE0F5F0),
               iconBgColor: const Color(0xFF2A9D8F),
-              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen(vehicleType: 'Commercial Bus', price: '₦20,000'))),
+              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PrivateCarPurchaseScreen(clientData: clientData, vehicleType: 'Commercial Bus', price: '₦20,000', isLoggedIn: true, isAgent: isAgent, agentCode: agentCode))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -81,7 +82,7 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               premiumPeriod: 'yearly',
               bgColor: const Color(0xFFFFF9DB),
               iconBgColor: const Color(0xFF6B705C),
-              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen(vehicleType: 'Motorcycle', price: '₦3,000'))),
+              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PrivateCarPurchaseScreen(clientData: clientData, vehicleType: 'Motorcycle', price: '₦3,000', isLoggedIn: true, isAgent: isAgent, agentCode: agentCode))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -93,7 +94,7 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               premiumPeriod: 'yearly',
               bgColor: const Color(0xFFF5E6DC),
               iconBgColor: const Color(0xFFE07A5F),
-              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivateCarPurchaseScreen(vehicleType: 'Tricycle (Keke)', price: '₦5,000'))),
+              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PrivateCarPurchaseScreen(clientData: clientData, vehicleType: 'Tricycle (Keke)', price: '₦5,000', isLoggedIn: true, isAgent: isAgent, agentCode: agentCode))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -105,7 +106,7 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               premiumPeriod: 'of sum insured',
               bgColor: const Color(0xFFE3EDF7),
               iconBgColor: const Color(0xFF3D5A80),
-              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ComprehensivePersonalInfoScreen())),
+              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ComprehensivePersonalInfoScreen(isLoggedIn: true, isAgent: isAgent))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -117,7 +118,7 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               premiumPeriod: '+ ₦15,000/m',
               bgColor: const Color(0xFFF8E0E0),
               iconBgColor: const Color(0xFFC1121F),
-              onBuyNow: () {},
+              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalAutoPurchaseScreen(productName: 'Royal Auto Bronze', price: 'Premium – 3% + N15,000/m'))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -129,7 +130,7 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               premiumPeriod: '+ ₦15,000/m',
               bgColor: const Color(0xFFFFF5E6),
               iconBgColor: const Color(0xFFC1121F),
-              onBuyNow: () {},
+              onBuyNow: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalAutoPurchaseScreen(productName: 'Royal Auto Silver', price: 'Premium – 3% + N15,000/m'))),
             ),
             const SizedBox(height: 12),
             _buildGetQuoteCard(
@@ -145,14 +146,18 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: isAgent ? null : SizedBox(
-        width: 50,
-        height: 50,
-        child: FloatingActionButton(
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewPolicyScreen(isAgent: isAgent))),
-          backgroundColor: AppTheme.accentOrange,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: Colors.white, size: 24),
+      floatingActionButton: isAgent ? null : Transform.translate(
+        offset: const Offset(0, 15),
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: FloatingActionButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewPolicyScreen(isAgent: isAgent))),
+            backgroundColor: AppTheme.accentOrange,
+            shape: const CircleBorder(),
+            elevation: 1,
+            child: const Icon(Icons.add, color: Colors.white, size: 30),
+          ),
         ),
       ),
       floatingActionButtonLocation: isAgent ? null : FloatingActionButtonLocation.centerDocked,
@@ -189,9 +194,9 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
             )
           : BottomAppBar(
         shape: const CircularNotchedRectangle(),
-        notchMargin: 6,
+        notchMargin: 4,
         child: SizedBox(
-          height: 50,
+          height: 60,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -199,7 +204,7 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
                 Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
               }),
               _buildNavItem(context, Icons.description_outlined, 'Policies', true),
-              const SizedBox(width: 40),
+              const SizedBox(width: 48),
               _buildNavItem(context, Icons.assignment_outlined, 'Claims', false, onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
               }),
@@ -256,14 +261,14 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
       child: Stack(
         children: [
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 2),
                 Text(subtitle, style: TextStyle(fontSize: 10, color: Colors.grey[700])),
-                _buildNairaText(amount, fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black),
+                _buildNairaText(amount, fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -276,11 +281,11 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text('Buy Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      child: Text('Buy Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -288,8 +293,8 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Premium', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
-                        const SizedBox(height: 2),
-                        Text(premium.contains('%') ? '$premium $premiumPeriod' : '$premium / $premiumPeriod', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                        SizedBox(height: 2),
+                        Text(premium.contains('%') ? '$premium $premiumPeriod' : '$premium / $premiumPeriod', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                       ],
                     ),
                     OutlinedButton(
@@ -352,14 +357,14 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
       child: Stack(
         children: [
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
-                const SizedBox(height: 2),
+                Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                SizedBox(height: 2),
                 Text(subtitle, style: TextStyle(fontSize: 10, color: Colors.grey[700])),
-                Text(amount, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                Text(amount, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,

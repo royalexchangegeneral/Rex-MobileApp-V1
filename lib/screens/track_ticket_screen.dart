@@ -110,15 +110,13 @@ class _TrackTicketScreenState extends State<TrackTicketScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Track Ticket', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text('Track Ticket', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
       ),
       body: Padding(
@@ -133,8 +131,8 @@ class _TrackTicketScreenState extends State<TrackTicketScreen> {
                 hintText: 'Search tickets',
                 hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
                 suffixIcon: Icon(Icons.search, color: Colors.grey[400]),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[300]!)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[300]!)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primaryNavy)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
@@ -147,15 +145,15 @@ class _TrackTicketScreenState extends State<TrackTicketScreen> {
                   _buildFilterChip('All', _selectedFilter == 'All'),
                   const SizedBox(width: 8),
                   _buildFilterChip('Open', _selectedFilter == 'Open'),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   _buildFilterChip('In Progress', _selectedFilter == 'In Progress'),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   _buildFilterChip('Resolved', _selectedFilter == 'Resolved'),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-            const Text('Your Tickets', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+            SizedBox(height: 16),
+            Text('Your Tickets', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 10),
             Expanded(
               child: ListView.builder(
@@ -235,14 +233,14 @@ class _TrackTicketScreenState extends State<TrackTicketScreen> {
           ],
         ),
       ),
-      floatingActionButton: widget.isAgentFlow ? null : SizedBox(width: 50, height: 50, child: FloatingActionButton(
+      floatingActionButton: widget.isAgentFlow ? null : Transform.translate(offset: const Offset(0, 15), child: SizedBox(width: 52, height: 52, child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-        backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), child: const Icon(Icons.add, color: Colors.white, size: 24))),
+        backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), elevation: 1, child: const Icon(Icons.add, color: Colors.white, size: 30)))),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
-        child: SizedBox(height: 50, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+      bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 4,
+        child: SizedBox(height: 44, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
           _nav(Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
-          _nav(Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 40),
+          _nav(Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 48),
           _nav(Icons.assignment_outlined, 'Claims', false, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()))),
           _nav(Icons.person_outline, 'Profile', true, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()))),
         ]))),

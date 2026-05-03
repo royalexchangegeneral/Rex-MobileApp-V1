@@ -40,11 +40,10 @@ class _HomeProtectionIdScreenState extends State<HomeProtectionIdScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-        title: const Text('Home Protection Plan', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
+        elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+        title: Text('Home Protection Plan', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -53,14 +52,14 @@ class _HomeProtectionIdScreenState extends State<HomeProtectionIdScreen> {
           children: [
             // Step indicator
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+              padding: EdgeInsets.fromLTRB(24, 8, 24, 0),
               child: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Step 2 of ${widget.totalSteps}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
-                      const Text('Mode of Identification', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black)),
+                      Text('Step 2 of ${widget.totalSteps}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+                      Text('Mode of Identification', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -79,14 +78,14 @@ class _HomeProtectionIdScreenState extends State<HomeProtectionIdScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ID Type dropdown
-                  const Text('Select mode of Identification', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87)),
-                  const SizedBox(height: 8),
+                  Text('Select mode of Identification', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
+                  SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(8)),
                     child: DropdownButtonFormField<String>(
                       value: _selectedIdType,
                       hint: Text('select identification', style: TextStyle(color: Colors.grey[400], fontSize: 14)),
-                      style: const TextStyle(color: Colors.black, fontSize: 14),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
                       decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10)),
                       icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
                       items: _idTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
@@ -96,20 +95,20 @@ class _HomeProtectionIdScreenState extends State<HomeProtectionIdScreen> {
 
                   // ID Number field (shown when type is selected)
                   if (_selectedIdType != null) ...[
-                    const SizedBox(height: 20),
-                    Text(_idLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87)),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 20),
+                    Text(_idLabel, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
+                    SizedBox(height: 8),
                     TextField(
                       controller: _idNumberController,
                       keyboardType: TextInputType.number,
                       maxLength: 11,
                       onChanged: (_) => setState(() {}),
-                      style: const TextStyle(color: Colors.black, fontSize: 14),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
                       decoration: InputDecoration(
                         hintText: _idHint, hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                        filled: true, fillColor: Colors.white,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+                        filled: true, fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       ),
@@ -138,20 +137,21 @@ class _HomeProtectionIdScreenState extends State<HomeProtectionIdScreen> {
           ],
         ),
       ),
-      floatingActionButton: SizedBox(width: 50, height: 50, child: FloatingActionButton(
+      floatingActionButton: Transform.translate(offset: const Offset(0, 15), child: SizedBox(width: 52, height: 52, child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
         backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 24),
-      )),
+        elevation: 1,
+        child: const Icon(Icons.add, color: Colors.white, size: 30),
+      ))),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(), notchMargin: 6,
-        child: SizedBox(height: 50, child: Row(
+        shape: const CircularNotchedRectangle(), notchMargin: 4,
+        child: SizedBox(height: 44, child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _nav(Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
             _nav(Icons.description_outlined, 'Policies', true, null),
-            const SizedBox(width: 40),
+            const SizedBox(width: 48),
             _nav(Icons.assignment_outlined, 'Claims', false, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()))),
             _nav(Icons.person_outline, 'Profile', false, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()))),
           ],

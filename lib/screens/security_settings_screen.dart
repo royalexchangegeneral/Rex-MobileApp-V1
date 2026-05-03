@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/biometric_service.dart';
+import '../providers/notifications_provider.dart';
 import '../utils/app_theme.dart';
 import 'agent_dashboard_screen.dart';
 import 'clients_list_screen.dart';
@@ -84,13 +85,13 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
         actions: const [],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Security Status
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
                 borderRadius: BorderRadius.circular(12),
@@ -196,40 +197,44 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
             
             const SizedBox(height: 16),
             
-            // Activity Items
-            _buildActivityItem(
-              icon: Icons.phone_iphone,
-              iconColor: Colors.blue,
-              iconBgColor: Colors.blue.withValues(alpha: 0.1),
-              title: 'New Device Login',
-              subtitle: 'Iphone 14 Pro . New york',
-              time: '2h ago',
-            ),
-            
-            const SizedBox(height: 12),
-            
-            _buildActivityItem(
-              icon: Icons.shield_outlined,
-              iconColor: Colors.blue,
-              iconBgColor: Colors.blue.withValues(alpha: 0.1),
-              title: 'Automatic Check',
-              subtitle: 'Security Check Completed',
-              time: '5 days ago',
-            ),
+            // Activity Items from API
+            Consumer<NotificationsProvider>(builder: (_, notifProvider, __) {
+              if (notifProvider.loading) return const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator()));
+              if (notifProvider.notifications.isEmpty) return Padding(padding: const EdgeInsets.all(12), child: Center(child: Text('No recent activity', style: TextStyle(color: Colors.grey[500], fontSize: 12))));
+              final items = notifProvider.notifications.take(3).toList();
+              return Column(children: items.map((n) {
+                final title = n['title']?.toString() ?? '';
+                final desc = n['description']?.toString() ?? n['message']?.toString() ?? '';
+                final time = n['created_at']?.toString() ?? '';
+                final isRead = notifProvider.readIds.contains(n['id']);
+                return Padding(padding: const EdgeInsets.only(bottom: 12), child: _buildActivityItem(
+                  icon: isRead ? Icons.shield_outlined : Icons.notifications_outlined,
+                  iconColor: isRead ? Colors.green : Colors.blue,
+                  iconBgColor: isRead ? Colors.green.withValues(alpha: 0.1) : Colors.blue.withValues(alpha: 0.1),
+                  title: title,
+                  subtitle: desc,
+                  time: time,
+                ));
+              }).toList());
+            }),
             
             const SizedBox(height: 100),
           ],
         ),
       ),
       floatingActionButton: Provider.of<AuthProvider>(context, listen: false).isCustomer()
-          ? SizedBox(
-              width: 50,
-              height: 50,
-              child: FloatingActionButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-                backgroundColor: AppTheme.accentOrange,
-                shape: const CircleBorder(),
-                child: const Icon(Icons.add, color: Colors.white, size: 24),
+          ? Transform.translate(
+              offset: const Offset(0, 15),
+              child: SizedBox(
+                width: 52,
+                height: 52,
+                child: FloatingActionButton(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+                  backgroundColor: AppTheme.accentOrange,
+                  shape: const CircleBorder(),
+                  elevation: 1,
+                  child: const Icon(Icons.add, color: Colors.white, size: 30),
+                ),
               ),
             )
           : null,
@@ -272,9 +277,9 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
 
     return BottomAppBar(
       shape: const CircularNotchedRectangle(),
-      notchMargin: 6,
+      notchMargin: 4,
       child: SizedBox(
-        height: 50,
+        height: 60,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -282,7 +287,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
               Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
             }),
             _buildCustomerNavItem(Icons.description_outlined, 'Policies', false, () {}),
-            const SizedBox(width: 40),
+            const SizedBox(width: 48),
             _buildCustomerNavItem(Icons.assignment_outlined, 'Claims', false, () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
             }),
@@ -321,7 +326,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     VoidCallback? onActionTap,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
@@ -392,7 +397,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     required String time,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),

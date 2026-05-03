@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../utils/app_theme.dart';
 import 'customer_motor_insurance_screen.dart';
 import 'protection_plans_screen.dart';
@@ -11,8 +12,9 @@ import 'my_claims_screen.dart';
 
 class NewPolicyScreen extends StatelessWidget {
   final bool isAgent;
+  final Map<String, dynamic>? clientData;
   
-  const NewPolicyScreen({super.key, this.isAgent = false});
+  const NewPolicyScreen({super.key, this.isAgent = false, this.clientData});
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +50,7 @@ class NewPolicyScreen extends StatelessWidget {
                 color: const Color(0xFFF3F8FF),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -61,10 +63,33 @@ class NewPolicyScreen extends StatelessWidget {
                   SizedBox(height: 8),
                   Text(
                     'Not sure what to buy?, do you need assistance choosing, customizing, or purchasing a new insurance policy.',
-                    style: TextStyle(fontSize: 12, color: Colors.black87, height: 1.4),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface, height: 1.4),
                   ),
                   SizedBox(height: 8),
-                  Text('Click here for advice.', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                  GestureDetector(
+                    onTap: () async {
+                      final uri = Uri(scheme: 'tel', path: '+2347080606100');
+                      try {
+                        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        if (!launched && context.mounted) {
+                          showDialog(context: context, builder: (ctx) => AlertDialog(
+                            title: const Text('Contact Support', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            content: const Text('+234 708 0606 100', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+                          ));
+                        }
+                      } catch (_) {
+                        if (context.mounted) {
+                          showDialog(context: context, builder: (ctx) => AlertDialog(
+                            title: const Text('Contact Support', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            content: const Text('+234 708 0606 100', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+                          ));
+                        }
+                      }
+                    },
+                    child: Text('Click here for advice.', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                  ),
                 ],
               ),
             ),
@@ -72,14 +97,18 @@ class NewPolicyScreen extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: isAgent ? null : SizedBox(
-        width: 50,
-        height: 50,
-        child: FloatingActionButton(
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-          backgroundColor: AppTheme.accentOrange,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: Colors.white, size: 24),
+      floatingActionButton: isAgent ? null : Transform.translate(
+        offset: const Offset(0, 15),
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: FloatingActionButton(
+            onPressed: null,
+            backgroundColor: Colors.grey[400],
+            shape: const CircleBorder(),
+            elevation: 1,
+            child: const Icon(Icons.add, color: Colors.white, size: 30),
+          ),
         ),
       ),
       floatingActionButtonLocation: isAgent ? null : FloatingActionButtonLocation.centerDocked,
@@ -116,9 +145,9 @@ class NewPolicyScreen extends StatelessWidget {
             )
           : BottomAppBar(
               shape: const CircularNotchedRectangle(),
-              notchMargin: 6,
+              notchMargin: 4,
               child: SizedBox(
-                height: 50,
+                height: 60,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
@@ -126,7 +155,7 @@ class NewPolicyScreen extends StatelessWidget {
                       Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
                     }),
                     _buildNavItem(Icons.description_outlined, 'Policies', true),
-                    const SizedBox(width: 40),
+                    const SizedBox(width: 48),
                     _buildNavItem(Icons.assignment_outlined, 'Claims', false, onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
                     }),
@@ -168,16 +197,16 @@ class NewPolicyScreen extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(color: iconBgColor, shape: BoxShape.circle),
                     child: Icon(icon, color: iconColor, size: 22),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 4),
                         Text(description, style: TextStyle(fontSize: 11, color: Colors.grey[600], height: 1.3)),
                       ],
@@ -189,7 +218,7 @@ class NewPolicyScreen extends StatelessWidget {
                       decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.grey[300]!)),
                       child: Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey[400]),
                     ),
-                  if (trailingIcon != null) const SizedBox(width: 40),
+                  if (trailingIcon != null) const SizedBox(width: 48),
                 ],
               ),
             ),
@@ -224,7 +253,7 @@ class NewPolicyScreen extends StatelessWidget {
 
   Widget _buildMotorInsuranceCard(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerMotorInsuranceScreen(isAgent: isAgent))),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerMotorInsuranceScreen(isAgent: isAgent, clientData: clientData))),
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
@@ -239,22 +268,22 @@ class NewPolicyScreen extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(color: Color(0xFFE8F4FD), shape: BoxShape.circle),
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: Color(0xFFE8F4FD), shape: BoxShape.circle),
                     child: SvgPicture.asset('assets/icons/car-front.svg', width: 22, height: 22, colorFilter: const ColorFilter.mode(Color(0xFF4A90D9), BlendMode.srcIn)),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Motor Insurance', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Motor Insurance', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 4),
                         Text('This policy covers the third party against Bodily injury and death resulting from a car accident caused by the insured.', style: TextStyle(fontSize: 11, color: Colors.grey[600], height: 1.3)),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 40),
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
@@ -290,22 +319,22 @@ class NewPolicyScreen extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(color: Color(0xFFFCE4EC), shape: BoxShape.circle),
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: Color(0xFFFCE4EC), shape: BoxShape.circle),
                     child: SvgPicture.asset('assets/icons/Capa_1.svg', width: 22, height: 22, colorFilter: const ColorFilter.mode(Color(0xFFE91E63), BlendMode.srcIn)),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Protection Plans', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Protection Plans', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 4),
                         Text('This product caters to both Single Transit and Open Cover Insurance.', style: TextStyle(fontSize: 11, color: Colors.grey[600], height: 1.3)),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 40),
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
@@ -341,22 +370,22 @@ class NewPolicyScreen extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(color: Color(0xFFFCE4EC), shape: BoxShape.circle),
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: Color(0xFFFCE4EC), shape: BoxShape.circle),
                     child: SvgPicture.asset('assets/icons/svg3474.svg', width: 22, height: 22, colorFilter: const ColorFilter.mode(Color(0xFFE91E63), BlendMode.srcIn)),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Royal Care', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('Royal Care', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 4),
                         Text('Protect your equipment', style: TextStyle(fontSize: 11, color: Colors.grey[600], height: 1.3)),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 40),
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
@@ -388,16 +417,16 @@ class NewPolicyScreen extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
-              decoration: const BoxDecoration(color: Color(0xFFE8F4FD), shape: BoxShape.circle),
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(color: Color(0xFFE8F4FD), shape: BoxShape.circle),
               child: SvgPicture.asset('assets/icons/Capa_1 (1).svg', width: 22, height: 22, colorFilter: const ColorFilter.mode(Color(0xFF4A90D9), BlendMode.srcIn)),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Underwritten Products', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+                  Text('Underwritten Products', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 4),
                   Text('Lorem ipsum dolor sit amet consectetur.', style: TextStyle(fontSize: 11, color: Colors.grey[600], height: 1.3)),
                 ],

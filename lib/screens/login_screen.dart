@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
 import '../services/biometric_service.dart';
+import '../services/device_security_service.dart';
 import 'customer_dashboard_screen.dart';
 import 'agent_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final bool isAgentLogin;
+  const LoginScreen({super.key, this.isAgentLogin = false});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -27,6 +30,16 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _checkBiometric();
+    DeviceSecurityService.enableSecureScreen();
+    DeviceSecurityService.checkAndWarn(context);
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    DeviceSecurityService.disableSecureScreen();
+    super.dispose();
   }
 
   Future<void> _checkBiometric() async {
@@ -45,25 +58,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.login(creds['email']!, creds['password']!);
+    final result = await authProvider.login(creds['email']!, creds['password']!);
     setState(() => _isLoading = false);
 
-    if (success && mounted) {
+    if (result.success && mounted) {
       if (authProvider.isAgent()) {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AgentDashboardScreen()));
       } else {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()));
       }
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Biometric login failed. Please login manually.'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.message ?? 'Biometric login failed. Please login manually.'), backgroundColor: Colors.red));
     }
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
   }
 
   Future<void> _handleLogin() async {
@@ -71,14 +77,29 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = true);
       
       final authProvider = context.read<AuthProvider>();
-      final success = await authProvider.login(
+      
+      // Check lockout before attempting
+      if (authProvider.isLockedOut) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Account locked. Try again in ${authProvider.lockoutRemaining.inSeconds} seconds.'), backgroundColor: Colors.red),
+          );
+        }
+        return;
+      }
+
+      final result = await authProvider.login(
         _emailController.text,
         _passwordController.text,
       );
       
       setState(() => _isLoading = false);
       
-      if (success && mounted) {
+      if (result.success && mounted) {
+        // Notify the platform to save credentials to Keychain / password manager
+        TextInput.finishAutofillContext();
+        
         // Check if biometric is available but not yet enabled — prompt user
         final bioAvailable = await BiometricService.isAvailable();
         final bioEnabled = await BiometricService.isEnabled();
@@ -100,8 +121,8 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid email or password. Please try again.'),
+          SnackBar(
+            content: Text(result.message ?? 'Invalid email or password. Please try again.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -136,13 +157,11 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/user-portal', (route) => false),
         ),
         actions: [
           Padding(
@@ -158,51 +177,53 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: Form(
+          child: AutofillGroup(
+            child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 
                 // Welcome Title
-                const Text(
+                Text(
                   'Hello, Welcome!',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 
-                const SizedBox(height: 40),
+                SizedBox(height: 40),
                 
                 // Email Address Field
-                const Text(
+                Text(
                   'Email Address',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(color: Colors.black, fontSize: 14),
+                  autofillHints: const [AutofillHints.email],
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Your email',
                     hintStyle: TextStyle(color: Colors.grey[400]),
                     filled: true,
-                    fillColor: Colors.grey[50],
+                    fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
+                      borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
+                      borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -221,34 +242,35 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
                 
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 
                 // Password Field
-                const Text(
+                Text(
                   'Password',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  style: const TextStyle(color: Colors.black, fontSize: 14),
+                  autofillHints: const [AutofillHints.password],
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Password',
                     hintStyle: TextStyle(color: Colors.grey[400]),
                     filled: true,
-                    fillColor: Colors.grey[50],
+                    fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
+                      borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
+                      borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -385,7 +407,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 
                 const SizedBox(height: 16),
                 
-                // Sign Up Link
+                // Sign Up Link (only for customer login)
+                if (!widget.isAgentLogin)
                 Center(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -420,6 +443,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),

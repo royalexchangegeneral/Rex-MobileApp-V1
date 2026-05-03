@@ -157,20 +157,18 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Add A New Client',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -241,23 +239,23 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Enter CAC
-                  const Text(
+                  Text(
                     'Enter CAC',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   TextField(
                     controller: _cacController,
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     decoration: InputDecoration(
                       hintText: 'enter CAC',
                       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -292,7 +290,7 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
+                          : Text(
                               'Verify',
                               style: TextStyle(
                                 fontSize: 14,
@@ -323,26 +321,26 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                     ],
                   ),
                   
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   
                   // Business Name
-                  const Text(
+                  Text(
                     'Business Name',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   TextField(
                     controller: _businessNameController,
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     decoration: InputDecoration(
                       hintText: 'John',
                       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -351,26 +349,26 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   
                   // Business Address
-                  const Text(
+                  Text(
                     'Business Address',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   TextField(
                     controller: _businessAddressController,
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     decoration: InputDecoration(
                       hintText: 'enter your address',
                       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -379,26 +377,26 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   
                   // Business Sector (optional)
-                  const Text(
+                  Text(
                     'Business Sector (optional)',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   TextField(
                     controller: _businessSectorController,
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     decoration: InputDecoration(
                       hintText: 'enter your occupation',
                       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -407,27 +405,27 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   
                   // Phone Number
-                  const Text(
+                  Text(
                     'Phone Number',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   TextField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     decoration: InputDecoration(
                       hintText: '+234902389421',
                       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -436,27 +434,27 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   
                   // Email Address
-                  const Text(
+                  Text(
                     'Email Address',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     decoration: InputDecoration(
                       hintText: 'example@gmail.com',
                       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -465,15 +463,15 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   
                   // Year of Incorporation
-                  const Text(
+                  Text(
                     'Year of Incorporation',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -494,12 +492,12 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                     child: AbsorbPointer(
                       child: TextField(
                         controller: _yearOfIncorporationController,
-                        style: const TextStyle(fontSize: 14, color: Colors.black),
+                        style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                         decoration: InputDecoration(
                           hintText: 'dd/mm/yy',
                           hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                           filled: true,
-                          fillColor: Colors.grey[100],
+                          fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,

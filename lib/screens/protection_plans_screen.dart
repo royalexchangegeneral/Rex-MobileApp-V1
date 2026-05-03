@@ -19,18 +19,16 @@ class ProtectionPlansScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Protection Plans', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text('Protection Plans', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
         actions: [
-          IconButton(icon: const Icon(Icons.tune, color: Colors.black), onPressed: () {}),
+          IconButton(icon: Icon(Icons.tune, color: Theme.of(context).colorScheme.onSurface), onPressed: () {}),
         ],
       ),
       body: SingleChildScrollView(
@@ -44,7 +42,7 @@ class ProtectionPlansScreen extends StatelessWidget {
               svgIcon: 'assets/icons/p1.svg',
               trailingSvgIcon: 'assets/icons/Group.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeProtectionPlanScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeProtectionPlanScreen(isFromNewPolicy: true))),
             ),
             const SizedBox(height: 12),
             _buildProtectionCard(
@@ -54,7 +52,7 @@ class ProtectionPlansScreen extends StatelessWidget {
               svgIcon: 'assets/icons/p2.svg',
               trailingSvgIcon: 'assets/icons/svg1824.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ShopProtectionPlanScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ShopProtectionPlanScreen(isFromNewPolicy: true))),
             ),
             const SizedBox(height: 12),
             _buildProtectionCard(
@@ -64,7 +62,7 @@ class ProtectionPlansScreen extends StatelessWidget {
               svgIcon: 'assets/icons/p3.svg',
               trailingSvgIcon: 'assets/icons/svg4053.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ParcelProtectionPlanScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ParcelProtectionPlanScreen(isFromNewPolicy: true))),
             ),
             const SizedBox(height: 12),
             _buildProtectionCard(
@@ -74,7 +72,7 @@ class ProtectionPlansScreen extends StatelessWidget {
               svgIcon: 'assets/icons/p4.svg',
               trailingSvgIcon: 'assets/icons/svg4728.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriversRidersProtectionScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriversRidersProtectionScreen(isFromNewPolicy: true))),
             ),
             const SizedBox(height: 12),
             _buildProtectionCard(
@@ -84,20 +82,24 @@ class ProtectionPlansScreen extends StatelessWidget {
               svgIcon: 'assets/icons/p5.svg',
               trailingSvgIcon: 'assets/icons/graduation-hat_11174463 1.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StudentProtectionPlanScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentProtectionPlanScreen(isFromNewPolicy: true))),
             ),
             const SizedBox(height: 20),
           ],
         ),
       ),
-      floatingActionButton: isAgent ? null : SizedBox(
-        width: 50,
-        height: 50,
-        child: FloatingActionButton(
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewPolicyScreen(isAgent: isAgent))),
-          backgroundColor: AppTheme.accentOrange,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: Colors.white, size: 24),
+      floatingActionButton: isAgent ? null : Transform.translate(
+        offset: const Offset(0, 15),
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: FloatingActionButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewPolicyScreen(isAgent: isAgent))),
+            backgroundColor: AppTheme.accentOrange,
+            shape: const CircleBorder(),
+            elevation: 1,
+            child: const Icon(Icons.add, color: Colors.white, size: 30),
+          ),
         ),
       ),
       floatingActionButtonLocation: isAgent ? null : FloatingActionButtonLocation.centerDocked,
@@ -134,9 +136,9 @@ class ProtectionPlansScreen extends StatelessWidget {
             )
           : BottomAppBar(
         shape: const CircularNotchedRectangle(),
-        notchMargin: 6,
+        notchMargin: 4,
         child: SizedBox(
-          height: 50,
+          height: 44,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -144,7 +146,7 @@ class ProtectionPlansScreen extends StatelessWidget {
                 Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
               }),
               _buildNavItem(context, Icons.description_outlined, 'Policies', true),
-              const SizedBox(width: 40),
+              const SizedBox(width: 48),
               _buildNavItem(context, Icons.assignment_outlined, 'Claims', false, onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
               }),
@@ -179,22 +181,22 @@ class ProtectionPlansScreen extends StatelessWidget {
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.all(14),
+              padding: EdgeInsets.all(14),
               child: Row(
                 children: [
                   SvgPicture.asset(svgIcon, width: 42, height: 42),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
                         const SizedBox(height: 2),
                         Text(subtitle, style: TextStyle(fontSize: 10, color: Colors.grey[600]), maxLines: 2, overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 40),
+                  const SizedBox(width: 48),
                 ],
               ),
             ),

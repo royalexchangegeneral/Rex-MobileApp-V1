@@ -12,15 +12,13 @@ class ClaimsProcessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Claims Process', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+        title: Text('Claims Process', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -121,22 +119,26 @@ class ClaimsProcessScreen extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: SizedBox(
-        width: 50,
-        height: 50,
-        child: FloatingActionButton(
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-          backgroundColor: AppTheme.accentOrange,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: Colors.white, size: 24),
+      floatingActionButton: Transform.translate(
+        offset: const Offset(0, 15),
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: FloatingActionButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+            backgroundColor: AppTheme.accentOrange,
+            shape: const CircleBorder(),
+            elevation: 1,
+            child: const Icon(Icons.add, color: Colors.white, size: 30),
+          ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
-        notchMargin: 6,
+        notchMargin: 4,
         child: SizedBox(
-          height: 50,
+          height: 60,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -144,7 +146,7 @@ class ClaimsProcessScreen extends StatelessWidget {
                 Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
               }),
               _buildNavItem(Icons.description_outlined, 'Policies', false),
-              const SizedBox(width: 40),
+              const SizedBox(width: 48),
               _buildNavItem(Icons.assignment_outlined, 'Claims', false, onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
               }),
@@ -177,7 +179,7 @@ class ClaimsProcessScreen extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                child: Center(child: Text(stepNumber, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold))),
+                child: Center(child: Text(stepNumber, style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold))),
               ),
               if (!isLast)
                 Expanded(
@@ -207,12 +209,12 @@ class ClaimsProcessScreen extends StatelessWidget {
                       ),
                       child: Icon(icon, color: color, size: 22),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                          Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
                           const SizedBox(height: 4),
                           Text(description, style: TextStyle(fontSize: 11, color: Colors.grey[600], height: 1.4)),
                         ],

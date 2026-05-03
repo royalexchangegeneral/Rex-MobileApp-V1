@@ -24,12 +24,20 @@ class AgentDashboardScreen extends StatefulWidget {
 }
 
 class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
+  String _selectedPeriod = 'this_month';
+  final Map<String, String> _periodLabels = {
+    'today': 'Today',
+    'this_week': 'This Week',
+    'this_month': 'This Month',
+  };
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<AgentPolicyProvider>(context, listen: false).fetchAgentPolicies(context);
       Provider.of<AgentPolicyProvider>(context, listen: false).fetchCustomerCount(context);
+      Provider.of<AgentPolicyProvider>(context, listen: false).fetchCommission(context);
       Provider.of<NotificationsProvider>(context, listen: false).fetchNotifications(context);
     });
   }
@@ -92,52 +100,38 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'N430,000.00',
-                              style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Commission',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white70,
-                              ),
-                            ),
-                          ],
-                        ),
+                      Expanded(
+                        child: Consumer<AgentPolicyProvider>(builder: (_, ap, __) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('₦${ap.commission}', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white)),
+                              const SizedBox(height: 4),
+                              const Text('Commission', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                            ],
+                          );
+                        }),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white.withOpacity(0.3)),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'This month',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.white,
-                              ),
-                            ),
-                            SizedBox(width: 4),
-                            Icon(
-                              Icons.keyboard_arrow_down,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ],
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          setState(() => _selectedPeriod = value);
+                          Provider.of<AgentPolicyProvider>(context, listen: false).fetchCommission(context, period: value);
+                        },
+                        itemBuilder: (_) => _periodLabels.entries.map((e) => PopupMenuItem(value: e.key, child: Text(e.value, style: const TextStyle(fontSize: 13)))).toList(),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white.withOpacity(0.3)),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(_periodLabels[_selectedPeriod] ?? 'This Month', style: const TextStyle(fontSize: 11, color: Colors.white)),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 16),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -270,7 +264,13 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
             Consumer<AgentPolicyProvider>(builder: (_, ap, __) {
               if (ap.loading) return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
               if (ap.policies.isEmpty) return Padding(padding: const EdgeInsets.all(20), child: Center(child: Text('No policies found', style: TextStyle(color: Colors.grey[500], fontSize: 12))));
-              final displayPolicies = ap.policies.take(5).toList();
+              final sortedPolicies = List<Map<String, dynamic>>.from(ap.policies);
+              sortedPolicies.sort((a, b) {
+                final dateA = DateTime.tryParse(a['startDate']?.toString() ?? '') ?? DateTime(1900);
+                final dateB = DateTime.tryParse(b['startDate']?.toString() ?? '') ?? DateTime(1900);
+                return dateB.compareTo(dateA); // most recent first
+              });
+              final displayPolicies = sortedPolicies.take(5).toList();
               return Column(children: displayPolicies.map((p) {
                 final isActive = p['status'] == 'Active';
                 final policyClass = p['policyClass']?.toString() ?? '';
@@ -503,7 +503,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
@@ -540,7 +540,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
@@ -647,7 +647,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                   children: [
                     CircleAvatar(
                       radius: 28,
-                      backgroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                       child: Icon(
                         Icons.person,
                         size: 32,
@@ -738,6 +738,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                   title: 'Reports',
                   onTap: () {
                     Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen()));
                   },
                 ),
                 _buildDrawerItem(
@@ -818,7 +819,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
     Color iconColor,
   ) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),

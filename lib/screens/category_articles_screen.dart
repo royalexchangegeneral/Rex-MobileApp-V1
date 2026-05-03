@@ -77,15 +77,13 @@ class CategoryArticlesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+        title: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -112,15 +110,15 @@ class CategoryArticlesScreen extends StatelessWidget {
                     ),
                     child: Icon(icon, color: color, size: 30),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text('${articles.length} articles', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-            const Text('All Articles', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+            SizedBox(height: 24),
+            Text('All Articles', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 14),
             ...List.generate(articles.length, (index) {
               final article = articles[index];
@@ -133,22 +131,26 @@ class CategoryArticlesScreen extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: SizedBox(
-        width: 50,
-        height: 50,
-        child: FloatingActionButton(
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-          backgroundColor: AppTheme.accentOrange,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: Colors.white, size: 24),
+      floatingActionButton: Transform.translate(
+        offset: const Offset(0, 15),
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: FloatingActionButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+            backgroundColor: AppTheme.accentOrange,
+            shape: const CircleBorder(),
+            elevation: 1,
+            child: const Icon(Icons.add, color: Colors.white, size: 30),
+          ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
-        notchMargin: 6,
+        notchMargin: 4,
         child: SizedBox(
-          height: 50,
+          height: 44,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -156,7 +158,7 @@ class CategoryArticlesScreen extends StatelessWidget {
                 Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
               }),
               _buildNavItem(Icons.description_outlined, 'Policies', false),
-              const SizedBox(width: 40),
+              const SizedBox(width: 48),
               _buildNavItem(Icons.assignment_outlined, 'Claims', false, onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
               }),
@@ -195,12 +197,12 @@ class CategoryArticlesScreen extends StatelessWidget {
               ),
               child: Center(child: Icon(Icons.article_outlined, color: color, size: 20)),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(article['title']!, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                  Text(article['title']!, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 3),
                   Text(article['desc']!, style: TextStyle(fontSize: 10, color: Colors.grey[500], height: 1.3)),
                 ],
@@ -272,15 +274,13 @@ class _ArticleDetailScreenState extends State<_ArticleDetailScreen> {
     final hasNext = _currentIndex < widget.articles.length - 1;
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('${_currentIndex + 1} of ${widget.articles.length}', style: const TextStyle(fontSize: 14, color: Colors.grey)),
+        title: Text('${_currentIndex + 1} of ${widget.articles.length}', style: TextStyle(fontSize: 14, color: Colors.grey)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -291,15 +291,15 @@ class _ArticleDetailScreenState extends State<_ArticleDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(article['read']!, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
             ),
-            const SizedBox(height: 12),
-            Text(article['title']!, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
+            SizedBox(height: 12),
+            Text(article['title']!, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 16),
             Container(
               width: double.infinity,
@@ -329,16 +329,16 @@ class _ArticleDetailScreenState extends State<_ArticleDetailScreen> {
                         child: Row(
                           children: [
                             Icon(Icons.arrow_back_ios, size: 14, color: color),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Previous', style: TextStyle(fontSize: 9, color: Colors.black)),
-                                  const SizedBox(height: 2),
+                                  Text('Previous', style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.onSurface)),
+                                  SizedBox(height: 2),
                                   Text(
                                     widget.articles[_currentIndex - 1]['title']!,
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black),
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -370,11 +370,11 @@ class _ArticleDetailScreenState extends State<_ArticleDetailScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Text('Next', style: TextStyle(fontSize: 9, color: Colors.black)),
-                                  const SizedBox(height: 2),
+                                  Text('Next', style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.onSurface)),
+                                  SizedBox(height: 2),
                                   Text(
                                     widget.articles[_currentIndex + 1]['title']!,
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black),
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),

@@ -24,18 +24,22 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>https</string>
 		<string>http</string>
 		<string>tel</string>
 	</array>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We need your location to find the nearest Rex Insurance office.</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>We need camera access to take photos for claims and documents.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>We use Face ID to securely log you into your RexVerse account.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location to find the nearest Rex Insurance office.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need photo library access to upload documents for claims.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

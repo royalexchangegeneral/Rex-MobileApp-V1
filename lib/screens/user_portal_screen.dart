@@ -1,27 +1,37 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import 'login_screen.dart';
 
 class UserPortalScreen extends StatelessWidget {
   const UserPortalScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bgColor = theme.scaffoldBackgroundColor;
+    final cardColor = isDark ? const Color(0xFF1A1F2E) : Colors.white;
+    final textColor = theme.colorScheme.onSurface;
+    final subtitleColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
+    final borderColor = isDark ? Colors.grey[700]! : Colors.grey[300]!;
+    final shadowColor = isDark ? Colors.transparent : Colors.black.withValues(alpha: 0.05);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             children: [
-              const SizedBox(height: 24),
+              const SizedBox(height: 60),
               
               // Welcome Title
-              const Text(
+              Text(
                 'Welcome to REX Insurance',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: textColor,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -33,7 +43,7 @@ class UserPortalScreen extends StatelessWidget {
                 'Select your platform to continue',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey[600],
+                  color: subtitleColor,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -44,12 +54,12 @@ class UserPortalScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[300]!),
+                  border: Border.all(color: borderColor),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: shadowColor,
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -57,12 +67,12 @@ class UserPortalScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    const Text(
+                    Text(
                       'Customer Portal',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: textColor,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -70,7 +80,7 @@ class UserPortalScreen extends StatelessWidget {
                       'Manage your policies, track claims, update details, secure, user-friendly dashboard.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: subtitleColor,
                         height: 1.4,
                       ),
                       textAlign: TextAlign.center,
@@ -110,12 +120,12 @@ class UserPortalScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[300]!),
+                  border: Border.all(color: borderColor),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: shadowColor,
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -123,12 +133,12 @@ class UserPortalScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    const Text(
+                    Text(
                       'Explore Our Products',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: textColor,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -136,7 +146,7 @@ class UserPortalScreen extends StatelessWidget {
                       'Browse our insurance products, and find the right coverage for your needs, no account required. secure, user-friendly dashboard.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: subtitleColor,
                         height: 1.4,
                       ),
                       textAlign: TextAlign.center,
@@ -176,31 +186,31 @@ class UserPortalScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[300]!),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   children: [
-                    const Text(
+                    Text(
                       'Are you an insurance agent?',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: Colors.black,
+                        color: textColor,
                       ),
                     ),
                     const SizedBox(height: 8),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/login');
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen(isAgentLogin: true)));
                       },
-                      child: const Text(
+                      child: Text(
                         'Agent Portal Login',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryBlue,
+                          color: isDark ? AppTheme.accentOrange : AppTheme.primaryBlue,
                           decoration: TextDecoration.underline,
                         ),
                       ),

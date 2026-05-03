@@ -10,12 +10,18 @@ class AgentPolicyProvider with ChangeNotifier {
   bool _loading = false;
   int _activePolicies = 0;
   int _totalClients = 0;
+  String _commission = '0';
+  String _totalPremium = '0';
+  Map<String, dynamic>? _commissionData;
 
   List<Map<String, dynamic>> get policies => _policies;
   List<Map<String, dynamic>> get customers => _customers;
   bool get loading => _loading;
   int get activePolicies => _activePolicies;
   int get totalClients => _totalClients;
+  String get commission => _commission;
+  String get totalPremium => _totalPremium;
+  Map<String, dynamic>? get commissionData => _commissionData;
 
   Future<void> fetchAgentPolicies(BuildContext context) async {
     _loading = true;
@@ -109,6 +115,54 @@ class AgentPolicyProvider with ChangeNotifier {
         }
       }
     } catch (e) { print('Fetch customer count error: $e'); }
+  }
+
+  Future<void> fetchCommission(BuildContext context, {String period = 'this_month'}) async {
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final agentCode = auth.userCode?.toString() ?? '';
+
+      // Calculate date range based on period
+      final now = DateTime.now();
+      String startDate;
+      String endDate;
+      final fmt = (DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+      if (period == 'today') {
+        startDate = fmt(now);
+        endDate = fmt(now);
+      } else if (period == 'this_week') {
+        final weekStart = now.subtract(Duration(days: now.weekday - 1));
+        final weekEnd = weekStart.add(const Duration(days: 6));
+        startDate = fmt(weekStart);
+        endDate = fmt(weekEnd);
+      } else {
+        // this_month
+        final monthStart = DateTime(now.year, now.month, 1);
+        final monthEnd = DateTime(now.year, now.month + 1, 0);
+        startDate = fmt(monthStart);
+        endDate = fmt(monthEnd);
+      }
+
+      print('=== FETCH COMMISSION ===');
+      print('agentcode: $agentCode, period: $period, startdate: $startDate, enddate: $endDate');
+
+      final r = await http.get(
+        Uri.parse('https://eportaltest.rexinsure.com/api/get-commission?agentcode=$agentCode&period=$period&startdate=$startDate&enddate=$endDate'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 15));
+
+      print('=== COMMISSION RESPONSE: ${r.statusCode} ===');
+      print(r.body.length > 500 ? '${r.body.substring(0, 500)}...' : r.body);
+
+      if (r.statusCode == 200 || r.statusCode == 201) {
+        final d = json.decode(r.body);
+        _commissionData = d;
+        _commission = d['total_commission']?.toString() ?? d['commission']?.toString() ?? '0';
+        _totalPremium = d['total_premium']?.toString() ?? d['premium']?.toString() ?? '0';
+        notifyListeners();
+      }
+    } catch (e) { print('Fetch commission error: $e'); }
   }
 
   String _getPolicyStatus(String? endDate) {

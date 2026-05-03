@@ -54,15 +54,13 @@ class _AgentPoliciesScreenState extends State<AgentPoliciesScreen> {
       final expiredCount = ap.policies.where((p) => p['status'] == 'Expired').length;
 
       return Scaffold(
-        backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text('My Policies', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+          title: Text('My Policies', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
           centerTitle: true,
         ),
         body: SingleChildScrollView(
@@ -81,21 +79,21 @@ class _AgentPoliciesScreenState extends State<AgentPoliciesScreen> {
                   _buildSummaryCard('$expiredCount', 'Expired', Icons.error_outline, Colors.red),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
 
               // Search bar
               TextField(
                 controller: _searchController,
                 onChanged: (_) => setState(() {}),
-                style: const TextStyle(fontSize: 13, color: Colors.black),
+                style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface),
                 decoration: InputDecoration(
                   hintText: 'Search by policy number, client name...',
                   hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
                   suffixIcon: Icon(Icons.search, color: Colors.grey[400]),
                   filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[300]!)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[300]!)),
+                  fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primaryNavy)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
@@ -216,14 +214,14 @@ class _AgentPoliciesScreenState extends State<AgentPoliciesScreen> {
                   color: AppTheme.primaryNavy.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.description_outlined, color: AppTheme.primaryNavy, size: 18),
+                child: Icon(Icons.description_outlined, color: AppTheme.primaryNavy, size: 18),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('$policyClass Insurance', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+                    Text('$policyClass Insurance', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                     const SizedBox(height: 2),
                     Text(p['customerName']?.toString() ?? '', style: TextStyle(fontSize: 10, color: Colors.grey[500])),
                     Text('Policy #${p['policyId']}', style: TextStyle(fontSize: 10, color: Colors.grey[500])),
@@ -258,8 +256,8 @@ class _AgentPoliciesScreenState extends State<AgentPoliciesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text('Premium', style: TextStyle(fontSize: 10, color: Colors.grey[500])),
-                    const SizedBox(height: 2),
-                    Text('₦${p['premium'] ?? '0'} / yearly', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black)),
+                    SizedBox(height: 2),
+                    Text('₦${p['premium'] ?? '0'} / yearly', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                   ],
                 ),
               ),

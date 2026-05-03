@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../providers/agent_policy_provider.dart';
+import '../providers/auth_provider.dart';
 import 'agent_dashboard_screen.dart';
 import 'clients_list_screen.dart';
 import 'reports_screen.dart';
@@ -47,23 +50,28 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
     try {
       // Convert DOB from DD/MM/YYYY to YYYY-MM-DD
       final dobFormatted = _convertDateFormat(widget.clientData['dob'] ?? '');
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final agentCode = auth.userCode?.toString() ?? auth.userData?['Usercode']?.toString() ?? '';
       
       final requestBody = {
-        'cust_first_name': widget.clientData['firstName'] ?? '',
-        'cust_middle_name': '', // Not collected in form
-        'cust_last_name': widget.clientData['lastName'] ?? '',
+        'cust_first_name': widget.clientType == 'corporate' 
+            ? (widget.clientData['businessName'] ?? '') 
+            : (widget.clientData['firstName'] ?? ''),
+        'cust_middle_name': '.', 
+        'cust_last_name': widget.clientType == 'corporate' ? '.' : (widget.clientData['lastName'] ?? ''),
         'cust_type': widget.clientType == 'individual' ? 'Individual' : 'Corporate',
-        'cust_occupation': '', // Not collected in form
+        'cust_occupation': 'Business',
         'cust_phone_no': widget.clientData['phone'] ?? '',
         'cust_email': widget.clientData['email'] ?? '',
-        'cust_address': widget.clientData['address'] ?? '',
-        'cust_town': '', // Not collected in form
-        'cust_nationality': 'Nigerian', // Default value
-        'cust_state': widget.clientData['state'] ?? '',
-        'cust_lga': widget.clientData['lga'] ?? '',
-        'cust_dob': dobFormatted,
-        'cust_national_id_name': 'NIN',
-        'cust_national_id_no': widget.clientData['nin'] ?? '',
+        'cust_address': widget.clientType == 'corporate' ? (widget.clientData['businessAddress'] ?? '.') : (widget.clientData['address'] ?? '.'),
+        'cust_town': '.', 
+        'cust_nationality': 'Nigerian',
+        'cust_state': widget.clientData['state'] ?? 'Lagos',
+        'cust_lga': widget.clientData['lga'] ?? 'Ikeja',
+        'cust_dob': dobFormatted.isNotEmpty ? dobFormatted : '1990-01-01',
+        'cust_national_id_name': widget.clientType == 'corporate' ? 'CAC' : 'NIN',
+        'cust_national_id_no': widget.clientType == 'corporate' ? (widget.clientData['cac'] ?? '') : (widget.clientData['nin'] ?? ''),
+        'cust_agent': agentCode,
       };
       
       print('=== CREATE CUSTOMER API REQUEST ===');
@@ -99,8 +107,14 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
             ),
           );
           
-          // Navigate back to clients list
-          Navigator.popUntil(context, (route) => route.isFirst);
+          // Refresh the customer list
+          if (mounted) {
+            Provider.of<AgentPolicyProvider>(context, listen: false).fetchAgentPolicies(context);
+            Provider.of<AgentPolicyProvider>(context, listen: false).fetchCustomerCount(context);
+          }
+          
+          // Navigate to clients list screen
+          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const ClientsListScreen()), (route) => route.isFirst);
         } else {
           final responseData = json.decode(response.body);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -134,20 +148,18 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Add A New Client',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -227,12 +239,12 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Client Information',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -398,14 +410,14 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
               fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: Colors.black,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
               ),
             ),

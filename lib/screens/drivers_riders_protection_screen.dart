@@ -1,137 +1,116 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
-import 'customer_dashboard_screen.dart';
-import 'customer_profile_screen.dart';
-import 'my_claims_screen.dart';
-import 'new_policy_screen.dart';
-import 'home_protection_id_screen.dart';
+import 'personal_care_purchase_screen.dart';
 import 'customer_renewal_screen.dart';
-import 'quote_screen.dart';
 
 class DriversRidersProtectionScreen extends StatelessWidget {
-  const DriversRidersProtectionScreen({super.key});
+  final bool isFromNewPolicy;
+  const DriversRidersProtectionScreen({super.key, this.isFromNewPolicy = false});
+
+  final List<String> _cardImages = const [
+    'assets/images/e6.png',
+    'assets/images/e6.png',
+    'assets/images/e6.png',
+    'assets/images/e6.png',
+    'assets/images/e6.png',
+  ];
+
+  List<Map<String, String>> get _cardData => const [
+    {'title': 'Option A', 'price': '₦2,000 yearly', 'death': '₦250,000.00', 'disability': '₦250,000.00', 'medical': '₦50,000.00', 'premium': '₦2000'},
+    {'title': 'Option B', 'price': '₦3,400 yearly', 'death': '₦350,000.00', 'disability': '₦350,000.00', 'medical': '₦100,000.00', 'premium': '₦3400'},
+    {'title': 'Option C', 'price': '₦5,000 yearly', 'death': '₦500,000.00', 'disability': '₦500,000.00', 'medical': '₦150,000.00', 'premium': '₦5000'},
+    {'title': 'Option D', 'price': '₦7,000 yearly', 'death': '₦750,000.00', 'disability': '₦750,000.00', 'medical': '₦200,000.00', 'premium': '₦7000'},
+    {'title': 'Option E', 'price': '₦9,000 yearly', 'death': '₦1,000,000.00', 'disability': '₦1,000,000.00', 'medical': '₦250,000.00', 'premium': '₦9000'},
+  ];
+
+  static const List<Color> _bgColors = [Color(0xFFFFF3E0), Color(0xFFE8F5E9), Color(0xFFE8EAF6), Color(0xFFE8EAF6), Color(0xFFFCE4EC)];
+  static const List<Color> _icColors = [Color(0xFF5D4037), Color(0xFF2E7D32), Color(0xFF283593), Color(0xFF283593), Color(0xFF880E4F)];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-        title: const Text('Drivers & Riders Protection', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
-        centerTitle: true,
-        actions: [IconButton(icon: const Icon(Icons.tune, color: Colors.black), onPressed: () {})],
-      ),
-      body: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _card(context, 'Option A', '₦250,000.00', '₦250,000.00', '₦50,000.00', '₦2000', const Color(0xFFFFF3E0), const Color(0xFF5D4037),
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeProtectionIdScreen(planType: 'Drivers - Option A', totalSteps: 4))),
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerRenewalScreen())),
-            ),
-            const SizedBox(height: 12),
-            _card(context, 'Option B', '₦350,000.00', '₦350,000.00', '₦100,000.00', '₦3400', const Color(0xFFE8F5E9), const Color(0xFF2E7D32),
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeProtectionIdScreen(planType: 'Drivers - Option B', totalSteps: 4))),
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerRenewalScreen())),
-            ),
-            const SizedBox(height: 12),
-            _card(context, 'Option C', '₦500,000.00', '₦500,000.00', '₦150,000.00', '₦5000', const Color(0xFFE8EAF6), const Color(0xFF283593),
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeProtectionIdScreen(planType: 'Drivers - Option C', totalSteps: 4))),
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerRenewalScreen())),
-            ),
-            const SizedBox(height: 12),
-            _card(context, 'Option D', '₦750,000.00', '₦750,000.00', '₦200,000.00', '₦7000', const Color(0xFFE8EAF6), const Color(0xFF283593),
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeProtectionIdScreen(planType: 'Drivers - Option D', totalSteps: 4))),
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerRenewalScreen())),
-            ),
-            const SizedBox(height: 12),
-            _card(context, 'Option E', '₦1,000,000.00', '₦1,000,000.00', '₦250,000.00', '₦9000', const Color(0xFFFCE4EC), const Color(0xFF880E4F),
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeProtectionIdScreen(planType: 'Drivers - Option E', totalSteps: 4))),
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerRenewalScreen())),
-            ),
-            const SizedBox(height: 12),
-            // Get Quote
-            Container(
-              clipBehavior: Clip.hardEdge,
-              decoration: BoxDecoration(color: const Color(0xFFF5F0E8), borderRadius: BorderRadius.circular(12)),
-              child: Stack(children: [
-                Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('For sum insured/benefit more than above', style: TextStyle(fontSize: 10, color: Colors.grey[700])),
-                  const SizedBox(height: 24),
-                  Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                    ElevatedButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QuoteScreen(insuranceType: 'Drivers & Riders Protection'))), style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: const Text('Get Quote', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
-                  ]),
-                ])),
-                Positioned(top: 8, right: 8, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: const Color(0xFF5D4037).withValues(alpha: 0.15), shape: BoxShape.circle), child: const Icon(Icons.sports_motorsports_outlined, color: Color(0xFF5D4037), size: 18))),
-              ]),
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-      floatingActionButton: SizedBox(width: 50, height: 50, child: FloatingActionButton(
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-        backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 24),
-      )),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6, child: SizedBox(height: 50, child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _nav(context, Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
-          _nav(context, Icons.description_outlined, 'Policies', true, null),
-          const SizedBox(width: 40),
-          _nav(context, Icons.assignment_outlined, 'Claims', false, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()))),
-          _nav(context, Icons.person_outline, 'Profile', false, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()))),
-        ],
-      ))),
-    );
+    if (isFromNewPolicy) return _buildFlatLayout(context);
+    return _buildExploreLayout(context);
   }
-  Widget _card(BuildContext context, String title, String death, String disability, String medical, String premium, Color bg, Color iconColor, VoidCallback onBuy, VoidCallback onRenew) {
-    return Container(
-      clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
-      child: Stack(children: [
-        Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
-          const SizedBox(height: 2),
-          Text('For sum insured/benefit up to', style: TextStyle(fontSize: 10, color: Colors.grey[700])),
-          const SizedBox(height: 8),
-          RichText(text: TextSpan(style: const TextStyle(fontSize: 12, color: Colors.black), children: [
-            TextSpan(text: '$death ', style: const TextStyle(fontWeight: FontWeight.bold)),
-            const TextSpan(text: '(Death)', style: TextStyle(color: Colors.grey)),
-          ])),
-          const SizedBox(height: 4),
-          RichText(text: TextSpan(style: const TextStyle(fontSize: 12, color: Colors.black), children: [
-            TextSpan(text: '$disability ', style: const TextStyle(fontWeight: FontWeight.bold)),
-            const TextSpan(text: '(Permanent Disability)', style: TextStyle(color: Colors.grey)),
-          ])),
-          RichText(text: TextSpan(style: const TextStyle(fontSize: 12, color: Colors.black), children: [
-            TextSpan(text: '$medical ', style: const TextStyle(fontWeight: FontWeight.bold)),
-            const TextSpan(text: '(Medical Expenses)', style: TextStyle(color: Colors.grey)),
-          ])),
-          const SizedBox(height: 12),
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            ElevatedButton(onPressed: onBuy, style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: const Text('Buy Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
-          ]),
-          const SizedBox(height: 10),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Premium', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
-              Text('$premium yearly', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
-            ]),
-            OutlinedButton(onPressed: onRenew, style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primaryNavy, side: const BorderSide(color: AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: const Text('Renew Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600))),
-          ]),
+
+  Widget _buildFlatLayout(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+        title: Text('Drivers & Riders Protection', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)), centerTitle: true),
+      body: SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), padding: EdgeInsets.all(16),
+        child: Column(children: [
+          ...List.generate(_cardData.length, (i) {
+            final d = _cardData[i];
+            return Padding(padding: EdgeInsets.only(bottom: 12), child: Container(
+              clipBehavior: Clip.hardEdge, decoration: BoxDecoration(color: _bgColors[i], borderRadius: BorderRadius.circular(12)),
+              child: Padding(padding: EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(d['title']!, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                const SizedBox(height: 2),
+                Text('For sum insured/benefit up to', style: TextStyle(fontSize: 10, color: Colors.grey[700])),
+                const SizedBox(height: 8),
+                _amt(d['death']!, '(Death)'), const SizedBox(height: 4),
+                _amt(d['disability']!, '(Permanent Disability)'),
+                _amt(d['medical']!, '(Medical Expenses)'),
+                SizedBox(height: 12),
+                Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                  ElevatedButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PersonalCarePurchaseScreen(optionTitle: d['title']!, price: d['price']!, productName: 'Driver Protection Plan'))),
+                    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                    child: Text('Buy Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)))]),
+                SizedBox(height: 10),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Premium', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+                    Text('${d['premium']} yearly', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface))]),
+                  OutlinedButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerRenewalScreen())),
+                    style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primaryNavy, side: const BorderSide(color: AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                    child: Text('Renew Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)))]),
+              ])),
+            ));
+          }),
+          SizedBox(height: 20),
         ])),
-        Positioned(top: 8, right: 8, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.15), shape: BoxShape.circle), child: Icon(Icons.sports_motorsports_outlined, color: iconColor, size: 18))),
-      ]),
     );
   }
 
-  Widget _nav(BuildContext context, IconData icon, String label, bool sel, VoidCallback? onTap) => InkWell(onTap: onTap, child: Column(mainAxisSize: MainAxisSize.min, children: [
-    Icon(icon, color: sel ? AppTheme.primaryNavy : Colors.grey, size: 20),
-    Text(label, style: TextStyle(fontSize: 10, color: sel ? AppTheme.primaryNavy : Colors.grey)),
-  ]));
+  Widget _amt(String v, String l) => RichText(text: TextSpan(style: TextStyle(fontSize: 12, color: Colors.black87), children: [
+    TextSpan(text: '$v ', style: const TextStyle(fontWeight: FontWeight.bold)), TextSpan(text: l, style: const TextStyle(color: Colors.grey))]));
+
+  Widget _buildExploreLayout(BuildContext context) {
+    return Scaffold(body: CustomScrollView(slivers: [
+      SliverAppBar(expandedHeight: 450, pinned: false,
+        leading: Container(margin: EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.3), shape: BoxShape.circle),
+          child: IconButton(icon: Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context))),
+        flexibleSpace: FlexibleSpaceBar(background: Column(children: [
+          Expanded(child: Stack(fit: StackFit.expand, children: [
+            Image.asset('assets/images/e6.png', fit: BoxFit.cover),
+            Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.black.withValues(alpha: 0.2), Colors.black.withValues(alpha: 0.5)]))),
+          ])),
+          Container(color: Colors.white, padding: EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Drivers & Riders Protection', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)), SizedBox(height: 8),
+            Text('This product is a compensation plan specially designed for licensed, personal drivers, corporate drivers, commercial drivers, dispatch riders, tricycle riders and motorcycle riders to provide payment for medical expenses in event of an accident.', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface, height: 1.4)),
+          ])),
+        ]))),
+      SliverPadding(padding: const EdgeInsets.all(16), sliver: SliverList(delegate: SliverChildBuilderDelegate(
+        (context, index) => Padding(padding: const EdgeInsets.only(bottom: 16), child: _buildImageCard(_cardImages[index], index, context)),
+        childCount: _cardImages.length))),
+    ]));
+  }
+
+  Widget _buildImageCard(String imagePath, int index, BuildContext context) {
+    final data = _cardData[index];
+    return Container(height: 220, decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), image: DecorationImage(image: AssetImage(imagePath), fit: BoxFit.cover)),
+      child: Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.black.withValues(alpha: 0.4), Colors.black.withValues(alpha: 0.85)])),
+        padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.end, children: [Text(data['price']!, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white))]),
+          const SizedBox(height: 6),
+          Text(data['title']!, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+          const SizedBox(height: 4),
+          Text('• Death: ${data['death']}\n• Disability: ${data['disability']}\n• Medical: ${data['medical']}', style: const TextStyle(fontSize: 12, color: Colors.white, height: 1.3), maxLines: 3, overflow: TextOverflow.ellipsis),
+          const Spacer(),
+          Align(alignment: Alignment.centerRight, child: ElevatedButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PersonalCarePurchaseScreen(optionTitle: data['title']!, price: data['price']!, productName: 'Driver Protection Plan'))),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentOrange, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+            child: const Text('Buy Now', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)))),
+        ])));
+  }
 }

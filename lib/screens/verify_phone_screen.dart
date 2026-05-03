@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../utils/app_theme.dart';
 
 class VerifyPhoneScreen extends StatefulWidget {
@@ -102,19 +105,84 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
     );
   }
 
-  void _submitPhone() {
-    if (_phoneController.text.isNotEmpty) {
-      setState(() {
-        _isSubmitted = true;
-      });
+  bool _isSendingOtp = false;
+
+  Future<void> _submitPhone() async {
+    if (_phoneController.text.isEmpty) return;
+    var phone = _phoneController.text.trim();
+    if (phone.startsWith('0')) phone = phone.substring(1);
+    final fullPhone = '$_selectedCountryCode$phone';
+    setState(() => _isSendingOtp = true);
+    try {
+      final response = await http.post(
+        Uri.parse('https://eportaltest.rexinsure.com/api/send-otp'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'mobileNo': fullPhone, 'email': widget.email}),
+      ).timeout(const Duration(seconds: 15));
+      print('=== SEND OTP: ${response.statusCode} ===');
+      print('Payload: {"mobileNo": "$fullPhone", "email": "${widget.email}"}');
+      print('Body: ${response.body}');
+      setState(() => _isSendingOtp = false);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('signup_phone', fullPhone);
+        setState(() => _isSubmitted = true);
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OTP sent successfully'), backgroundColor: Colors.green));
+      } else {
+        String errorMsg = 'Failed to send OTP';
+        try { final d = json.decode(response.body); errorMsg = d['Message']?.toString() ?? d['message']?.toString() ?? errorMsg; } catch (_) {}
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMsg), backgroundColor: Colors.red));
+      }
+    } catch (e) {
+      setState(() => _isSendingOtp = false);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
     }
   }
 
   void _onCodeChanged(int index, String value) {
-    setState(() {});
-    if (value.isNotEmpty && index < 3) {
-      _codeFocusNodes[index + 1].requestFocus();
+    // Handle paste / iOS AutoFill: value may contain multiple digits
+    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+    
+    if (digits.length > 1) {
+      // Distribute digits across all fields starting from the first box
+      for (int i = 0; i < 4; i++) {
+        if (i < digits.length) {
+          _codeControllers[i].text = digits[i];
+          _codeControllers[i].selection = TextSelection.fromPosition(
+            TextPosition(offset: 1),
+          );
+        }
+      }
+      // Move focus to last filled field or the 4th field
+      final lastIndex = (digits.length - 1).clamp(0, 3);
+      _codeFocusNodes[lastIndex].requestFocus();
+      setState(() {});
+      // Auto-verify if all 4 digits are filled
+      if (digits.length >= 4 && _codeControllers.every((c) => c.text.isNotEmpty)) {
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) _verifyCode();
+        });
+      }
+      return;
     }
+    
+    // Single digit: keep only 1 character
+    if (digits.length == 1) {
+      if (_codeControllers[index].text != digits) {
+        _codeControllers[index].text = digits;
+        _codeControllers[index].selection = TextSelection.fromPosition(
+          TextPosition(offset: 1),
+        );
+      }
+      // Move to next field
+      if (index < 3) {
+        _codeFocusNodes[index + 1].requestFocus();
+      }
+    } else if (digits.isEmpty) {
+      _codeControllers[index].text = '';
+    }
+    
+    setState(() {});
   }
 
   void _onBackspace(int index) {
@@ -123,28 +191,75 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
     }
   }
 
+  bool _isVerifyingOtp = false;
+
   Future<void> _verifyCode() async {
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      Navigator.pushNamed(context, '/verification-success');
+    final otp = _codeControllers.map((c) => c.text).join();
+    if (otp.length != 4) return;
+
+    var phone = _phoneController.text.trim();
+    if (phone.startsWith('0')) phone = phone.substring(1);
+    final fullPhone = '$_selectedCountryCode$phone';
+
+    setState(() => _isVerifyingOtp = true);
+    try {
+      final response = await http.post(
+        Uri.parse('https://eportaltest.rexinsure.com/api/verify-otp'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'mobileNo': fullPhone, 'otp': otp}),
+      ).timeout(const Duration(seconds: 15));
+
+      print('=== VERIFY OTP: ${response.statusCode} ===');
+      print('Payload: {"mobileNo": "$fullPhone", "otp": "$otp"}');
+      print('Body: ${response.body}');
+
+      setState(() => _isVerifyingOtp = false);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = json.decode(response.body);
+        if (data['status'] == true || data['Status']?.toString().toLowerCase() == 'success') {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Phone verified successfully'), backgroundColor: Colors.green));
+            Navigator.pushNamed(context, '/verification-success');
+          }
+        } else {
+          final msg = data['message']?.toString() ?? data['Message']?.toString() ?? 'Invalid OTP';
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
+        }
+      } else {
+        String errorMsg = 'OTP verification failed';
+        try { final d = json.decode(response.body); errorMsg = d['message']?.toString() ?? d['Message']?.toString() ?? errorMsg; } catch (_) {}
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMsg), backgroundColor: Colors.red));
+      }
+    } catch (e) {
+      setState(() => _isVerifyingOtp = false);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
     }
   }
 
   Future<void> _resendCode() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Code resent')),
-    );
+    var phone = _phoneController.text.trim();
+    if (phone.startsWith('0')) phone = phone.substring(1);
+    final fullPhone = '$_selectedCountryCode$phone';
+    try {
+      await http.post(
+        Uri.parse('https://eportaltest.rexinsure.com/api/send-otp'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'mobileNo': fullPhone, 'email': widget.email}),
+      ).timeout(const Duration(seconds: 15));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Code resent'), backgroundColor: Colors.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -164,14 +279,14 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               
-              const Text(
+              Text(
                 'Verify your Phone Number',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               
@@ -204,15 +319,15 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                           children: [
                             Text(
                               _selectedCountryFlag,
-                              style: const TextStyle(fontSize: 20),
+                              style: TextStyle(fontSize: 20),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Text(
                               _selectedCountryCode,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.black,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(width: 4),
@@ -221,24 +336,25 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: TextFormField(
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
-                        style: const TextStyle(color: Colors.black, fontSize: 14),
+                        autofillHints: const [AutofillHints.telephoneNumber],
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
                         decoration: InputDecoration(
                           hintText: 'Phone Number',
                           hintStyle: TextStyle(color: Colors.grey[400]),
                           filled: true,
-                          fillColor: Colors.grey[50],
+                          fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -257,7 +373,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _isPhoneValid ? _submitPhone : null,
+                    onPressed: _isPhoneValid && !_isSendingOtp ? _submitPhone : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _isPhoneValid ? AppTheme.primaryBlue : Colors.grey[300],
                       foregroundColor: Colors.white,
@@ -266,13 +382,9 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      'Submit',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: _isSendingOtp
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : Text('Submit', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ] else ...[
@@ -286,10 +398,10 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                     children: [
                       const TextSpan(text: 'Please enter the code we have sent to '),
                       TextSpan(
-                        text: '0${_phoneController.text}',
-                        style: const TextStyle(
+                        text: _phoneController.text.startsWith('0') ? _phoneController.text : '0${_phoneController.text}',
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -298,50 +410,63 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                 
                 const SizedBox(height: 32),
                 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(4, (index) {
-                    return SizedBox(
-                      width: 70,
-                      height: 70,
-                      child: TextField(
-                        controller: _codeControllers[index],
-                        focusNode: _codeFocusNodes[index],
-                        textAlign: TextAlign.center,
-                        keyboardType: TextInputType.number,
-                        maxLength: 1,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                        decoration: InputDecoration(
-                          counterText: '',
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppTheme.primaryBlue,
-                              width: 2,
+                AutofillGroup(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(4, (index) {
+                      return SizedBox(
+                        width: 70,
+                        height: 70,
+                        child: KeyboardListener(
+                          focusNode: FocusNode(),
+                          onKeyEvent: (event) {
+                            if (event is KeyDownEvent &&
+                                event.logicalKey == LogicalKeyboardKey.backspace) {
+                              _onBackspace(index);
+                            }
+                          },
+                          child: TextField(
+                            controller: _codeControllers[index],
+                            focusNode: _codeFocusNodes[index],
+                            textAlign: TextAlign.center,
+                            keyboardType: TextInputType.number,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
+                            autofillHints: index == 0
+                                ? const [AutofillHints.oneTimeCode]
+                                : null,
+                            decoration: InputDecoration(
+                              counterText: '',
+                              filled: true,
+                              fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: AppTheme.primaryBlue,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            onChanged: (value) => _onCodeChanged(index, value),
                           ),
                         ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        onChanged: (value) => _onCodeChanged(index, value),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
+                  ),
                 ),
                 
                 const SizedBox(height: 32),
@@ -350,7 +475,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _codeControllers.every((c) => c.text.isNotEmpty)
+                    onPressed: _codeControllers.every((c) => c.text.isNotEmpty) && !_isVerifyingOtp
                         ? _verifyCode
                         : null,
                     style: ElevatedButton.styleFrom(
@@ -363,13 +488,9 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      'Submit',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: _isVerifyingOtp
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : Text('Submit', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                   ),
                 ),
                 
@@ -393,12 +514,12 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                           minimumSize: const Size(0, 0),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        child: const Text(
+                        child: Text(
                           'Resend code',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),

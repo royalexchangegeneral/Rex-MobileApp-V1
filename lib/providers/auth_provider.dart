@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -13,6 +14,12 @@ class AuthProvider with ChangeNotifier {
   String? _profilePhoto;
   Map<String, dynamic>? _userData;
 
+  // Brute force protection
+  int _failedLoginAttempts = 0;
+  DateTime? _lockoutUntil;
+  static const int _maxAttempts = 5;
+  static const Duration _lockoutDuration = Duration(seconds: 30);
+
   bool get isAuthenticated => _isAuthenticated;
   String? get userId => _userId;
   String? get userName => _userName;
@@ -21,9 +28,29 @@ class AuthProvider with ChangeNotifier {
   String? get userCode => _userCode;
   String? get profilePhoto => _profilePhoto;
   Map<String, dynamic>? get userData => _userData;
-  
+  int get failedLoginAttempts => _failedLoginAttempts;
+  int get remainingAttempts => (_maxAttempts - _failedLoginAttempts).clamp(0, _maxAttempts);
+
   bool isAgent() => _userType == 'agent';
   bool isCustomer() => _userType == 'customer';
+
+  /// Returns true if the account is currently locked out due to too many failed attempts.
+  bool get isLockedOut {
+    if (_lockoutUntil == null) return false;
+    if (DateTime.now().isAfter(_lockoutUntil!)) {
+      _lockoutUntil = null;
+      _failedLoginAttempts = 0;
+      return false;
+    }
+    return true;
+  }
+
+  /// Returns the remaining lockout duration, or Duration.zero if not locked.
+  Duration get lockoutRemaining {
+    if (_lockoutUntil == null) return Duration.zero;
+    final remaining = _lockoutUntil!.difference(DateTime.now());
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
 
   // Check authentication status
   Future<void> checkAuthStatus() async {
@@ -44,18 +71,29 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // API login
-  Future<bool> login(String email, String password) async {
+  /// API login with brute force protection.
+  /// Returns a LoginResult with success status and optional error message.
+  Future<LoginResult> login(String email, String password) async {
+    // Check lockout
+    if (isLockedOut) {
+      final secs = lockoutRemaining.inSeconds;
+      return LoginResult(
+        success: false,
+        message: 'Too many failed attempts. Try again in $secs seconds.',
+      );
+    }
+
     try {
       final requestBody = {
         'userid': email,
         'password': password,
       };
 
-      print('=== LOGIN API REQUEST ===');
-      print('URL: https://eportaltest.rexinsure.com/api/userlogin');
-      print('Request Body: ${json.encode(requestBody)}');
-      print('=========================');
+      if (kDebugMode) {
+        print('=== LOGIN API REQUEST ===');
+        print('URL: https://eportaltest.rexinsure.com/api/userlogin');
+        print('=========================');
+      }
       
       final response = await http.post(
         Uri.parse('https://eportaltest.rexinsure.com/api/userlogin'),
@@ -63,21 +101,15 @@ class AuthProvider with ChangeNotifier {
         body: json.encode(requestBody),
       ).timeout(const Duration(seconds: 15));
 
-      print('=== LOGIN API RESPONSE ===');
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
-      print('==========================');
+      if (kDebugMode) {
+        print('=== LOGIN API RESPONSE ===');
+        print('Status Code: ${response.statusCode}');
+        print('==========================');
+      }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
         
-        print('=== PARSED LOGIN DATA ===');
-        print('All keys: ${data.keys.toList()}');
-        print('Statuscode value: "${data['Statuscode']}" (type: ${data['Statuscode'].runtimeType})');
-        print('Status value: "${data['Status']}" (type: ${data['Status'].runtimeType})');
-        print('=========================');
-        
-        // Check if login was successful - accept any success indicator
         final statusCode = data['Statuscode']?.toString() ?? '';
         final status = data['Status']?.toString() ?? '';
         
@@ -85,14 +117,8 @@ class AuthProvider with ChangeNotifier {
           final userData = data['Data'];
           final userTypeCode = userData['UserType']?.toString() ?? '';
           
-          print('UserType code: $userTypeCode');
-          
-          // Determine user type based on UserType code
-          // 009 = customer, 007/008/010 = agent
+          // Determine user type: 009 = customer, 007/008/010 = agent
           final userType = userTypeCode == '009' ? 'customer' : 'agent';
-          
-          print('Determined user type: $userType');
-          print('Will navigate to: ${userType == "agent" ? "AgentDashboard" : "CustomerDashboard"}');
           
           // Save to SharedPreferences
           final prefs = await SharedPreferences.getInstance();
@@ -114,35 +140,47 @@ class AuthProvider with ChangeNotifier {
           _userCode = userData['Usercode']?.toString();
           _profilePhoto = userData['ProfilePhoto'];
           _userData = userData;
+
+          // Reset brute force counters on success
+          _failedLoginAttempts = 0;
+          _lockoutUntil = null;
           
           notifyListeners();
-          return true;
+          return LoginResult(success: true);
         } else {
-          print('=== LOGIN CHECK FAILED ===');
-          print('statusCode check: $statusCode (expected 200 or 201)');
-          print('status check: $status (expected Active)');
-          print('==========================');
+          _recordFailedAttempt();
+          return LoginResult(
+            success: false,
+            message: _failedLoginAttempts >= _maxAttempts
+                ? 'Account locked for ${_lockoutDuration.inSeconds} seconds due to too many failed attempts.'
+                : 'Invalid credentials. $remainingAttempts attempts remaining.',
+          );
         }
       } else {
-        print('=== LOGIN HTTP FAILED ===');
-        print('HTTP Status code: ${response.statusCode} (expected 200 or 201)');
-        print('Response: ${response.body}');
-        print('=========================');
+        _recordFailedAttempt();
+        return LoginResult(
+          success: false,
+          message: 'Server error (${response.statusCode}). $remainingAttempts attempts remaining.',
+        );
       }
-      
-      return false;
     } catch (e) {
       debugPrint('Login error: $e');
-      return false;
+      return LoginResult(success: false, message: 'Connection error. Please check your internet.');
     }
+  }
+
+  void _recordFailedAttempt() {
+    _failedLoginAttempts++;
+    if (_failedLoginAttempts >= _maxAttempts) {
+      _lockoutUntil = DateTime.now().add(_lockoutDuration);
+    }
+    notifyListeners();
   }
 
   // Mock signup
   Future<bool> signup(String name, String email, String password) async {
-    // Simulate API call delay
     await Future.delayed(const Duration(seconds: 1));
     
-    // Mock validation
     if (name.isNotEmpty && email.isNotEmpty && password.length >= 6) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isAuthenticated', true);
@@ -177,4 +215,11 @@ class AuthProvider with ChangeNotifier {
     
     notifyListeners();
   }
+}
+
+/// Result of a login attempt, includes success flag and optional message.
+class LoginResult {
+  final bool success;
+  final String? message;
+  LoginResult({required this.success, this.message});
 }

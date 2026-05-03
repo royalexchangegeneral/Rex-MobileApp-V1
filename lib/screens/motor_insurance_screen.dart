@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
 import 'private_car_purchase_screen.dart';
 import 'comprehensive_personal_info_screen.dart';
+import 'royal_auto_purchase_screen.dart';
 
 class MotorInsuranceScreen extends StatelessWidget {
   const MotorInsuranceScreen({super.key});
@@ -21,7 +22,6 @@ class MotorInsuranceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: Stack(
         children: [
           CustomScrollView(
@@ -29,7 +29,7 @@ class MotorInsuranceScreen extends StatelessWidget {
               SliverAppBar(
                 expandedHeight: 450,
                 pinned: false,
-                backgroundColor: Colors.white,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 leading: Container(
                   margin: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -37,7 +37,7 @@ class MotorInsuranceScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    icon: Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -63,15 +63,15 @@ class MotorInsuranceScreen extends StatelessWidget {
                       ),
                       Container(
                         color: Colors.white,
-                        padding: const EdgeInsets.all(24),
-                        child: const Column(
+                        padding: EdgeInsets.all(24),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Motor Insurance', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                            Text('Motor Insurance', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                             SizedBox(height: 8),
                             Text(
                               'This policy covers the third party against bodily injury and death resulting from a car accident caused by the insured the legal liability of the insured where damage was caused to another person\'s property',
-                              style: TextStyle(fontSize: 11, color: Colors.black87, height: 1.4),
+                              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface, height: 1.4),
                             ),
                           ],
                         ),
@@ -122,12 +122,12 @@ class MotorInsuranceScreen extends StatelessWidget {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
-              children: [Text(cardData['price'] as String, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white))],
+              children: [Text(cardData['price'] as String, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white))],
             ),
             const SizedBox(height: 6),
-            Text(cardData['title'] as String, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text(cardData['title'] as String, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 4),
-            Text(cardData['description'] as String, style: const TextStyle(fontSize: 10, color: Colors.white, height: 1.3), maxLines: 3, overflow: TextOverflow.ellipsis),
+            Text(cardData['description'] as String, style: const TextStyle(fontSize: 12, color: Colors.white, height: 1.3), maxLines: 3, overflow: TextOverflow.ellipsis),
             const Spacer(),
             Align(
               alignment: Alignment.centerRight,
@@ -151,7 +151,7 @@ class MotorInsuranceScreen extends StatelessWidget {
   Map<String, dynamic> _getCardData(int index) {
     final data = [
       {'title': 'Private Car', 'price': 'N15,000.00', 'description': '• For third party damage up to N3,000,000.00\n• Accidental bodily injury or death to the third party arising from the use of the vehicle.', 'height': 220.0},
-      {'title': 'Commercial Vehicle', 'price': 'N20,000 - N100,000', 'description': '• Third Party property damage\n• Accidental bodily injury or death to the third party arising from the use of the vehicle.', 'height': 220.0},
+      {'title': 'Commercial Vehicle', 'price': 'N20,000.00', 'description': '• Third Party property damage\n• Accidental bodily injury or death to the third party arising from the use of the vehicle.', 'height': 220.0},
       {'title': 'Private Bus', 'price': 'N20,000.00', 'description': 'For third party damage up to N3,000,000.00', 'height': 220.0},
       {'title': 'Commercial Bus', 'price': 'Premium – N20,000 yearly', 'description': 'For third party damage up to N3,000,000.00', 'height': 220.0},
       {'title': 'Motorcycle', 'price': 'Premium – N3000 Yearly', 'description': 'For sum insured/benefit up to N1,000,000.00', 'height': 220.0},
@@ -166,17 +166,12 @@ class MotorInsuranceScreen extends StatelessWidget {
   void _navigateToScreen(BuildContext context, int index) {
     if (index == 6) {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const ComprehensivePersonalInfoScreen()));
+    } else if (index == 7 || index == 8) {
+      final cardData = _getCardData(index);
+      Navigator.push(context, MaterialPageRoute(builder: (_) => RoyalAutoPurchaseScreen(productName: cardData['title'] as String, price: cardData['price'] as String)));
     } else {
       final cardData = _getCardData(index);
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PrivateCarPurchaseScreen(
-            vehicleType: cardData['title'] as String,
-            price: cardData['price'] as String,
-          ),
-        ),
-      );
+      Navigator.push(context, MaterialPageRoute(builder: (_) => PrivateCarPurchaseScreen(vehicleType: cardData['title'] as String, price: cardData['price'] as String)));
     }
   }
 }

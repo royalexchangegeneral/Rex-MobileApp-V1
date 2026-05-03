@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
 import 'signup_screen.dart';
 import 'customer_dashboard_screen.dart';
+import 'agent_dashboard_screen.dart';
 
 class PolicyPurchaseSuccessScreen extends StatelessWidget {
-  const PolicyPurchaseSuccessScreen({super.key});
+  final bool isLoggedIn;
+  final bool isAgent;
+  final String? reference;
+  final String? message;
+  const PolicyPurchaseSuccessScreen({super.key, this.isLoggedIn = false, this.isAgent = false, this.reference, this.message});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -32,7 +36,7 @@ class PolicyPurchaseSuccessScreen extends StatelessWidget {
                     border: Border.all(color: Colors.white, width: 3),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.check,
                     color: Colors.white,
                     size: 50,
@@ -40,16 +44,16 @@ class PolicyPurchaseSuccessScreen extends StatelessWidget {
                 ),
               ),
               
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               
               // Success message
-              const Text(
+              Text(
                 'Your policy has been\nsuccessfully purchased',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                   height: 1.3,
                 ),
               ),
@@ -63,18 +67,28 @@ class PolicyPurchaseSuccessScreen extends StatelessWidget {
                     fontSize: 14,
                     color: Colors.grey[600],
                   ),
-                  children: const [
-                    TextSpan(text: 'Reference ID: '),
+                  children: [
+                    const TextSpan(text: 'Reference ID: '),
                     TextSpan(
-                      text: '#REX-548291',
+                      text: reference != null ? '#$reference' : '#REX-000000',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ],
                 ),
               ),
+              
+              const SizedBox(height: 16),
+
+              // Backend message
+              if (message != null)
+                Text(
+                  message!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.green[700], fontWeight: FontWeight.w500, height: 1.4),
+                ),
               
               const SizedBox(height: 24),
               
@@ -113,11 +127,15 @@ class PolicyPurchaseSuccessScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()),
-                      (route) => false,
-                    );
+                    if (isLoggedIn) {
+                      if (isAgent) {
+                        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const AgentDashboardScreen()), (route) => false);
+                      } else {
+                        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
+                      }
+                    } else {
+                      Navigator.pushNamedAndRemoveUntil(context, '/user-portal', (route) => false);
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryNavy,
@@ -139,7 +157,8 @@ class PolicyPurchaseSuccessScreen extends StatelessWidget {
               
               const SizedBox(height: 12),
               
-              // Create Account button
+              // Create Account button (only for non-logged-in users)
+              if (!isLoggedIn)
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(

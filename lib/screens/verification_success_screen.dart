@@ -23,7 +23,6 @@ class _VerificationSuccessScreenState extends State<VerificationSuccessScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -41,20 +40,20 @@ class _VerificationSuccessScreenState extends State<VerificationSuccessScreen> {
                   shape: BoxShape.circle,
                   color: AppTheme.primaryBlue,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.check,
                   color: Colors.white,
                   size: 50,
                 ),
               ),
             ),
-            const SizedBox(height: 32),
-            const Text(
+            SizedBox(height: 32),
+            Text(
               'Verification Successful',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 12),

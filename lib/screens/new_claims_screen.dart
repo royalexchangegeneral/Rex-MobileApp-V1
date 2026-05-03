@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'dart:io';
+import 'dart:convert';
 import '../utils/app_theme.dart';
 import '../widgets/agent_bottom_nav.dart';
+import '../providers/auth_provider.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
+import 'agent_dashboard_screen.dart';
 
 class NewClaimsScreen extends StatefulWidget {
   final String? policyNumber;
@@ -47,9 +52,11 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
   // Step 4
   bool _confirmAccuracy = false;
   bool _agreePrivacy = false;
+  bool _verifying = false;
+  bool _submitting = false;
 
   final List<String> _stepLabels = ['Claim Details', 'Profile Details', 'Incident Details', 'Claim Details'];
-  final List<String> _itemCodes = ['IC-001', 'IC-002', 'IC-003', 'IC-004'];
+  List<String> _itemCodes = [];
 
   @override
   void dispose() {
@@ -74,9 +81,61 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
     if (_currentStep < 3) {
       setState(() => _currentStep++);
     } else {
-      // Submit — show success
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _ClaimSuccessScreen()));
+      _submitClaim();
     }
+  }
+
+  Future<void> _submitClaim() async {
+    setState(() => _submitting = true);
+
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final userData = auth.userData;
+      final userName = '${userData?['FirstName'] ?? ''} ${userData?['LastName'] ?? userData?['Lastname'] ?? ''}'.trim();
+
+      final request = http.MultipartRequest('POST', Uri.parse('https://eportaltest.rexinsure.com/api/claim_notification'));
+      request.headers['Accept'] = 'application/json';
+
+      request.fields['Address'] = _addressController.text;
+      request.fields['Email'] = _emailController.text;
+      request.fields['MobileNo'] = _phoneController.text;
+      request.fields['LossDate'] = _incidentDateController.text;
+      request.fields['Subject'] = _incidentSubjectController.text;
+      request.fields['Description'] = _descriptionController.text;
+      request.fields['PolicyNo'] = _policyNoController.text;
+      request.fields['Insured'] = _claimantNameController.text.isNotEmpty ? _claimantNameController.text : userName;
+      request.fields['ProductClass'] = _productTypeController.text;
+      request.fields['ProductCover'] = _riskTypeController.text;
+      request.fields['Claimant'] = _claimantNameController.text.isNotEmpty ? _claimantNameController.text : userName;
+
+      for (final photo in _photos) {
+        request.files.add(await http.MultipartFile.fromPath('Files[]', photo.path));
+      }
+
+      print('=== CLAIM SUBMISSION ===');
+      print('Fields: ${request.fields}');
+      print('Files: ${request.files.length}');
+
+      final streamed = await request.send().timeout(const Duration(seconds: 20));
+      final response = await http.Response.fromStream(streamed);
+
+      print('=== CLAIM RESPONSE: ${response.statusCode} ===');
+      print('Body: ${response.body}');
+
+      if (mounted) {
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => _ClaimSuccessScreen(isAgentFlow: widget.isAgentFlow)));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to submit claim: ${response.statusCode}'), backgroundColor: Colors.red));
+        }
+      }
+    } catch (e) {
+      print('Claim submission error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      }
+    }
+    if (mounted) setState(() => _submitting = false);
   }
 
   void _prevStep() {
@@ -87,14 +146,88 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
     }
   }
 
+  Future<void> _verifyPolicy() async {
+    final policyNo = _policyNoController.text.trim();
+    if (policyNo.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a policy number'), backgroundColor: Colors.red));
+      return;
+    }
+
+    setState(() => _verifying = true);
+    try {
+      final url = 'https://eportaltest.rexinsure.com/api/getpolicy?IntCode=TESTCODE&Password=royal1234&PolicyNo=$policyNo';
+      print('=== VERIFY POLICY: $url ===');
+      final r = await http.get(Uri.parse(url), headers: {'Accept': 'application/json'}).timeout(const Duration(seconds: 15));
+      print('=== POLICY RESPONSE: ${r.statusCode} ===');
+      print('Body: ${r.body}');
+
+      if (r.statusCode == 200 || r.statusCode == 201) {
+        final d = json.decode(r.body);
+        // Response: {"Status":"success","Data":[{Insured, PolicyNo, ProductClass, ProductCover, items:[{item_code}]}]}
+        Map<String, dynamic> pd = {};
+        if (d is Map) {
+          // Data is capital D, and it's a List
+          if (d['Data'] is List && (d['Data'] as List).isNotEmpty) {
+            pd = Map<String, dynamic>.from((d['Data'] as List).first);
+          } else if (d['data'] is List && (d['data'] as List).isNotEmpty) {
+            pd = Map<String, dynamic>.from((d['data'] as List).first);
+          } else if (d['Data'] is Map) {
+            pd = Map<String, dynamic>.from(d['Data']);
+          } else if (d['data'] is Map) {
+            pd = Map<String, dynamic>.from(d['data']);
+          } else {
+            pd = Map<String, dynamic>.from(d);
+          }
+        }
+
+        print('=== POLICY KEYS: ${pd.keys.toList()} ===');
+        print('=== Insured: ${pd['Insured']}, ProductClass: ${pd['ProductClass']}, ProductCover: ${pd['ProductCover']} ===');
+
+        _claimantNameController.text = (pd['Insured'] ?? '').toString();
+        _emailController.text = (pd['Email'] ?? pd['email'] ?? '').toString();
+        _phoneController.text = (pd['MobileNo'] ?? pd['Phone'] ?? pd['PhoneNumber'] ?? '').toString();
+        _addressController.text = (pd['Address'] ?? pd['address'] ?? '').toString();
+        _productTypeController.text = (pd['ProductClass'] ?? '').toString();
+        _riskTypeController.text = (pd['ProductCover'] ?? '').toString();
+
+        // Extract item codes from items array: [{item_code: "AGL355BT", desc: "Motor Insurance", ...}]
+        final items = <String>[];
+        if (pd['items'] is List) {
+          for (final item in pd['items']) {
+            if (item is Map) {
+              final code = item['item_code']?.toString() ?? '';
+              final desc = item['desc']?.toString() ?? '';
+              if (code.isNotEmpty) items.add(code);
+            }
+          }
+        }
+        if (items.isNotEmpty) {
+          _itemCodes = items;
+          _selectedItemCode = items.first;
+        }
+        print('=== ITEM CODES: $_itemCodes ===');
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Policy verified successfully'), backgroundColor: Colors.green));
+          setState(() => _currentStep = 1);
+        }
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Policy not found: ${r.statusCode}'), backgroundColor: Colors.red));
+      }
+    } catch (e) {
+      print('Verify policy error: $e');
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error verifying policy: $e'), backgroundColor: Colors.red));
+    }
+    setState(() => _verifying = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: _prevStep),
-        title: const Text('New Claims', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+        elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: _prevStep),
+        title: Text('New Claims', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         centerTitle: true,
       ),
       body: Column(
@@ -136,20 +269,20 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
         ],
       ),
       floatingActionButton: widget.isAgentFlow ? null : SizedBox(
-        width: 50, height: 50,
-        child: FloatingActionButton(onPressed: () {}, backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), child: const Icon(Icons.add, color: Colors.white, size: 24)),
+        width: 60, height: 60,
+        child: FloatingActionButton(onPressed: () {}, backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), elevation: 1, child: const Icon(Icons.add, color: Colors.white, size: 30)),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 1) : BottomAppBar(
-        shape: const CircularNotchedRectangle(), notchMargin: 6,
+        shape: const CircularNotchedRectangle(), notchMargin: 4,
         child: SizedBox(
-          height: 50,
+          height: 44,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _navItem(Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
               _navItem(Icons.description_outlined, 'Policies', false, () {}),
-              const SizedBox(width: 40),
+              const SizedBox(width: 48),
               _navItem(Icons.assignment_outlined, 'Claims', true, () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()))),
               _navItem(Icons.person_outline, 'Profile', false, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()))),
             ],
@@ -161,36 +294,38 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
 
   InputDecoration _inputDeco(String hint, {Widget? suffix}) => InputDecoration(
     hintText: hint, hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
-    filled: true, fillColor: Colors.white,
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[300]!)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[300]!)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF1E2D64))),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+    filled: true, fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xFF1E2D64))),
+    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
     suffixIcon: suffix,
   );
 
   Widget _label(String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black)),
+    padding: EdgeInsets.only(bottom: 6),
+    child: Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
   );
 
   // STEP 1: Enter Policy No
   Widget _buildStep1() {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _label('Enter Policy No.'),
-          TextField(controller: _policyNoController, style: const TextStyle(color: Colors.black, fontSize: 12), decoration: _inputDeco('enter policy number')),
+          TextField(controller: _policyNoController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('enter policy number')),
           const Padding(padding: EdgeInsets.only(top: 280)),
           SizedBox(
             width: double.infinity, height: 46,
             child: ElevatedButton(
-              onPressed: _nextStep,
+              onPressed: _verifying ? null : _verifyPolicy,
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E2D64), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
-              child: const Text('Verify', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              child: _verifying
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : const Text('Verify', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             ),
           ),
           const SizedBox(height: 12),
@@ -211,40 +346,40 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
   Widget _buildStep2() {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Policy Details', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
-          const SizedBox(height: 16),
+          Text('Policy Details', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+          SizedBox(height: 16),
           _label('Claimant Name'),
-          TextField(controller: _claimantNameController, style: const TextStyle(color: Colors.black, fontSize: 12), decoration: _inputDeco('John Doe')),
-          const SizedBox(height: 14),
+          TextField(controller: _claimantNameController, autofillHints: const [AutofillHints.name], style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('John Doe')),
+          SizedBox(height: 14),
           _label('Phone Number'),
-          TextField(controller: _phoneController, style: const TextStyle(color: Colors.black, fontSize: 12), keyboardType: TextInputType.phone, decoration: _inputDeco('+23481234578')),
-          const SizedBox(height: 14),
+          TextField(controller: _phoneController, autofillHints: const [AutofillHints.telephoneNumber], style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), keyboardType: TextInputType.phone, decoration: _inputDeco('+23481234578')),
+          SizedBox(height: 14),
           _label('Contact Address'),
-          TextField(controller: _addressController, style: const TextStyle(color: Colors.black, fontSize: 12), decoration: _inputDeco('24, upheld street, kingsland')),
-          const SizedBox(height: 14),
+          TextField(controller: _addressController, autofillHints: const [AutofillHints.streetAddressLine1], style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('24, upheld street, kingsland')),
+          SizedBox(height: 14),
           _label('Email Address'),
-          TextField(controller: _emailController, style: const TextStyle(color: Colors.black, fontSize: 12), keyboardType: TextInputType.emailAddress, decoration: _inputDeco('example@gmail.com')),
-          const SizedBox(height: 14),
+          TextField(controller: _emailController, autofillHints: const [AutofillHints.email], style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), keyboardType: TextInputType.emailAddress, decoration: _inputDeco('example@gmail.com')),
+          SizedBox(height: 14),
           _label('Product type'),
-          TextField(controller: _productTypeController, style: const TextStyle(color: Colors.black, fontSize: 12), decoration: _inputDeco('Motor')),
-          const SizedBox(height: 14),
+          TextField(controller: _productTypeController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('Motor')),
+          SizedBox(height: 14),
           _label('Risk Type'),
-          TextField(controller: _riskTypeController, style: const TextStyle(color: Colors.black, fontSize: 12), decoration: _inputDeco('lorem ipsum')),
+          TextField(controller: _riskTypeController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('lorem ipsum')),
           const SizedBox(height: 14),
           _label('Select Item Code'),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(10)),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _selectedItemCode, isExpanded: true,
                 hint: Text('select item code', style: TextStyle(color: Colors.grey[400], fontSize: 12)),
                 icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[500], size: 20),
-                style: const TextStyle(fontSize: 12, color: Colors.black),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface),
                 items: _itemCodes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                 onChanged: (v) => setState(() => _selectedItemCode = v),
               ),
@@ -254,7 +389,13 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           SizedBox(
             width: double.infinity, height: 46,
             child: ElevatedButton(
-              onPressed: _nextStep,
+              onPressed: () {
+                if (_claimantNameController.text.isEmpty || _phoneController.text.isEmpty || _addressController.text.isEmpty || _emailController.text.isEmpty || _productTypeController.text.isEmpty || _riskTypeController.text.isEmpty || _selectedItemCode == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All fields are compulsory'), backgroundColor: Colors.red));
+                  return;
+                }
+                _nextStep();
+              },
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E2D64), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
               child: const Text('Continue', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             ),
@@ -269,38 +410,38 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
   Widget _buildStep3() {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Incident Details', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
-          const SizedBox(height: 16),
+          Text('Incident Details', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+          SizedBox(height: 16),
           _label('Incident Date'),
           GestureDetector(
             onTap: () async {
               final picked = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2020), lastDate: DateTime.now());
-              if (picked != null) setState(() => _incidentDateController.text = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}');
+              if (picked != null) setState(() => _incidentDateController.text = '${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year}');
             },
-            child: AbsorbPointer(child: TextField(controller: _incidentDateController, style: const TextStyle(color: Colors.black, fontSize: 12), decoration: _inputDeco('dd/mm/yyyy', suffix: Icon(Icons.calendar_today_outlined, color: Colors.grey[400], size: 18)))),
+            child: AbsorbPointer(child: TextField(controller: _incidentDateController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('dd-mm-yyyy', suffix: Icon(Icons.calendar_today_outlined, color: Colors.grey[400], size: 18)))),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           _label('Incident Subject'),
-          TextField(controller: _incidentSubjectController, style: const TextStyle(color: Colors.black, fontSize: 12), decoration: _inputDeco('enter incident subject')),
-          const SizedBox(height: 14),
+          TextField(controller: _incidentSubjectController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('enter incident subject')),
+          SizedBox(height: 14),
           _label('Time of Incident / Loss'),
-          TextField(controller: _incidentTimeController, style: const TextStyle(color: Colors.black, fontSize: 12), decoration: _inputDeco('enter time of incident')),
-          const SizedBox(height: 14),
+          TextField(controller: _incidentTimeController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('enter time of incident')),
+          SizedBox(height: 14),
           _label('Place of Incident / Loss'),
-          TextField(controller: _incidentPlaceController, style: const TextStyle(color: Colors.black, fontSize: 12), decoration: _inputDeco('enter place the incident')),
-          const SizedBox(height: 14),
+          TextField(controller: _incidentPlaceController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('enter place the incident')),
+          SizedBox(height: 14),
           _label('Describe your Request'),
-          TextField(controller: _descriptionController, style: const TextStyle(color: Colors.black, fontSize: 12), maxLines: 3, decoration: _inputDeco('')),
-          const SizedBox(height: 14),
+          TextField(controller: _descriptionController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), maxLines: 3, decoration: _inputDeco('')),
+          SizedBox(height: 14),
           _label('Witness Name'),
-          TextField(controller: _witnessNameController, style: const TextStyle(color: Colors.black, fontSize: 12), maxLines: 2, decoration: _inputDeco('')),
-          const SizedBox(height: 14),
+          TextField(controller: _witnessNameController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), maxLines: 2, decoration: _inputDeco('')),
+          SizedBox(height: 14),
           _label('Witness Address'),
-          TextField(controller: _witnessAddressController, style: const TextStyle(color: Colors.black, fontSize: 12), decoration: _inputDeco('select item code')),
+          TextField(controller: _witnessAddressController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('select item code')),
           const SizedBox(height: 18),
           _label('Upload Supporting Document'),
           Wrap(
@@ -370,9 +511,41 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
 
   Widget _buildPhotoBox() {
     return GestureDetector(
-      onTap: () async {
-        final XFile? image = await _picker.pickImage(source: ImageSource.camera, maxWidth: 1920, imageQuality: 85);
-        if (image != null) setState(() => _photos.add(File(image.path)));
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+          builder: (ctx) => SafeArea(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              const SizedBox(height: 12),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Color(0xFF1E2D64)),
+                title: const Text('Take Photo', style: TextStyle(fontSize: 14)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    final XFile? image = await _picker.pickImage(source: ImageSource.camera, maxWidth: 1920, imageQuality: 85);
+                    if (image != null) setState(() => _photos.add(File(image.path)));
+                  } catch (e) { print('Camera error: $e'); }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Color(0xFF1E2D64)),
+                title: const Text('Choose from Gallery', style: TextStyle(fontSize: 14)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, maxWidth: 1920, imageQuality: 85);
+                    if (image != null) setState(() => _photos.add(File(image.path)));
+                  } catch (e) { print('Gallery error: $e'); }
+                },
+              ),
+              const SizedBox(height: 12),
+            ]),
+          ),
+        );
       },
       child: Container(
         width: 120, height: 80,
@@ -383,7 +556,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.camera_alt_outlined, color: Colors.grey[400], size: 24),
+            Icon(Icons.add_photo_alternate_outlined, color: Colors.grey[400], size: 24),
             const SizedBox(height: 4),
             Text('Add Photo', style: TextStyle(fontSize: 10, color: Colors.grey[500])),
           ],
@@ -402,12 +575,12 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
         children: [
           // Contact Information
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(14),
             decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Contact Information', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                Text('Contact Information', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 12),
                 _summaryRow('Claimant Name', _claimantNameController.text),
                 _summaryRow('Phone Number', _phoneController.text),
@@ -419,15 +592,15 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           // Incident Details
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(14),
             decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Incident Details', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                Text('Incident Details', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 12),
                 _summaryRow('Incident Date', _incidentDateController.text),
                 _summaryRow('Incident Subject', _incidentSubjectController.text),
@@ -437,15 +610,15 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           // Attachments
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(14),
             decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Attachments', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                Text('Attachments', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 12),
                 if (_photos.isEmpty)
                   Text('No attachments', style: TextStyle(fontSize: 11, color: Colors.grey[500]))
@@ -480,9 +653,11 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           SizedBox(
             width: double.infinity, height: 46,
             child: ElevatedButton(
-              onPressed: (_confirmAccuracy && _agreePrivacy) ? _nextStep : null,
+              onPressed: (_confirmAccuracy && _agreePrivacy && !_submitting) ? _nextStep : null,
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E2D64), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
-              child: const Text('Continue', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              child: _submitting
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : const Text('Submit Claim', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             ),
           ),
           const SizedBox(height: 80),
@@ -493,12 +668,12 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
 
   Widget _summaryRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-          Flexible(child: Text(value.isNotEmpty ? value : '-', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black), textAlign: TextAlign.end)),
+          Flexible(child: Text(value.isNotEmpty ? value : '-', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface), textAlign: TextAlign.end)),
         ],
       ),
     );
@@ -528,12 +703,12 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
 
 // Success Screen
 class _ClaimSuccessScreen extends StatelessWidget {
-  const _ClaimSuccessScreen();
+  final bool isAgentFlow;
+  const _ClaimSuccessScreen({this.isAgentFlow = false});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -549,18 +724,18 @@ class _ClaimSuccessScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                     border: Border.all(color: const Color(0xFF1E2D64).withValues(alpha: 0.3), width: 8),
                   ),
-                  child: const Icon(Icons.check, color: Colors.white, size: 44),
+                  child: Icon(Icons.check, color: Colors.white, size: 44),
                 ),
-                const SizedBox(height: 28),
-                const Text(
+                SizedBox(height: 28),
+                Text(
                   'Your claim has been received\nand is now under review.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black, height: 1.4),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface, height: 1.4),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 RichText(
                   text: const TextSpan(
-                    style: TextStyle(fontSize: 13, color: Colors.black),
+                    style: TextStyle(fontSize: 13, color: Colors.black87),
                     children: [
                       TextSpan(text: 'Claim Number: '),
                       TextSpan(text: '#CLM-203874', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -573,7 +748,7 @@ class _ClaimSuccessScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity, height: 46,
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false),
+                    onPressed: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => isAgentFlow ? const AgentDashboardScreen() : const CustomerDashboardScreen()), (r) => false),
                     style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E2D64), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
                     child: const Text('Homepage', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                   ),

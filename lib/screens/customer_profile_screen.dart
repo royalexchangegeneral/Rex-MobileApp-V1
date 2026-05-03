@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart';
 import 'notification_settings_screen.dart';
 import 'security_settings_screen.dart';
 import 'customer_dashboard_screen.dart';
 import 'my_claims_screen.dart';
+import 'my_policies_screen.dart';
 import 'new_policy_screen.dart';
 import 'help_support_screen.dart';
 
@@ -22,15 +24,13 @@ class CustomerProfileScreen extends StatelessWidget {
     final phone = userData?['MobileNo']?.toString() ?? '';
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Profile', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black)),
+        title: Text('Profile', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         centerTitle: true,
         actions: const [],
       ),
@@ -43,16 +43,16 @@ class CustomerProfileScreen extends StatelessWidget {
             Center(
               child: Column(
                 children: [
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: Colors.grey[200],
                     child: Icon(Icons.person, size: 44, color: Colors.grey[400]),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   Text(
                     '$firstName $surname',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -88,19 +88,19 @@ class CustomerProfileScreen extends StatelessWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       ),
-                      child: const Text('Refer Now', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      child: Text('Refer Now', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                     ),
                   ],
                 ),
               ),
             ),
 
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // Personal Information
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('Personal Information', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+              child: Text('Personal Information', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             ),
             const SizedBox(height: 12),
             Container(
@@ -122,12 +122,12 @@ class CustomerProfileScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // My Document
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('My Document', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+              child: Text('My Document', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             ),
             const SizedBox(height: 8),
             Container(
@@ -139,18 +139,16 @@ class CustomerProfileScreen extends StatelessWidget {
               child: Column(
                 children: [
                   _buildDocumentItem(context, Icons.badge_outlined, 'Identity Verification', () {}),
-                  Divider(color: Colors.grey[200], height: 1, indent: 16, endIndent: 16),
-                  _buildDocumentItem(context, Icons.drive_eta_outlined, 'Driving License', () {}),
                 ],
               ),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Settings
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('Settings', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+              child: Text('Settings', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             ),
             const SizedBox(height: 8),
             Container(
@@ -226,30 +224,36 @@ class CustomerProfileScreen extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: SizedBox(
-        width: 50,
-        height: 50,
-        child: FloatingActionButton(
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-          backgroundColor: AppTheme.accentOrange,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: Colors.white, size: 24),
+      floatingActionButton: Transform.translate(
+        offset: const Offset(0, 15),
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: FloatingActionButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+            backgroundColor: AppTheme.accentOrange,
+            shape: const CircleBorder(),
+            elevation: 1,
+            child: const Icon(Icons.add, color: Colors.white, size: 30),
+          ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
-        notchMargin: 6,
+        notchMargin: 4,
         child: SizedBox(
-          height: 50,
+          height: 60,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(context, Icons.home_outlined, 'Home', false, onTap: () {
                 Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
               }),
-              _buildNavItem(context, Icons.description_outlined, 'Policies', false, onTap: () {}),
-              const SizedBox(width: 40),
+              _buildNavItem(context, Icons.description_outlined, 'Policies', false, onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPoliciesScreen()));
+              }),
+              const SizedBox(width: 48),
               _buildNavItem(context, Icons.assignment_outlined, 'Claims', false, onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
               }),
@@ -263,14 +267,14 @@ class CustomerProfileScreen extends StatelessWidget {
 
   Widget _buildInfoItem(String label, String value, {bool showDivider = true}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
-          const SizedBox(height: 4),
-          Text(value.isNotEmpty ? value : '-', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black)),
+          SizedBox(height: 4),
+          Text(value.isNotEmpty ? value : '-', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black87)),
           const SizedBox(height: 12),
           if (showDivider) Divider(color: Colors.grey[200], height: 1),
         ],
@@ -280,10 +284,10 @@ class CustomerProfileScreen extends StatelessWidget {
 
   Widget _buildDocumentItem(BuildContext context, IconData icon, String title, VoidCallback onTap) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       dense: true,
       leading: Icon(icon, color: const Color(0xFF1E2D64), size: 22),
-      title: Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black)),
+      title: Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
       trailing: Icon(Icons.chevron_right, color: Colors.grey[400], size: 20),
       onTap: onTap,
     );
@@ -304,6 +308,11 @@ class CustomerProfileScreen extends StatelessWidget {
   }
 
   Widget _buildSettingsItemWithToggle(BuildContext context, IconData icon, String title, Color bgColor, Color iconColor) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final brightness = MediaQuery.of(context).platformBrightness;
+    final isEffectivelyDark = themeProvider.isSystemMode
+        ? brightness == Brightness.dark
+        : themeProvider.isDarkMode;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       dense: true,
@@ -313,12 +322,22 @@ class CustomerProfileScreen extends StatelessWidget {
         child: Icon(icon, color: iconColor, size: 20),
       ),
       title: Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF1E2D64))),
-      trailing: const Switch(
-        value: false,
-        onChanged: null,
-        activeThumbColor: Colors.white,
-        activeTrackColor: Color(0xFF1E2D64),
+      subtitle: Text(
+        themeProvider.isSystemMode ? 'Following system' : (isEffectivelyDark ? 'Dark' : 'Light'),
+        style: TextStyle(fontSize: 10, color: Colors.grey[500]),
       ),
+      trailing: Switch(
+        value: isEffectivelyDark,
+        onChanged: (val) => themeProvider.setTheme(val),
+        activeThumbColor: Colors.white,
+        activeTrackColor: const Color(0xFF1E2D64),
+      ),
+      onLongPress: () {
+        themeProvider.useSystemTheme();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Theme set to follow system'), backgroundColor: Colors.green, duration: Duration(seconds: 2)),
+        );
+      },
     );
   }
 

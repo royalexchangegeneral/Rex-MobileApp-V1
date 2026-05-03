@@ -13,31 +13,29 @@ class DiscoverInsuranceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Discover Insurance', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+        title: Text('Discover Insurance', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Featured Video section
-            const Text('Featured Video', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
-            const SizedBox(height: 14),
+            Text('Featured Video', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+            SizedBox(height: 14),
             _buildFeaturedVideoCard(context),
-            const SizedBox(height: 28),
+            SizedBox(height: 28),
 
             // Categories section
-            const Text('Categories', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+            Text('Categories', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 14),
             Row(
               children: [
@@ -56,16 +54,16 @@ class DiscoverInsuranceScreen extends StatelessWidget {
                 Expanded(child: _buildCategoryCard(context, Icons.directions_car_outlined, 'Motor Insurance', '5 articles', const Color(0xFF4A90D9), onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => CategoryArticlesScreen.motorInsurance()));
                 })),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(child: _buildCategoryCard(context, Icons.home_outlined, 'Property Cover', '4 articles', const Color(0xFFE91E63), onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => CategoryArticlesScreen.propertyCover()));
                 })),
               ],
             ),
-            const SizedBox(height: 28),
+            SizedBox(height: 28),
 
             // Insurance 101 section
-            const Text('Insurance 101: The Basics', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+            Text('Insurance 101: The Basics', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 14),
             Container(
               width: double.infinity,
@@ -82,21 +80,21 @@ class DiscoverInsuranceScreen extends StatelessWidget {
                     'Insurance is a way to protect yourself, your family, and your belongings from unexpected events. Think of it as a safety net — when things go wrong, insurance helps cover the costs so you don\'t have to handle it all on your own.',
                     style: TextStyle(fontSize: 12, color: Colors.grey[700], height: 1.6),
                   ),
-                  const SizedBox(height: 16),
-                  const Text('Here\'s how it works:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                  SizedBox(height: 16),
+                  Text('Here\'s how it works:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 10),
                   _buildBulletPoint('You pay a premium', 'A small amount regularly.'),
                   const SizedBox(height: 8),
                   _buildBulletPoint('We provide coverage', 'If an event happens (like an accident, damage or theft), the insurance helps pay for it.'),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   _buildBulletPoint('Peace of mind', 'You can focus on life, knowing you\'re financially protected.'),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Types of Insurance
-            const Text('Types of Insurance', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+            Text('Types of Insurance', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 12),
             _buildInsuranceTypeCard(Icons.directions_car, 'Vehicle Insurance', 'Covers damages or loss of your vehicle.', const Color(0xFF4A90D9)),
             const SizedBox(height: 10),
@@ -149,22 +147,26 @@ class DiscoverInsuranceScreen extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: SizedBox(
-        width: 50,
-        height: 50,
-        child: FloatingActionButton(
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-          backgroundColor: AppTheme.accentOrange,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: Colors.white, size: 24),
+      floatingActionButton: Transform.translate(
+        offset: const Offset(0, 15),
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: FloatingActionButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+            backgroundColor: AppTheme.accentOrange,
+            shape: const CircleBorder(),
+            elevation: 1,
+            child: const Icon(Icons.add, color: Colors.white, size: 30),
+          ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
-        notchMargin: 6,
+        notchMargin: 4,
         child: SizedBox(
-          height: 50,
+          height: 44,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -172,7 +174,7 @@ class DiscoverInsuranceScreen extends StatelessWidget {
                 Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
               }),
               _buildNavItem(Icons.description_outlined, 'Policies', false),
-              const SizedBox(width: 40),
+              const SizedBox(width: 48),
               _buildNavItem(Icons.assignment_outlined, 'Claims', false, onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
               }),
@@ -220,7 +222,7 @@ class DiscoverInsuranceScreen extends StatelessWidget {
                         color: Colors.black.withValues(alpha: 0.3),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.play_arrow, color: Colors.white, size: 32),
+                      child: Icon(Icons.play_arrow, color: Colors.white, size: 32),
                     ),
                   ),
                 ),
@@ -233,18 +235,18 @@ class DiscoverInsuranceScreen extends StatelessWidget {
                       color: AppTheme.primaryNavy,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text('New', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
+                    child: Text('New', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Understanding Your Insurance Policy', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+                Text('Understanding Your Insurance Policy', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 6),
                 Text(
                   'Learn the key components of your insurance policy and how to maximize your coverage benefits.',
@@ -283,15 +285,15 @@ class DiscoverInsuranceScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: color, size: 22),
             ),
-            const SizedBox(height: 10),
-            Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+            SizedBox(height: 10),
+            Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 2),
             Text(subtitle, style: TextStyle(fontSize: 10, color: Colors.grey[500])),
             const SizedBox(height: 8),
@@ -322,15 +324,15 @@ class DiscoverInsuranceScreen extends StatelessWidget {
           margin: const EdgeInsets.only(top: 5),
           width: 6,
           height: 6,
-          decoration: const BoxDecoration(color: AppTheme.accentOrange, shape: BoxShape.circle),
+          decoration: BoxDecoration(color: AppTheme.accentOrange, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Expanded(
           child: RichText(
             text: TextSpan(
               style: TextStyle(fontSize: 12, color: Colors.grey[700], height: 1.5),
               children: [
-                TextSpan(text: '$title: ', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                TextSpan(text: '$title: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
                 TextSpan(text: description),
               ],
             ),
@@ -358,12 +360,12 @@ class DiscoverInsuranceScreen extends StatelessWidget {
             ),
             child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
                 const SizedBox(height: 2),
                 Text(description, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
               ],

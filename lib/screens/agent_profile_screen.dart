@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/theme_provider.dart';
 import '../providers/agent_policy_provider.dart';
 import 'login_screen.dart';
 import 'notification_settings_screen.dart';
 import 'security_settings_screen.dart';
+import 'help_support_screen.dart';
 import 'agent_dashboard_screen.dart';
 import 'clients_list_screen.dart';
 import 'reports_screen.dart';
@@ -16,7 +16,6 @@ class AgentProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final themeProvider = Provider.of<ThemeProvider>(context);
     final userName = authProvider.userName ?? 'Agent Name';
     final userEmail = authProvider.userEmail ?? 'agent@example.com';
     final userCode = authProvider.userCode ?? 'AG0000';
@@ -69,7 +68,7 @@ class AgentProfileScreen extends StatelessWidget {
                       children: [
                         CircleAvatar(
                           radius: 50,
-                          backgroundColor: Colors.white,
+                          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                           child: Icon(
                             Icons.person,
                             size: 50,
@@ -79,7 +78,7 @@ class AgentProfileScreen extends StatelessWidget {
                         const SizedBox(height: 16),
                         Text(
                           userName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -110,7 +109,7 @@ class AgentProfileScreen extends StatelessWidget {
                     left: 16,
                     right: 16,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
                         borderRadius: BorderRadius.circular(12),
@@ -125,7 +124,7 @@ class AgentProfileScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatItem('₦434,000', 'Commission'),
+                          Consumer<AgentPolicyProvider>(builder: (_, ap, __) => _buildStatItem('₦${ap.commission}', 'Commission')),
                           Container(
                             width: 1,
                             height: 40,
@@ -273,20 +272,9 @@ class AgentProfileScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   _buildSettingsItem(
                     context,
-                    icon: Icons.nightlight_outlined,
-                    title: 'Dark Theme',
-                    onTap: () {},
-                    showArrow: false,
-                    hasToggle: true,
-                    toggleValue: themeProvider.isDarkMode,
-                    onToggleChanged: null, // Disabled - set to null
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSettingsItem(
-                    context,
                     icon: Icons.help_outline,
                     title: 'Help and support',
-                    onTap: () {},
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen(isAgentFlow: true))),
                   ),
                   const SizedBox(height: 12),
                   _buildSettingsItem(
@@ -531,7 +519,7 @@ class AgentProfileScreen extends StatelessWidget {
       onTap: hasToggle ? null : onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.circular(12),

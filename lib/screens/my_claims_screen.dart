@@ -58,15 +58,13 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
       }).length;
 
       return Scaffold(
-        backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text('My Claims', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black)),
+          title: Text('My Claims', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
           centerTitle: true,
         ),
         body: Stack(
@@ -154,13 +152,13 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
                       },
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
 
                   // Claims header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('My Claims', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                      Text('My Claims', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                       TextButton(
                         onPressed: () => setState(() => _selectedFilter = 0),
                         child: const Text('View All', style: TextStyle(fontSize: 11, color: AppTheme.accentOrange, fontWeight: FontWeight.w600)),
@@ -188,10 +186,10 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
             ),
             // New claim FAB
             Positioned(
-              bottom: 16,
+              bottom: 0,
               right: 16,
               child: GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewClaimsScreen())),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewClaimsScreen(isAgentFlow: widget.isAgentFlow))),
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -205,22 +203,26 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
             ),
           ],
         ),
-        floatingActionButton: widget.isAgentFlow ? null : SizedBox(
-          width: 50,
-          height: 50,
-          child: FloatingActionButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-            backgroundColor: AppTheme.accentOrange,
-            shape: const CircleBorder(),
-            child: const Icon(Icons.add, color: Colors.white, size: 24),
+        floatingActionButton: widget.isAgentFlow ? null : Transform.translate(
+          offset: const Offset(0, 15),
+          child: SizedBox(
+            width: 52,
+            height: 52,
+            child: FloatingActionButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+              backgroundColor: AppTheme.accentOrange,
+              shape: const CircleBorder(),
+              elevation: 1,
+              child: const Icon(Icons.add, color: Colors.white, size: 30),
+            ),
           ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(
           shape: const CircularNotchedRectangle(),
-          notchMargin: 6,
+          notchMargin: 4,
           child: SizedBox(
-            height: 50,
+            height: 60,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -230,7 +232,7 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
                 _buildNavItem(Icons.description_outlined, 'Policies', false, () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPoliciesScreen()));
                 }),
-                const SizedBox(width: 40),
+                const SizedBox(width: 48),
                 _buildNavItem(Icons.assignment_outlined, 'Claims', true, () {}),
                 _buildNavItem(Icons.person_outline, 'Profile', false, () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
@@ -273,14 +275,14 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
                   color: const Color(0xFF1E2D64).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.assignment_outlined, color: Color(0xFF1E2D64), size: 20),
+                child: Icon(Icons.assignment_outlined, color: Color(0xFF1E2D64), size: 20),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(claimType, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black)),
+                    Text(claimType, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                     const SizedBox(height: 2),
                     if (insured.isNotEmpty) Text(insured, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
                     Text('Claim #$claimId', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
@@ -297,7 +299,7 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Row(
             children: [
               Expanded(
@@ -305,8 +307,8 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(claimAmount.isNotEmpty ? 'Claim Amount' : 'Policy No', style: TextStyle(fontSize: 9, color: Colors.grey[500])),
-                    const SizedBox(height: 2),
-                    Text(claimAmount.isNotEmpty ? '₦$claimAmount' : policyNo, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black)),
+                    SizedBox(height: 2),
+                    Text(claimAmount.isNotEmpty ? '₦$claimAmount' : policyNo, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                   ],
                 ),
               ),
@@ -315,8 +317,8 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Date Filed', style: TextStyle(fontSize: 9, color: Colors.grey[500])),
-                    const SizedBox(height: 2),
-                    Text(dateFiled.isNotEmpty ? dateFiled : 'N/A', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.black)),
+                    SizedBox(height: 2),
+                    Text(dateFiled.isNotEmpty ? dateFiled : 'N/A', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
                   ],
                 ),
               ),

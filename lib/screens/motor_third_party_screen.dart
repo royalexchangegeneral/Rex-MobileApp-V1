@@ -20,7 +20,6 @@ class MotorThirdPartyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: Stack(
         children: [
           // Scrollable list of third party types
@@ -30,7 +29,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
               SliverAppBar(
                 expandedHeight: 450,
                 pinned: false,
-                backgroundColor: Colors.white,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 leading: Container(
                   margin: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -38,7 +37,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    icon: Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -72,8 +71,8 @@ class MotorThirdPartyScreen extends StatelessWidget {
                       // White text section
                       Container(
                         color: Colors.white,
-                        padding: const EdgeInsets.all(24),
-                        child: const Column(
+                        padding: EdgeInsets.all(24),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
@@ -81,7 +80,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             SizedBox(height: 8),
@@ -89,7 +88,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
                               'This policy covers the third party against bodily injury and death resulting from a car accident caused by the insured the legal liability of the insured where damage was caused to another person\'s property',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 height: 1.4,
                               ),
                             ),
@@ -211,7 +210,7 @@ class MotorThirdPartyScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const PrivateCarPurchaseScreen(),
+                        builder: (context) => const PrivateCarPurchaseScreen(isLoggedIn: true),
                       ),
                     );
                   },

@@ -110,35 +110,34 @@ class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
     final isOpen = _isOpen();
     final closest = _offices[_closestIdx];
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-        title: const Text('Office Locations', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)), centerTitle: true),
-      body: SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), padding: const EdgeInsets.all(16),
+      appBar: AppBar(elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+        title: Text('Office Locations', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)), centerTitle: true),
+      body: SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), padding: EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          TextField(controller: _searchController, style: const TextStyle(fontSize: 13, color: Colors.black),
+          TextField(controller: _searchController, style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface),
             onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
             decoration: InputDecoration(hintText: 'Search by location or zip', hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
               suffixIcon: Icon(Icons.my_location, color: Colors.grey[400]),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[300]!)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[300]!)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primaryNavy)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12))),
           const SizedBox(height: 14),
-          Row(children: [const Icon(Icons.my_location, color: AppTheme.primaryNavy, size: 16), const SizedBox(width: 6),
-            const Text('Your Current location', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy))]),
-          const SizedBox(height: 4),
+          Row(children: [Icon(Icons.my_location, color: AppTheme.primaryNavy, size: 16), SizedBox(width: 6),
+            Text('Your Current location', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy))]),
+          SizedBox(height: 4),
           Text(_currentAddress, style: TextStyle(fontSize: 12, color: Colors.grey[700])),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           // Map
           ClipRRect(borderRadius: BorderRadius.circular(12), child: SizedBox(height: 200,
             child: WebViewWidget(controller: _mapController))),
-          const SizedBox(height: 20),
-          const Center(child: Text('Location closest to you', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black))),
-          const SizedBox(height: 14),
+          SizedBox(height: 20),
+          Center(child: Text('Location closest to you', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface))),
+          SizedBox(height: 14),
           _buildCard(context, closest, isOpen),
-          const SizedBox(height: 20),
-          const Center(child: Text('Our Office Location', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black))),
+          SizedBox(height: 20),
+          Center(child: Text('Our Office Location', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface))),
           const SizedBox(height: 14),
           ...List.generate(_offices.length, (i) {
             final o = _offices[i];
@@ -147,26 +146,26 @@ class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
           }),
           const SizedBox(height: 80),
         ])),
-      floatingActionButton: widget.isAgentFlow ? null : SizedBox(width: 50, height: 50, child: FloatingActionButton(
+      floatingActionButton: widget.isAgentFlow ? null : Transform.translate(offset: const Offset(0, 15), child: SizedBox(width: 52, height: 52, child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-        backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), child: const Icon(Icons.add, color: Colors.white, size: 24))),
+        backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), elevation: 1, child: const Icon(Icons.add, color: Colors.white, size: 30)))),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
-        child: SizedBox(height: 50, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+      bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 4,
+        child: SizedBox(height: 44, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
           _nav(Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
-          _nav(Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 40),
+          _nav(Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 48),
           _nav(Icons.assignment_outlined, 'Claims', false, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()))),
           _nav(Icons.person_outline, 'Profile', true, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()))),
         ]))),
     );
   }
   Widget _buildCard(BuildContext ctx, Map<String, dynamic> o, bool isOpen) {
-    return Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
+    return Container(padding: EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: const Color(0xFFE3F2FD), shape: BoxShape.circle), child: const Icon(Icons.business, color: AppTheme.primaryNavy, size: 18)),
-          const SizedBox(width: 10),
-          Expanded(child: Text(o['name'], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black))),
+          Container(padding: EdgeInsets.all(8), decoration: BoxDecoration(color: const Color(0xFFE3F2FD), shape: BoxShape.circle), child: Icon(Icons.business, color: AppTheme.primaryNavy, size: 18)),
+          SizedBox(width: 10),
+          Expanded(child: Text(o['name'], style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface))),
           Icon(Icons.circle, size: 8, color: isOpen ? Colors.green : Colors.red), const SizedBox(width: 4),
           Text(isOpen ? 'Open Now' : 'Closed', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isOpen ? Colors.green : Colors.red)),
         ]),

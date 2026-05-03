@@ -6,6 +6,7 @@ import 'reports_screen.dart';
 import 'agent_profile_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../widgets/searchable_dropdown.dart';
 
 class AddClientScreen extends StatefulWidget {
   final String clientType; // 'individual' or 'corporate'
@@ -247,7 +248,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
         if (responseData['status'] == 'success' && 
             responseData['data'] != null && 
             responseData['data']['data'] != null &&
-            responseData['data']['data']['kyc'] != null) {
+            responseData['data']['data']['kyc'] != null &&
+            responseData['data']['data']['kyc']['firstname'] != null && (responseData['data']['data']['kyc']['firstname']?.toString() ?? '').isNotEmpty) {
           
           final kycData = responseData['data']['data']['kyc'];
           
@@ -288,9 +290,11 @@ class _AddClientScreenState extends State<AddClientScreen> {
         } else {
           // No data returned or verification failed
           if (mounted) {
+            final kycData = responseData['data']?['data']?['kyc'];
+            final msg = kycData != null ? (kycData['status']?.toString() ?? 'Verification failed') : 'No data found. Please enter details manually';
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('No data found. Please enter details manually'),
+              SnackBar(
+                content: Text(msg),
               ),
             );
           }
@@ -400,20 +404,18 @@ class _AddClientScreenState extends State<AddClientScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Add A New Client',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -484,25 +486,25 @@ class _AddClientScreenState extends State<AddClientScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Enter NIN
-                  const Text(
+                  Text(
                     'Enter NIN',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   TextField(
                     controller: _ninController,
                     keyboardType: TextInputType.number,
                     maxLength: 11,
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     decoration: InputDecoration(
                       hintText: 'enter NIN (11 digits)',
                       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -538,7 +540,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
+                          : Text(
                               'Verify',
                               style: TextStyle(
                                 fontSize: 14,
@@ -569,26 +571,27 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     ],
                   ),
                   
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   
                   // First Name
-                  const Text(
+                  Text(
                     'First Name',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   TextField(
                     controller: _firstNameController,
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    autofillHints: const [AutofillHints.givenName],
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     decoration: InputDecoration(
                       hintText: 'enter first name',
                       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -597,26 +600,27 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   
                   // Last Name
-                  const Text(
+                  Text(
                     'Last Name',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   TextField(
                     controller: _lastNameController,
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    autofillHints: const [AutofillHints.familyName],
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     decoration: InputDecoration(
                       hintText: 'enter last name',
                       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -625,27 +629,28 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   
                   // Email Address
-                  const Text(
+                  Text(
                     'Email Address',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    autofillHints: const [AutofillHints.email],
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     decoration: InputDecoration(
                       hintText: 'enter your email address',
                       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -654,27 +659,28 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   
                   // Phone Number
-                  const Text(
+                  Text(
                     'Phone Number',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   TextField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    autofillHints: const [AutofillHints.telephoneNumber],
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     decoration: InputDecoration(
                       hintText: 'enter your phone number',
                       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -683,15 +689,15 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   
                   // Date of Birth
-                  const Text(
+                  Text(
                     'Date of Birth',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -712,12 +718,12 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     child: AbsorbPointer(
                       child: TextField(
                         controller: _dobController,
-                        style: const TextStyle(fontSize: 14, color: Colors.black),
+                        style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                         decoration: InputDecoration(
                           hintText: 'dd/mm/yyyy',
                           hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                           filled: true,
-                          fillColor: Colors.grey[100],
+                          fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -729,26 +735,27 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   
                   // Address
-                  const Text(
+                  Text(
                     'Address',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   TextField(
                     controller: _addressController,
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                    autofillHints: const [AutofillHints.streetAddressLine1],
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     decoration: InputDecoration(
                       hintText: 'enter your address',
                       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -766,47 +773,24 @@ class _AddClientScreenState extends State<AddClientScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'State',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.black,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: _selectedState,
-                                  isExpanded: true,
-                                  hint: Text(
-                                    'select state',
-                                    style: TextStyle(color: Colors.grey[400], fontSize: 14),
-                                  ),
-                                  icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600], size: 20),
-                                  style: const TextStyle(fontSize: 14, color: Colors.black),
-                                  items: _nigerianStates.map((String state) {
-                                    return DropdownMenuItem<String>(
-                                      value: state == 'Select State' ? null : state,
-                                      child: Text(state),
-                                    );
-                                  }).toList(),
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      _selectedState = newValue;
-                                    });
-                                    if (newValue != null) {
-                                      _fetchLgas(newValue);
-                                    }
-                                  },
-                                ),
-                              ),
+                            SearchableDropdown(
+                              hint: 'select state',
+                              value: _selectedState,
+                              items: _nigerianStates.where((s) => s != 'Select State').toList(),
+                              fontSize: 14,
+                              onChanged: (String? newValue) {
+                                setState(() { _selectedState = newValue; });
+                                if (newValue != null) { _fetchLgas(newValue); }
+                              },
                             ),
                           ],
                         ),
@@ -816,12 +800,12 @@ class _AddClientScreenState extends State<AddClientScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'LGA',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.black,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -851,45 +835,21 @@ class _AddClientScreenState extends State<AddClientScreen> {
                                     ),
                                   )
                                 : _lgaList.isNotEmpty
-                                    ? Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey[100],
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: DropdownButtonHideUnderline(
-                                          child: DropdownButton<String>(
-                                            value: _selectedLga,
-                                            isExpanded: true,
-                                            hint: Text(
-                                              'select LGA',
-                                              style: TextStyle(color: Colors.grey[400], fontSize: 14),
-                                            ),
-                                            icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600], size: 20),
-                                            style: const TextStyle(fontSize: 14, color: Colors.black),
-                                            items: _lgaList.map((lga) {
-                                              final lgaName = lga['name']?.toString() ?? lga['lga']?.toString() ?? '';
-                                              return DropdownMenuItem<String>(
-                                                value: lgaName,
-                                                child: Text(lgaName),
-                                              );
-                                            }).toList(),
-                                            onChanged: (String? newValue) {
-                                              setState(() {
-                                                _selectedLga = newValue;
-                                              });
-                                            },
-                                          ),
-                                        ),
+                                    ? SearchableDropdown(
+                                        hint: 'select LGA',
+                                        value: _selectedLga,
+                                        items: _lgaList.map((lga) => lga['name']?.toString() ?? lga['lga']?.toString() ?? '').where((s) => s.isNotEmpty).toList(),
+                                        fontSize: 14,
+                                        onChanged: (String? newValue) { setState(() { _selectedLga = newValue; }); },
                                       )
                                     : TextField(
                                         controller: _lgaController,
-                                        style: const TextStyle(fontSize: 14, color: Colors.black),
+                                        style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                                         decoration: InputDecoration(
                                           hintText: _selectedState == null ? 'select state first' : 'enter LGA',
                                           hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                                           filled: true,
-                                          fillColor: Colors.grey[100],
+                                          fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                                           border: OutlineInputBorder(
                                             borderRadius: BorderRadius.circular(12),
                                             borderSide: BorderSide.none,

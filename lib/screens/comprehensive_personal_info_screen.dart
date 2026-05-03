@@ -4,11 +4,14 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/searchable_dropdown.dart';
 import 'comprehensive_vehicle_info_screen.dart';
 
 class ComprehensivePersonalInfoScreen extends StatefulWidget {
   final String vehicleType;
-  const ComprehensivePersonalInfoScreen({super.key, this.vehicleType = 'Comprehensive Motor'});
+  final bool isLoggedIn;
+  final bool isAgent;
+  const ComprehensivePersonalInfoScreen({super.key, this.vehicleType = 'Comprehensive Motor', this.isLoggedIn = false, this.isAgent = false});
   @override
   State<ComprehensivePersonalInfoScreen> createState() => _ComprehensivePersonalInfoScreenState();
 }
@@ -106,11 +109,10 @@ class _ComprehensivePersonalInfoScreenState extends State<ComprehensivePersonalI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-        title: Text(widget.vehicleType, style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600)),
+        elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+        title: Text(widget.vehicleType, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w600)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -139,47 +141,39 @@ class _ComprehensivePersonalInfoScreenState extends State<ComprehensivePersonalI
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildTextField('First Name', _firstNameController, 'enter first name'),
+                    _buildTextField('First Name', _firstNameController, 'enter first name', autofillHints: [AutofillHints.givenName]),
                     const SizedBox(height: 16),
-                    _buildTextField('Last Name', _lastNameController, 'enter last name'),
+                    _buildTextField('Last Name', _lastNameController, 'enter last name', autofillHints: [AutofillHints.familyName]),
                     const SizedBox(height: 16),
-                    _buildTextField('Email Address', _emailController, 'enter your email address', keyboardType: TextInputType.emailAddress),
+                    _buildTextField('Email Address', _emailController, 'enter your email address', keyboardType: TextInputType.emailAddress, autofillHints: [AutofillHints.email]),
                     const SizedBox(height: 16),
-                    _buildTextField('Phone Number', _phoneController, 'enter your phone number', keyboardType: TextInputType.phone),
+                    _buildTextField('Phone Number', _phoneController, 'enter your phone number', keyboardType: TextInputType.phone, autofillHints: [AutofillHints.telephoneNumber]),
                     const SizedBox(height: 16),
                     _buildTextField('Occupation', _occupationController, 'enter your occupation'),
                     const SizedBox(height: 16),
-                    _buildTextField('Address', _addressController, 'enter your address', maxLines: 3),
+                    _buildTextField('Address', _addressController, 'enter your address', maxLines: 3, autofillHints: [AutofillHints.streetAddressLine1]),
                     const SizedBox(height: 16),
-                    const Text('State', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87)),
+                    Text('State', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
                     const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(8)),
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedState,
-                        hint: Text('select your state', style: TextStyle(color: Colors.grey[400], fontSize: 14)),
-                        decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4)),
-                        icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[400]),
-                        items: _nigerianStates.map((s) => DropdownMenuItem(value: s, child: Text(s, style: const TextStyle(fontSize: 14)))).toList(),
-                        onChanged: (val) { setState(() => _selectedState = val); if (val != null) _fetchLgas(val); },
-                      ),
+                    SearchableDropdown(
+                      hint: 'select your state',
+                      value: _selectedState,
+                      items: _nigerianStates,
+                      fontSize: 14,
+                      onChanged: (val) { setState(() => _selectedState = val); if (val != null) _fetchLgas(val); },
                     ),
                     const SizedBox(height: 16),
-                    const Text('LGA', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87)),
+                    Text('LGA', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(8)),
                       child: _isLoadingLgas
                           ? const Padding(padding: EdgeInsets.all(14), child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))))
-                          : DropdownButtonFormField<String>(
+                          : SearchableDropdown(
+                              hint: _selectedState == null ? 'select state first' : 'select your LGA',
                               value: _selectedLGA,
-                              hint: Text(_selectedState == null ? 'select state first' : 'select your LGA', style: TextStyle(color: Colors.grey[400], fontSize: 14)),
-                              decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4)),
-                              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[400]),
-                              items: _lgaList.map((lga) {
-                                final name = lga['name']?.toString() ?? lga['lga_name']?.toString() ?? lga['LGA']?.toString() ?? '';
-                                return DropdownMenuItem(value: name, child: Text(name, style: const TextStyle(fontSize: 14)));
-                              }).toList(),
+                              items: _lgaList.map((lga) => lga['name']?.toString() ?? lga['lga_name']?.toString() ?? lga['LGA']?.toString() ?? '').where((s) => s.isNotEmpty).toList(),
+                              fontSize: 14,
                               onChanged: (val) => setState(() => _selectedLGA = val),
                             ),
                     ),
@@ -202,7 +196,7 @@ class _ComprehensivePersonalInfoScreenState extends State<ComprehensivePersonalI
                       'state': _selectedState ?? '',
                       'lga': _selectedLGA ?? '',
                     };
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => ComprehensiveVehicleInfoScreen(vehicleType: widget.vehicleType, personalInfo: personalInfo)));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => ComprehensiveVehicleInfoScreen(vehicleType: widget.vehicleType, personalInfo: personalInfo, isLoggedIn: widget.isLoggedIn, isAgent: widget.isAgent)));
                   }
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
@@ -215,20 +209,21 @@ class _ComprehensivePersonalInfoScreenState extends State<ComprehensivePersonalI
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, String hint, {TextInputType? keyboardType, int maxLines = 1}) {
+  Widget _buildTextField(String label, TextEditingController controller, String hint, {TextInputType? keyboardType, int maxLines = 1, List<String>? autofillHints}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87)),
-        const SizedBox(height: 8),
+        Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
+        SizedBox(height: 8),
         TextFormField(
           controller: controller, keyboardType: keyboardType, maxLines: maxLines,
-          style: const TextStyle(color: Colors.black, fontSize: 14),
+          autofillHints: autofillHints,
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
           decoration: InputDecoration(
             hintText: hint, hintStyle: TextStyle(color: Colors.grey[400]),
-            filled: true, fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+            filled: true, fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),

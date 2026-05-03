@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../utils/app_theme.dart';
 import 'motor_insurance_screen.dart';
+import 'royal_personal_care_screen.dart';
+import 'royal_family_care_screen.dart';
+import 'royal_group_care_screen.dart';
+import 'shop_protection_plan_screen.dart';
+import 'drivers_riders_protection_screen.dart';
+import 'home_protection_plan_screen.dart';
+import 'parcel_protection_plan_screen.dart';
+import 'student_protection_plan_screen.dart';
 
 class ExploreServicesScreen extends StatefulWidget {
   const ExploreServicesScreen({super.key});
@@ -58,13 +66,13 @@ class _ExploreServicesScreenState extends State<ExploreServicesScreen> {
           'Every year, families suffer losses or damage to their household items as a result of fire, flood and windstorm. This product is designed to help you recover your losses in event of any of these risk occurring. It also covers liability to your neighbour',
     },
     {
-      'image': 'assets/images/e8.png',
+      'image': 'assets/images/e9.png',
       'title': 'Parcel Protection Plan',
       'description':
           'This plan provides cover for your goods while in transit by road, rail, or inland waterway, it also covers your goods while boarding or unloading and while temporarily garaged in the course of transit. The product will indemnify you on goods lost or...',
     },
     {
-      'image': 'assets/images/e9.png',
+      'image': 'assets/images/e8.png',
       'title': 'Student Protection Plan',
       'description':
           'Sometimes children / ward drop out of school due to permanent disability or death of parent or guardian. This cover provides them the assurance of continuous education in situation where this occurs',
@@ -200,20 +208,29 @@ class _ExploreServicesScreenState extends State<ExploreServicesScreen> {
                       height: 44,
                       child: OutlinedButton(
                         onPressed: () {
-                          if (service['title'] == 'Motor Insurance') {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const MotorInsuranceScreen(),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Buy ${service['title']}'),
-                              ),
-                            );
+                          final title = service['title']!;
+                          Widget? screen;
+                          if (title == 'Motor Insurance') {
+                            screen = const MotorInsuranceScreen();
+                          } else if (title.contains('Personal Care')) {
+                            screen = const RoyalPersonalCareScreen();
+                          } else if (title.contains('Family Care')) {
+                            screen = const RoyalFamilyCareScreen();
+                          } else if (title.contains('Group Care')) {
+                            screen = const RoyalGroupCareScreen();
+                          } else if (title.contains('Shop')) {
+                            screen = const ShopProtectionPlanScreen();
+                          } else if (title.contains('Driver')) {
+                            screen = const DriversRidersProtectionScreen();
+                          } else if (title.contains('Home')) {
+                            screen = const HomeProtectionPlanScreen();
+                          } else if (title.contains('Parcel')) {
+                            screen = const ParcelProtectionPlanScreen();
+                          } else if (title.contains('Student')) {
+                            screen = const StudentProtectionPlanScreen();
+                          }
+                          if (screen != null) {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => screen!));
                           }
                         },
                         style: OutlinedButton.styleFrom(

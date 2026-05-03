@@ -43,18 +43,16 @@ class _EnterBvnScreenState extends State<EnterBvnScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'BVN',
           style: TextStyle(
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -67,36 +65,36 @@ class _EnterBvnScreenState extends State<EnterBvnScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               
-              const Text(
+              Text(
                 'Enter your BVN',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               
               TextFormField(
                 controller: _bvnController,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.black, fontSize: 14),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
                 onChanged: (value) => setState(() {}),
                 decoration: InputDecoration(
                   hintText: 'enter your BVN',
                   hintStyle: TextStyle(color: Colors.grey[400]),
                   filled: true,
-                  fillColor: Colors.grey[50],
+                  fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
+                    borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
+                    borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -110,7 +108,7 @@ class _EnterBvnScreenState extends State<EnterBvnScreen> {
                 ],
               ),
               
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               
               const Center(
                 child: Text(
@@ -118,7 +116,7 @@ class _EnterBvnScreenState extends State<EnterBvnScreen> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                    color: Colors.black87,
                   ),
                 ),
               ),

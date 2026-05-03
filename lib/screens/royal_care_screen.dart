@@ -17,18 +17,16 @@ class RoyalCareScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Royal Care', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text('Royal Care', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
         actions: [
-          IconButton(icon: const Icon(Icons.tune, color: Colors.black), onPressed: () {}),
+          IconButton(icon: Icon(Icons.tune, color: Theme.of(context).colorScheme.onSurface), onPressed: () {}),
         ],
       ),
       body: SingleChildScrollView(
@@ -42,7 +40,7 @@ class RoyalCareScreen extends StatelessWidget {
               svgIcon: 'assets/icons/svg3474.svg',
               trailingSvgIcon: 'assets/icons/svg3474.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalPersonalCareScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalPersonalCareScreen(isFromNewPolicy: true))),
             ),
             const SizedBox(height: 12),
             _buildRoyalCareCard(
@@ -52,7 +50,7 @@ class RoyalCareScreen extends StatelessWidget {
               svgIcon: 'assets/icons/Capa_1 2.svg',
               trailingSvgIcon: 'assets/icons/Capa_1 2.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalGroupCareScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalGroupCareScreen(isFromNewPolicy: true))),
             ),
             const SizedBox(height: 12),
             _buildRoyalCareCard(
@@ -62,20 +60,24 @@ class RoyalCareScreen extends StatelessWidget {
               svgIcon: 'assets/icons/Layer_1.svg',
               trailingSvgIcon: 'assets/icons/Layer_1.svg',
               cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalFamilyCareScreen())),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalFamilyCareScreen(isFromNewPolicy: true))),
             ),
             const SizedBox(height: 20),
           ],
         ),
       ),
-      floatingActionButton: isAgent ? null : SizedBox(
-        width: 50,
-        height: 50,
-        child: FloatingActionButton(
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewPolicyScreen(isAgent: isAgent))),
-          backgroundColor: AppTheme.accentOrange,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: Colors.white, size: 24),
+      floatingActionButton: isAgent ? null : Transform.translate(
+        offset: const Offset(0, 15),
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: FloatingActionButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewPolicyScreen(isAgent: isAgent))),
+            backgroundColor: AppTheme.accentOrange,
+            shape: const CircleBorder(),
+            elevation: 1,
+            child: const Icon(Icons.add, color: Colors.white, size: 30),
+          ),
         ),
       ),
       floatingActionButtonLocation: isAgent ? null : FloatingActionButtonLocation.centerDocked,
@@ -112,9 +114,9 @@ class RoyalCareScreen extends StatelessWidget {
             )
           : BottomAppBar(
         shape: const CircularNotchedRectangle(),
-        notchMargin: 6,
+        notchMargin: 4,
         child: SizedBox(
-          height: 50,
+          height: 44,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -122,7 +124,7 @@ class RoyalCareScreen extends StatelessWidget {
                 Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
               }),
               _buildNavItem(context, Icons.description_outlined, 'Policies', true),
-              const SizedBox(width: 40),
+              const SizedBox(width: 48),
               _buildNavItem(context, Icons.assignment_outlined, 'Claims', false, onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
               }),
@@ -168,18 +170,18 @@ class RoyalCareScreen extends StatelessWidget {
                     ),
                     child: SvgPicture.asset(svgIcon, width: 22, height: 22),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
                         const SizedBox(height: 2),
                         Text(subtitle, style: TextStyle(fontSize: 10, color: Colors.grey[600]), maxLines: 2, overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 40),
+                  const SizedBox(width: 48),
                 ],
               ),
             ),

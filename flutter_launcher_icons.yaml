@@ -1,10 +1,9 @@
 flutter_launcher_icons:
   android: true
-  ios: false
-  image_path: "assets/icons/rex.png"
+  ios: true
+  image_path: "assets/icons/app_icon_android.png"
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/icons/rex.png"
+  adaptive_icon_foreground: "assets/icons/app_icon_android_foreground.png"
   min_sdk_android: 21
-  
-  # Padding to ensure logo fits completely within circular icon
-  android_adaptive_icon_padding: 10
+  remove_alpha_ios: true
+  ios_image_path: "assets/icons/app_icon_ios.png"

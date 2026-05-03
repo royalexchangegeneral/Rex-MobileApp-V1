@@ -29,6 +29,7 @@ import 'providers/theme_provider.dart';
 import 'providers/notifications_provider.dart';
 import 'providers/policy_provider.dart';
 import 'providers/agent_policy_provider.dart';
+import 'services/inactivity_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +38,6 @@ void main() {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
     ),
   );
   
@@ -60,12 +60,23 @@ class MyApp extends StatelessWidget {
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
-          return MaterialApp(
+          return InactivityService(
+            timeout: const Duration(minutes: 5),
+            child: MaterialApp(
             title: 'Rex Insurance',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
-            themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            themeMode: themeProvider.themeMode,
+            // Lock text scaling to 1.0 so UI sizes don't change with device font settings
+            builder: (context, child) {
+              return MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: const TextScaler.linear(1.1),
+                ),
+                child: child!,
+              );
+            },
             initialRoute: '/',
             routes: {
               '/': (context) => const OnboardingScreen(),
@@ -112,6 +123,7 @@ class MyApp extends StatelessWidget {
               }
               return null;
             },
+          ),
           );
         },
       ),

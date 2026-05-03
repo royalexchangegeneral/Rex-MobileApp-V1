@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:webview_flutter/webview_flutter.dart';
-import 'dart:convert';
+import 'dart:io';
 import '../utils/app_theme.dart';
+import '../services/payment_service.dart';
+import '../widgets/paystack_webview.dart';
 import 'policy_purchase_success_screen.dart';
 
 class ComprehensiveSummaryScreen extends StatelessWidget {
@@ -12,61 +12,97 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
   final String regNumber;
   final Map<String, String> personalInfo;
   final Map<String, dynamic> vehicleData;
+  final List<File> imageFiles;
+  final bool isLoggedIn;
+  final bool isAgent;
 
-  const ComprehensiveSummaryScreen({super.key, required this.vehicleType, required this.sumInsured, required this.premium, required this.regNumber, this.personalInfo = const {}, this.vehicleData = const {}});
+  const ComprehensiveSummaryScreen({super.key, required this.vehicleType, required this.sumInsured, required this.premium, required this.regNumber, this.personalInfo = const {}, this.vehicleData = const {}, this.imageFiles = const [], this.isLoggedIn = false, this.isAgent = false});
 
-  static const String _paystackSecretKey = 'sk_test_dd6287962b39d4040217583eb0c2abef0d1239b5';
-
-  int _parsePremiumToKobo() {
+  double _getBaseAmount() {
     final cleaned = premium.replaceAll(RegExp(r'[^0-9.]'), '');
-    final amount = double.tryParse(cleaned) ?? 0;
-    return (amount * 100).toInt();
+    return double.tryParse(cleaned) ?? 0;
   }
 
-  Future<void> _initiatePayment(BuildContext context) async {
-    final email = personalInfo['email'] ?? 'customer@rexinsure.com';
-    final amountInKobo = _parsePremiumToKobo();
-    final ref = 'REX_COMP_${DateTime.now().millisecondsSinceEpoch}';
+  double _getPaystackCharge() {
+    final base = _getBaseAmount();
+    double charge = (base * 0.015) + 100;
+    if (charge > 2000) charge = 2000;
+    return charge;
+  }
 
+  double _getTotalAmount() => _getBaseAmount() + _getPaystackCharge();
+
+  String _formatNaira(double amount) {
+    return '₦${amount.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+\.)'), (m) => '${m[1]},')}';
+  }
+
+  Future<void> _submitProposalAndPay(BuildContext context) async {
     showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator(color: Colors.white)));
 
-    try {
-      final response = await http.post(
-        Uri.parse('https://api.paystack.co/transaction/initialize'),
-        headers: {'Authorization': 'Bearer $_paystackSecretKey', 'Content-Type': 'application/json'},
-        body: json.encode({'email': email, 'amount': amountInKobo, 'reference': ref, 'currency': 'NGN', 'callback_url': 'https://rexinsure.com/payment-callback'}),
-      ).timeout(const Duration(seconds: 15));
+    final premiumAmount = _getBaseAmount().toInt();
+    final names = '${personalInfo['firstName'] ?? ''} ${personalInfo['lastName'] ?? ''}'.trim();
+    final email = personalInfo['email'] ?? 'customer@rexinsure.com';
+    final mobileno = personalInfo['phone'] ?? '';
 
-      if (!context.mounted) return;
-      Navigator.pop(context);
+    // Build fields for multipart proposal
+    final fields = <String, String>{
+      'product_code': 'CP',
+      'type': 'Individual',
+      'names': names,
+      'email': email,
+      'mobileno': mobileno,
+      'premium': premiumAmount.toString(),
+      'occupation': personalInfo['occupation'] ?? '',
+      'state': personalInfo['state'] ?? '',
+      'address': personalInfo['address'] ?? '',
+      'vehregno': regNumber,
+      'vehchasisno': vehicleData['chassisNo']?.toString() ?? vehicleData['VIN']?.toString() ?? '',
+      'engnumb': vehicleData['vehicleEngineno']?.toString() ?? vehicleData['EngineNumber']?.toString() ?? '',
+      'engcap': vehicleData['vehicleEngineCapacity']?.toString() ?? '',
+      'vehmake': vehicleData['vehicleMake']?.toString() ?? vehicleData['VehicleMake']?.toString() ?? '',
+      'vehmodel': vehicleData['vehicleModel']?.toString() ?? vehicleData['VehicleModel']?.toString() ?? '',
+      'vehyear': vehicleData['Year']?.toString() ?? '',
+      'vehtype': vehicleData['VehicleType']?.toString() ?? 'Saloon',
+      'vehcolor': vehicleData['vehicleColor']?.toString() ?? vehicleData['VehicleColor']?.toString() ?? '',
+      'sumInsured': sumInsured,
+      'premrate': '5',
+      'grosspremium': premiumAmount.toString(),
+    };
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['status'] == true) {
-          final authUrl = data['data']['authorization_url'];
-          final result = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => _PaystackWebView(url: authUrl, callbackUrl: 'https://rexinsure.com/payment-callback')));
-          if (result == true && context.mounted) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const PolicyPurchaseSuccessScreen()));
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(data['message'] ?? 'Payment failed'), backgroundColor: Colors.red));
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to initialize payment'), backgroundColor: Colors.red));
+    // Collect image file paths
+    final imagePaths = imageFiles.where((f) => f.existsSync()).map((f) => f.path).toList();
+
+    final result = await PaymentService.initiateComprehensivePurchase(
+      fields: fields,
+      imagePaths: imagePaths,
+      names: names,
+      email: email,
+      mobileno: mobileno,
+      premium: premiumAmount,
+    );
+
+    if (!context.mounted) return;
+    Navigator.pop(context);
+
+    if (result.success && result.authorizationUrl != null) {
+      final payResult = await Navigator.push<PaymentVerifyResult>(context, MaterialPageRoute(builder: (_) => PaystackWebView(url: result.authorizationUrl!)));
+      if (payResult != null && payResult.success && context.mounted) {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => PolicyPurchaseSuccessScreen(isLoggedIn: isLoggedIn, isAgent: isAgent, reference: payResult.reference, message: payResult.message)));
+      } else if (payResult != null && !payResult.success && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(payResult.message ?? 'Payment verification failed'), backgroundColor: Colors.red));
       }
-    } catch (e) {
-      if (context.mounted) { Navigator.pop(context); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red)); }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.message ?? 'Payment failed'), backgroundColor: Colors.red));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-        title: Text(vehicleType, style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600)),
+        elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+        title: Text(vehicleType, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w600)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -89,17 +125,19 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Payment Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
-                  const SizedBox(height: 16),
+                  Text('Payment Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                  SizedBox(height: 16),
                   _buildInfoRow('Product', 'Motor Comprehensive'),
                   _buildInfoRow('Sum Insured', 'N$sumInsured'),
                   _buildInfoRow('Premium', premium),
-                  const SizedBox(height: 24),
-                  const Text('Vehicle Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                  _buildInfoRow('Paystack Charges', _formatNaira(_getPaystackCharge())),
+                  _buildInfoRow('Total', _formatNaira(_getTotalAmount())),
+                  SizedBox(height: 24),
+                  Text('Vehicle Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 16),
                   _buildInfoRow('Reg Number', vehicleData['registrationNo']?.toString() ?? regNumber),
                   _buildInfoRow('Chassis No.', vehicleData['chassisNo']?.toString() ?? '-'),
@@ -110,8 +148,8 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
                   _buildInfoRow('Engine Capacity', vehicleData['vehicleEngineCapacity']?.toString() ?? '-'),
                   _buildInfoRow('Category', vehicleData['vehicleCategory']?.toString() ?? '-'),
                   _buildInfoRow('Owner', vehicleData['ownersName']?.toString() ?? '-'),
-                  const SizedBox(height: 24),
-                  const Text('Personal Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                  SizedBox(height: 24),
+                  Text('Personal Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 16),
                   _buildInfoRow('First Name', personalInfo['firstName'] ?? '-'),
                   _buildInfoRow('Last Name', personalInfo['lastName'] ?? '-'),
@@ -130,7 +168,7 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
                 onPressed: () {
                   showModalBottomSheet(
                     context: context,
-                    backgroundColor: Colors.white,
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
                     builder: (ctx) => Container(
                       padding: const EdgeInsets.all(24),
@@ -138,16 +176,16 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
                           InkWell(
-                            onTap: () { Navigator.pop(ctx); _initiatePayment(context); },
+                            onTap: () { Navigator.pop(ctx); _submitProposalAndPay(context); },
                             child: Container(
-                              padding: const EdgeInsets.all(16),
+                              padding: EdgeInsets.all(16),
                               decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(8)),
                               child: Row(children: [
                                 Container(width: 40, height: 40, decoration: BoxDecoration(color: Colors.cyan[50], borderRadius: BorderRadius.circular(8)), child: Icon(Icons.payment, color: Colors.cyan[600], size: 24)),
-                                const SizedBox(width: 16),
-                                const Text('Pay with Paystack', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black)),
+                                SizedBox(width: 16),
+                                Text('Pay with Paystack', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
                                 const Spacer(),
                                 Icon(Icons.radio_button_checked, color: AppTheme.primaryNavy, size: 22),
                               ]),
@@ -171,51 +209,16 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(flex: 2, child: Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600]))),
-          Expanded(flex: 3, child: Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87), textAlign: TextAlign.right)),
+          Expanded(flex: 3, child: Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87), textAlign: TextAlign.right)),
         ],
       ),
     );
   }
 }
 
-class _PaystackWebView extends StatefulWidget {
-  final String url;
-  final String callbackUrl;
-  const _PaystackWebView({required this.url, required this.callbackUrl});
-  @override
-  State<_PaystackWebView> createState() => _PaystackWebViewState();
-}
 
-class _PaystackWebViewState extends State<_PaystackWebView> {
-  late final WebViewController _controller;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(NavigationDelegate(
-        onPageStarted: (_) => setState(() => _isLoading = true),
-        onPageFinished: (_) => setState(() => _isLoading = false),
-        onNavigationRequest: (request) {
-          if (request.url.startsWith(widget.callbackUrl)) { Navigator.pop(context, true); return NavigationDecision.prevent; }
-          return NavigationDecision.navigate;
-        },
-      ))
-      ..loadRequest(Uri.parse(widget.url));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.white, elevation: 0, leading: IconButton(icon: const Icon(Icons.close, color: Colors.black), onPressed: () => Navigator.pop(context, false)), title: const Text('Payment', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)), centerTitle: true),
-      body: Stack(children: [WebViewWidget(controller: _controller), if (_isLoading) const Center(child: CircularProgressIndicator())]),
-    );
-  }
-}

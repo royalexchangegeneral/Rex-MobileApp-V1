@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'new_policy_screen.dart';
 import 'select_client_screen.dart';
 import 'agent_dashboard_screen.dart';
@@ -97,11 +98,26 @@ class BuyNewPolicyScreen extends StatelessWidget {
             
             // Help text
             InkWell(
-              onTap: () {
-                // Contact support action
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Contacting support...')),
-                );
+              onTap: () async {
+                final uri = Uri(scheme: 'tel', path: '+2347080606100');
+                try {
+                  final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  if (!launched && context.mounted) {
+                    showDialog(context: context, builder: (ctx) => AlertDialog(
+                      title: const Text('Contact Support', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      content: const Text('+234 708 0606 100', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+                    ));
+                  }
+                } catch (_) {
+                  if (context.mounted) {
+                    showDialog(context: context, builder: (ctx) => AlertDialog(
+                      title: const Text('Contact Support', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      content: const Text('+234 708 0606 100', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+                    ));
+                  }
+                }
               },
               borderRadius: BorderRadius.circular(8),
               child: Padding(
@@ -208,7 +224,7 @@ class BuyNewPolicyScreen extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.circular(12),

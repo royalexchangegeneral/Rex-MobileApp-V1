@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:convert';
 import '../utils/app_theme.dart';
+import 'customer_dashboard_screen.dart';
 
 class ExistingPolicyQuestionScreen extends StatefulWidget {
   const ExistingPolicyQuestionScreen({super.key});
@@ -11,31 +16,143 @@ class ExistingPolicyQuestionScreen extends StatefulWidget {
 
 class _ExistingPolicyQuestionScreenState extends State<ExistingPolicyQuestionScreen> {
   String? _selectedOption;
+  bool _isCreating = false;
 
-  void _handleContinue() {
+  Future<void> _handleContinue() async {
     if (_selectedOption == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select an option')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select an option')));
       return;
     }
 
     if (_selectedOption == 'yes') {
       Navigator.pushNamed(context, '/enter-policy-details');
     } else {
-      Navigator.pushNamed(context, '/get-covered');
+      await _createCustomerAndLogin();
+    }
+  }
+
+  Future<void> _createCustomerAndLogin() async {
+    setState(() => _isCreating = true);
+    final prefs = await SharedPreferences.getInstance();
+    final firstName = prefs.getString('signup_first_name') ?? '';
+    final lastName = prefs.getString('signup_last_name') ?? '';
+    final email = prefs.getString('signup_email') ?? '';
+    final phone = prefs.getString('signup_phone') ?? '';
+    final nin = prefs.getString('signup_nin') ?? '';
+    final password = prefs.getString('signup_password') ?? '';
+    final dob = prefs.getString('signup_dob') ?? '';
+    // Convert DOB from DD-MM-YYYY or DD/MM/YYYY to YYYY-MM-DD
+    String formattedDob = dob;
+    if (dob.contains('-') || dob.contains('/')) {
+      final parts = dob.replaceAll('/', '-').split('-');
+      if (parts.length == 3 && parts[0].length <= 2) {
+        formattedDob = '${parts[2]}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}';
+      }
+    }
+    final state = prefs.getString('signup_state') ?? '';
+    final lga = prefs.getString('signup_lga') ?? '';
+    final address = prefs.getString('signup_address') ?? '';
+
+    try {
+      // Step 1: Create Customer
+      final customerPayload = {
+        'cust_first_name': firstName,
+        'cust_middle_name': '',
+        'cust_last_name': lastName,
+        'cust_type': 'Individual',
+        'cust_occupation': 'Business',
+        'cust_phone_no': phone,
+        'cust_email': email,
+        'cust_address': address,
+        'cust_town': '',
+        'cust_nationality': 'Nigerian',
+        'cust_state': state,
+        'cust_lga': lga,
+        'cust_dob': formattedDob,
+        'cust_national_id_name': 'NIN',
+        'cust_national_id_no': nin,
+      };
+      print('=== CREATE CUSTOMER ===');
+      print('Payload: ${json.encode(customerPayload)}');
+
+      final custResponse = await http.post(
+        Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(customerPayload),
+      ).timeout(const Duration(seconds: 15));
+
+      print('Response: ${custResponse.statusCode} - ${custResponse.body}');
+
+      if (custResponse.statusCode == 200 || custResponse.statusCode == 201) {
+        final custData = json.decode(custResponse.body);
+        if (custData['Status']?.toString().toLowerCase() == 'success' && custData['StatusCode'] != 409) {
+          // Step 2: Create Login
+          final loginPayload = {
+            'cust_first_name': firstName,
+            'cust_middle_name': '',
+            'cust_last_name': lastName,
+            'cust_occupation': 'Business',
+            'cust_phone_no': phone,
+            'cust_email': email,
+            'cust_password': password,
+          };
+          print('=== CREATE LOGIN ===');
+          print('Payload: ${json.encode(loginPayload)}');
+
+          final loginResponse = await http.post(
+            Uri.parse('https://eportaltest.rexinsure.com/api/createlogin'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(loginPayload),
+          ).timeout(const Duration(seconds: 15));
+
+          print('Response: ${loginResponse.statusCode} - ${loginResponse.body}');
+
+          setState(() => _isCreating = false);
+
+          if (loginResponse.statusCode == 200 || loginResponse.statusCode == 201) {
+            final loginData = json.decode(loginResponse.body);
+            if (loginData['Status']?.toString().toLowerCase() == 'success' || loginData['StatusCode'] == 201) {
+              // Clear signup data
+              await prefs.remove('signup_first_name');
+              await prefs.remove('signup_last_name');
+              await prefs.remove('signup_email');
+              await prefs.remove('signup_phone');
+              await prefs.remove('signup_nin');
+              await prefs.remove('signup_password');
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Account created successfully!'), backgroundColor: Colors.green));
+                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false);
+              }
+            } else {
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login creation failed: ${loginData['message'] ?? loginData['Status'] ?? 'Unknown error'}'), backgroundColor: Colors.red));
+            }
+          } else {
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loginResponse.statusCode == 200 || loginResponse.statusCode == 201 ? 'Login creation failed' : (() { try { final d = json.decode(loginResponse.body); return d['Message']?.toString() ?? d['message']?.toString() ?? 'Login creation failed'; } catch (_) { return 'Login creation failed'; } })()), backgroundColor: Colors.red));
+          }
+        } else {
+          setState(() => _isCreating = false);
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(custData['Message']?.toString() ?? custData['message']?.toString() ?? 'Customer creation failed'), backgroundColor: Colors.red));
+        }
+      } else {
+        setState(() => _isCreating = false);
+        String errorMsg = 'Customer creation failed';
+        try { final d = json.decode(custResponse.body); errorMsg = d['Message']?.toString() ?? d['message']?.toString() ?? errorMsg; } catch (_) {}
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMsg), backgroundColor: Colors.red));
+      }
+    } catch (e) {
+      setState(() => _isCreating = false);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -55,14 +172,14 @@ class _ExistingPolicyQuestionScreenState extends State<ExistingPolicyQuestionScr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               
-              const Text(
+              Text(
                 'Do You Have An Existing Insurance Policy?',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               
@@ -77,15 +194,15 @@ class _ExistingPolicyQuestionScreenState extends State<ExistingPolicyQuestionScr
                 ),
               ),
               
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               
               // Yes Option
               GestureDetector(
                 onTap: () => setState(() => _selectedOption = 'yes'),
                 child: Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1A1F2E) : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: _selectedOption == 'yes' ? AppTheme.primaryBlue : Colors.grey[300]!,
@@ -117,13 +234,13 @@ class _ExistingPolicyQuestionScreenState extends State<ExistingPolicyQuestionScr
                               )
                             : null,
                       ),
-                      const SizedBox(width: 12),
-                      const Text(
+                      SizedBox(width: 12),
+                      Text(
                         'Yes',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -131,15 +248,15 @@ class _ExistingPolicyQuestionScreenState extends State<ExistingPolicyQuestionScr
                 ),
               ),
               
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               
               // No Option
               GestureDetector(
                 onTap: () => setState(() => _selectedOption = 'no'),
                 child: Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1A1F2E) : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: _selectedOption == 'no' ? AppTheme.primaryBlue : Colors.grey[300]!,
@@ -171,13 +288,13 @@ class _ExistingPolicyQuestionScreenState extends State<ExistingPolicyQuestionScr
                               )
                             : null,
                       ),
-                      const SizedBox(width: 12),
-                      const Text(
+                      SizedBox(width: 12),
+                      Text(
                         'No',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -221,12 +338,35 @@ class _ExistingPolicyQuestionScreenState extends State<ExistingPolicyQuestionScr
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Click here for advice.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryNavy,
+                    GestureDetector(
+                      onTap: () async {
+                        final uri = Uri(scheme: 'tel', path: '+2347080606100');
+                        try {
+                          final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          if (!launched && context.mounted) {
+                            showDialog(context: context, builder: (ctx) => AlertDialog(
+                              title: const Text('Contact Support', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              content: const Text('+234 708 0606 100', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                              actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+                            ));
+                          }
+                        } catch (_) {
+                          if (context.mounted) {
+                            showDialog(context: context, builder: (ctx) => AlertDialog(
+                              title: const Text('Contact Support', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              content: const Text('+234 708 0606 100', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                              actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+                            ));
+                          }
+                        }
+                      },
+                      child: const Text(
+                        'Click here for advice.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryNavy,
+                        ),
                       ),
                     ),
                   ],
@@ -239,22 +379,18 @@ class _ExistingPolicyQuestionScreenState extends State<ExistingPolicyQuestionScr
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _handleContinue,
+                  onPressed: _selectedOption != null && !_isCreating ? _handleContinue : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryBlue,
+                    backgroundColor: _selectedOption != null ? AppTheme.primaryBlue : Colors.grey[300],
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: _isCreating
+                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('Continue', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],

@@ -4,17 +4,26 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/searchable_dropdown.dart';
 import 'vehicle_information_screen.dart';
 import 'comprehensive_personal_info_screen.dart';
 
 class PrivateCarPurchaseScreen extends StatefulWidget {
   final String vehicleType;
   final String price;
+  final Map<String, dynamic>? clientData;
+  final bool isLoggedIn;
+  final bool isAgent;
+  final String agentCode;
   
   const PrivateCarPurchaseScreen({
     super.key,
     this.vehicleType = 'Private Car',
     this.price = 'N15,000',
+    this.clientData,
+    this.isLoggedIn = false,
+    this.isAgent = false,
+    this.agentCode = '',
   });
 
   @override
@@ -58,18 +67,26 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final auth = Provider.of<AuthProvider>(context, listen: false);
-      final userData = auth.userData;
-      if (userData != null) {
-        print('=== USER DATA KEYS ===');
-        userData.forEach((key, value) => print('  $key: $value'));
-        print('======================');
-        _firstNameController.text = userData['FirstName']?.toString() ?? '';
-        _lastNameController.text = userData['LastName']?.toString() ?? userData['Lastname']?.toString() ?? userData['Surname']?.toString() ?? '';
-        _emailController.text = userData['Email']?.toString() ?? '';
-        _phoneController.text = userData['Phone']?.toString() ?? userData['PhoneNo']?.toString() ?? userData['Phoneno']?.toString() ?? userData['MobileNo']?.toString() ?? userData['Mobile']?.toString() ?? userData['PhoneNumber']?.toString() ?? userData['Telephone']?.toString() ?? '';
-        _occupationController.text = userData['Occupation']?.toString() ?? '';
-        _addressController.text = userData['Address']?.toString() ?? '';
+      // Use client data if available (agent buying for client), otherwise use logged-in user data
+      if (widget.clientData != null) {
+        final c = widget.clientData!;
+        _firstNameController.text = c['cust_firstname']?.toString() ?? c['Firstname']?.toString() ?? '';
+        _lastNameController.text = c['cust_lastname']?.toString() ?? c['Surname']?.toString() ?? '';
+        _emailController.text = c['cust_email']?.toString() ?? '';
+        _phoneController.text = c['cust_phone']?.toString() ?? '';
+        _addressController.text = c['cust_address']?.toString() ?? '';
+        _occupationController.text = c['cust_occupation']?.toString() ?? '';
+      } else {
+        final auth = Provider.of<AuthProvider>(context, listen: false);
+        final userData = auth.userData;
+        if (userData != null) {
+          _firstNameController.text = userData['FirstName']?.toString() ?? '';
+          _lastNameController.text = userData['LastName']?.toString() ?? userData['Lastname']?.toString() ?? userData['Surname']?.toString() ?? '';
+          _emailController.text = userData['Email']?.toString() ?? '';
+          _phoneController.text = userData['Phone']?.toString() ?? userData['PhoneNo']?.toString() ?? userData['MobileNo']?.toString() ?? '';
+          _occupationController.text = userData['Occupation']?.toString() ?? '';
+          _addressController.text = userData['Address']?.toString() ?? '';
+        }
       }
     });
   }
@@ -120,11 +137,10 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-        title: Text(widget.vehicleType, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
+        elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+        title: Text(widget.vehicleType, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.w600)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -156,32 +172,26 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildTextField('First Name*', 'enter first name', _firstNameController),
+                    _buildTextField('First Name*', 'enter first name', _firstNameController, autofillHints: [AutofillHints.givenName]),
                     const SizedBox(height: 14),
-                    _buildTextField('Last Name*', 'enter last name', _lastNameController),
+                    _buildTextField('Last Name*', 'enter last name', _lastNameController, autofillHints: [AutofillHints.familyName]),
                     const SizedBox(height: 14),
-                    _buildTextField('Email Address*', 'enter your email address', _emailController, keyboardType: TextInputType.emailAddress),
+                    _buildTextField('Email Address*', 'enter your email address', _emailController, keyboardType: TextInputType.emailAddress, autofillHints: [AutofillHints.email]),
                     const SizedBox(height: 14),
-                    _buildTextField('Phone Number*', 'enter your phone number', _phoneController, keyboardType: TextInputType.phone),
+                    _buildTextField('Phone Number*', 'enter your phone number', _phoneController, keyboardType: TextInputType.phone, autofillHints: [AutofillHints.telephoneNumber]),
                     const SizedBox(height: 14),
                     _buildTextField('Occupation', 'enter your occupation', _occupationController),
                     const SizedBox(height: 14),
-                    _buildTextField('Address*', 'enter your address', _addressController, maxLines: 3),
+                    _buildTextField('Address*', 'enter your address', _addressController, maxLines: 3, autofillHints: [AutofillHints.streetAddressLine1]),
                     const SizedBox(height: 14),
                     _buildLabel('State*'),
                     const SizedBox(height: 6),
-                    Container(
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey[400]!, width: 1.5)),
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedState,
-                        hint: Text('select your state', style: TextStyle(color: Colors.grey[400], fontSize: 13)),
-                        style: const TextStyle(color: Colors.black, fontSize: 13),
-                        decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-                        icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
-                        validator: (v) => (v == null || v.isEmpty) ? 'This field is required' : null,
-                        items: _nigerianStates.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-                        onChanged: (val) { setState(() => _selectedState = val); if (val != null) _fetchLgas(val); },
-                      ),
+                    SearchableDropdown(
+                      hint: 'select your state',
+                      value: _selectedState,
+                      items: _nigerianStates,
+                      borderColor: Colors.grey[400],
+                      onChanged: (val) { setState(() => _selectedState = val); if (val != null) _fetchLgas(val); },
                     ),
                     const SizedBox(height: 14),
                     _buildLabel('LGA*'),
@@ -190,17 +200,11 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                       decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey[400]!, width: 1.5)),
                       child: _isLoadingLgas
                           ? const Padding(padding: EdgeInsets.all(14), child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))))
-                          : DropdownButtonFormField<String>(
+                          : SearchableDropdown(
+                              hint: _selectedState == null ? 'select state first' : 'select your LGA',
                               value: _selectedLGA,
-                              hint: Text(_selectedState == null ? 'select state first' : 'select your LGA', style: TextStyle(color: Colors.grey[400], fontSize: 13)),
-                              style: const TextStyle(color: Colors.black, fontSize: 13),
-                              decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-                              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
-                              validator: (v) => (v == null || v.isEmpty) ? 'This field is required' : null,
-                              items: _lgaList.map((lga) {
-                                final name = lga['name']?.toString() ?? lga['lga_name']?.toString() ?? lga['LGA']?.toString() ?? '';
-                                return DropdownMenuItem(value: name, child: Text(name));
-                              }).toList(),
+                              items: _lgaList.map((lga) => lga['name']?.toString() ?? lga['lga_name']?.toString() ?? lga['LGA']?.toString() ?? '').where((s) => s.isNotEmpty).toList(),
+                              borderColor: Colors.grey[400],
                               onChanged: (val) => setState(() => _selectedLGA = val),
                             ),
                     ),
@@ -228,7 +232,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                       if (widget.vehicleType.toLowerCase().contains('comprehensive')) {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => ComprehensivePersonalInfoScreen(vehicleType: widget.vehicleType)));
                       } else {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => VehicleInformationScreen(vehicleType: widget.vehicleType, price: widget.price, personalInfo: personalInfo)));
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => VehicleInformationScreen(vehicleType: widget.vehicleType, price: widget.price, personalInfo: personalInfo, isLoggedIn: widget.isLoggedIn, isAgent: widget.isAgent, agentCode: widget.agentCode)));
                       }
                     }
                   },
@@ -244,23 +248,35 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
   }
 
   Widget _buildLabel(String label) {
-    return Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.black87));
+    return Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface));
   }
 
-  Widget _buildTextField(String label, String hint, TextEditingController controller, {TextInputType? keyboardType, int maxLines = 1}) {
+  Widget _buildTextField(String label, String hint, TextEditingController controller, {TextInputType? keyboardType, int maxLines = 1, List<String>? autofillHints}) {
     final isRequired = label.contains('*');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLabel(label),
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
         TextFormField(
           controller: controller, keyboardType: keyboardType, maxLines: maxLines,
-          style: const TextStyle(color: Colors.black, fontSize: 13),
-          validator: isRequired ? (v) => (v == null || v.trim().isEmpty) ? 'This field is required' : null : null,
+          autofillHints: autofillHints,
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
+          validator: (v) {
+            if (isRequired && (v == null || v.trim().isEmpty)) return 'This field is required';
+            if (v != null && v.trim().isNotEmpty && keyboardType == TextInputType.emailAddress) {
+              final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+              if (!emailRegex.hasMatch(v.trim())) return 'Enter a valid email address';
+            }
+            if (v != null && v.trim().isNotEmpty && keyboardType == TextInputType.phone) {
+              final cleaned = v.replaceAll(RegExp(r'[^0-9+]'), '');
+              if (cleaned.length < 10 || cleaned.length > 15) return 'Enter a valid phone number';
+            }
+            return null;
+          },
           decoration: InputDecoration(
             hintText: hint, hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-            filled: true, fillColor: Colors.white,
+            filled: true, fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[400]!, width: 1.5)),
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[400]!, width: 1.5)),
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2)),

@@ -14,10 +14,9 @@ class ServiceRequestScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-        title: const Text('Service Request', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)), centerTitle: true),
+      appBar: AppBar(elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+        title: Text('Service Request', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)), centerTitle: true),
       body: SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           _section('Policy Services'),
@@ -48,21 +47,21 @@ class ServiceRequestScreen extends StatelessWidget {
           _item(context, Icons.sync_outlined, 'Duplicate Transactions', 'Deletion/reversal (Agents)', const Color(0xFFFFF3E0), const Color(0xFFE8923E)),
           const SizedBox(height: 80),
         ])),
-      floatingActionButton: isAgentFlow ? null : SizedBox(width: 50, height: 50, child: FloatingActionButton(
+      floatingActionButton: isAgentFlow ? null : Transform.translate(offset: const Offset(0, 15), child: SizedBox(width: 52, height: 52, child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-        backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), child: const Icon(Icons.add, color: Colors.white, size: 24))),
+        backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), elevation: 1, child: const Icon(Icons.add, color: Colors.white, size: 30)))),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: isAgentFlow ? buildAgentBottomNav(context, currentIndex: 1) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
-        child: SizedBox(height: 50, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+      bottomNavigationBar: isAgentFlow ? buildAgentBottomNav(context, currentIndex: 1) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 4,
+        child: SizedBox(height: 44, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
           _nav(context, Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
-          _nav(context, Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 40),
+          _nav(context, Icons.description_outlined, 'Policies', false, null), SizedBox(width: 48),
           _nav(context, Icons.assignment_outlined, 'Claims', false, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()))),
           _nav(context, Icons.person_outline, 'Profile', true, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()))),
         ]))),
     );
   }
 
-  Widget _section(String t) => Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(t, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)));
+  Widget _section(String t) => Padding(padding: EdgeInsets.only(bottom: 12), child: Text(t, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)));
 
   Widget _item(BuildContext ctx, IconData icon, String title, String sub, Color bg, Color ic) {
     return Padding(padding: const EdgeInsets.only(bottom: 10), child: GestureDetector(
@@ -73,12 +72,12 @@ class ServiceRequestScreen extends StatelessWidget {
           Navigator.push(ctx, MaterialPageRoute(builder: (_) => NewTicketScreen(initialCategory: title, isAgentFlow: isAgentFlow)));
         }
       },
-      child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
+      child: Container(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
         child: Row(children: [
-          Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: bg, shape: BoxShape.circle), child: Icon(icon, color: ic, size: 20)),
-          const SizedBox(width: 14),
+          Container(padding: EdgeInsets.all(10), decoration: BoxDecoration(color: bg, shape: BoxShape.circle), child: Icon(icon, color: ic, size: 20)),
+          SizedBox(width: 14),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+            Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
             Text(sub, style: TextStyle(fontSize: 10, color: Colors.grey[500])),
           ])),
         ]))));

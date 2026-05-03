@@ -86,26 +86,25 @@ class _SelectClientScreenState extends State<SelectClientScreen> {
     final colors = [const Color(0xFF1E2D64), const Color(0xFFFF6B35), const Color(0xFFE63946), const Color(0xFF0066FF)];
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-        title: const Text('Select Client', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)), centerTitle: true),
+      appBar: AppBar(elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+        title: Text('Select Client', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)), centerTitle: true),
       body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // Recent
-        if (recent.isNotEmpty) Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Recent', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black)),
-          const SizedBox(height: 12),
+        if (recent.isNotEmpty) Padding(padding: EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Recent', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+          SizedBox(height: 12),
           SizedBox(height: 72, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(recent.length, (i) {
             final c = recent[i];
             return _buildRecentCard(c, colors[i % colors.length]);
           }))),
         ])),
         // Search
-        Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: TextField(
+        Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: TextField(
           controller: _searchController, onChanged: (_) => setState(() {}),
-          style: const TextStyle(fontSize: 13, color: Colors.black),
+          style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface),
           decoration: InputDecoration(hintText: 'Search name, email or phone', hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-            prefixIcon: Icon(Icons.search, color: Colors.grey[400]), filled: true, fillColor: Colors.grey[100],
+            prefixIcon: Icon(Icons.search, color: Colors.grey[400]), filled: true, fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12)))),
         const SizedBox(height: 16),
@@ -137,14 +136,14 @@ class _SelectClientScreenState extends State<SelectClientScreen> {
     final initials = _getInitials(c);
     final name = _getName(c);
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen(isAgent: true))),
-      child: Container(width: 85, margin: const EdgeInsets.only(right: 10), padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewPolicyScreen(isAgent: true, clientData: c))),
+      child: Container(width: 85, margin: EdgeInsets.only(right: 10), padding: EdgeInsets.symmetric(horizontal: 6, vertical: 5),
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
         child: Column(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
           Container(width: 28, height: 28, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
-            child: Center(child: Text(initials, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 9)))),
-          const SizedBox(height: 3),
-          Text(name, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.black, height: 1.0), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+            child: Center(child: Text(initials, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 9)))),
+          SizedBox(height: 3),
+          Text(name, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface, height: 1.0), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 1),
           Text(c['cust_type']?.toString() ?? '', style: TextStyle(fontSize: 7, color: Colors.grey[600], height: 1.0), maxLines: 1),
         ])));
@@ -165,16 +164,16 @@ class _SelectClientScreenState extends State<SelectClientScreen> {
     final type = c['cust_type']?.toString() ?? '';
     final isCorporate = type.toLowerCase() == 'corporate';
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen(isAgent: true))),
-      child: Container(margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(16),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewPolicyScreen(isAgent: true, clientData: c))),
+      child: Container(margin: EdgeInsets.only(bottom: 12), padding: EdgeInsets.all(16),
         decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
         child: Row(children: [
           CircleAvatar(radius: 24, backgroundColor: isCorporate ? const Color(0xFFE8EAF6) : const Color(0xFFE3F2FD),
             child: Icon(isCorporate ? Icons.business : Icons.person, color: const Color(0xFF1E2D64), size: 24)),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              Expanded(child: Text(name.isNotEmpty ? name : 'Unknown', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black))),
+              Expanded(child: Text(name.isNotEmpty ? name : 'Unknown', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface))),
               Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(color: isCorporate ? const Color(0xFFEDE7F6) : const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(10)),
                 child: Text(type, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: isCorporate ? const Color(0xFF7B1FA2) : const Color(0xFF2E7D32)))),

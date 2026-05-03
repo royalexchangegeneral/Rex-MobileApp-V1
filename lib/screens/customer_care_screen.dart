@@ -80,30 +80,29 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-        title: const Text('Customer Care', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)), centerTitle: true),
-      body: SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), padding: const EdgeInsets.all(16),
+      appBar: AppBar(elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+        title: Text('Customer Care', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)), centerTitle: true),
+      body: SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), padding: EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           // Search
-          TextField(controller: _searchController, style: const TextStyle(fontSize: 13, color: Colors.black),
+          TextField(controller: _searchController, style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface),
             decoration: InputDecoration(hintText: 'Search help', hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
               suffixIcon: Icon(Icons.search, color: Colors.grey[400]),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[300]!)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[300]!)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primaryNavy)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12))),
-          const SizedBox(height: 24),
-          const Text('Select Issue Category', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-          const SizedBox(height: 14),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primaryNavy)),
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12))),
+          SizedBox(height: 24),
+          Text('Select Issue Category', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+          SizedBox(height: 14),
           ...List.generate(_categories.length, (i) {
             final c = _categories[i];
-            return Padding(padding: const EdgeInsets.only(bottom: 10), child: _buildCategoryItem(c['icon'], c['title'], c['sub'], c['bg'], c['ic']));
+            return Padding(padding: EdgeInsets.only(bottom: 10), child: _buildCategoryItem(c['icon'], c['title'], c['sub'], c['bg'], c['ic']));
           }),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('Recent Tickets', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+            Text('Recent Tickets', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             GestureDetector(
               onTap: () {
                 Navigator.push(
@@ -129,14 +128,14 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
           )),
           const SizedBox(height: 80),
         ])),
-      floatingActionButton: widget.isAgentFlow ? null : SizedBox(width: 50, height: 50, child: FloatingActionButton(
+      floatingActionButton: widget.isAgentFlow ? null : Transform.translate(offset: const Offset(0, 15), child: SizedBox(width: 52, height: 52, child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-        backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), child: const Icon(Icons.add, color: Colors.white, size: 24))),
+        backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), elevation: 1, child: const Icon(Icons.add, color: Colors.white, size: 30)))),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 6,
-        child: SizedBox(height: 50, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+      bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 4,
+        child: SizedBox(height: 44, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
           _nav(Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
-          _nav(Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 40),
+          _nav(Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 48),
           _nav(Icons.assignment_outlined, 'Claims', false, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()))),
           _nav(Icons.person_outline, 'Profile', true, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()))),
         ]))),
@@ -152,13 +151,13 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
       } else {
         Navigator.push(context, MaterialPageRoute(builder: (_) => NewTicketScreen(isAgentFlow: widget.isAgentFlow)));
       }
-    }, child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    }, child: Container(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
       child: Row(children: [
-        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: bg, shape: BoxShape.circle), child: Icon(icon, color: ic, size: 22)),
-        const SizedBox(width: 14),
+        Container(padding: EdgeInsets.all(12), decoration: BoxDecoration(color: bg, shape: BoxShape.circle), child: Icon(icon, color: ic, size: 22)),
+        SizedBox(width: 14),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+          Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
           Text(sub, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
         ])),
         Icon(Icons.chevron_right, color: Colors.grey[400], size: 22),
@@ -192,12 +191,12 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
       }
     }
 
-    return Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
+    return Container(padding: EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
       child: Row(children: [
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('#TK${t['id']}', style: TextStyle(fontSize: 11, color: Colors.grey[500])),
-          const SizedBox(height: 2),
-          Text(t['category'] ?? 'Unknown', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+          SizedBox(height: 2),
+          Text(t['category'] ?? 'Unknown', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
           Text(timeText, style: TextStyle(fontSize: 10, color: Colors.grey[400])),
         ])),
         Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(14), border: Border.all(color: statusColor)),

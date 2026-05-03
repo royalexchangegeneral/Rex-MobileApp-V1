@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '../utils/app_theme.dart';
+import '../providers/policy_provider.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
@@ -17,26 +20,58 @@ class MyCertificateScreen extends StatefulWidget {
 class _MyCertificateScreenState extends State<MyCertificateScreen> {
   final _searchController = TextEditingController();
 
-  final List<Map<String, String>> _certificates = [
-    {
-      'id': 'KET-123AB',
-      'type': 'MOTOR THIRD-PARTY',
-      'name': 'AKINNIRANYE ABIODUN SEAN',
-      'policyNo': 'P/RAG/AGY/MT/25/0016970',
-      'certNo': '25/112874/ROY',
-      'startDate': 'May 23, 2025',
-      'expiryDate': 'November 20, 2025',
-    },
-    {
-      'id': 'KET-123AB',
-      'type': 'FIRE INSURANCE',
-      'name': 'AKINNIRANYE ABIODUN SEAN',
-      'policyNo': 'P/RAG/AGY/MT/25/0016970',
-      'certNo': '25/112874/ROY',
-      'startDate': 'May 23, 2025',
-      'expiryDate': 'November 20, 2025',
-    },
-  ];
+  final List<Map<String, String>> _certificates = [];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final policyProvider = Provider.of<PolicyProvider>(context, listen: false);
+      if (policyProvider.policies.isEmpty) {
+        await policyProvider.fetchPolicies(context);
+      }
+      _loadCertificates();
+    });
+  }
+
+  void _loadCertificates() {
+    final policyProvider = Provider.of<PolicyProvider>(context, listen: false);
+    final policies = policyProvider.policies;
+    setState(() {
+      _certificates.clear();
+      for (final p in policies) {
+        _certificates.add({
+          'id': p['policyId']?.toString() ?? '',
+          'type': (p['policyClass']?.toString() ?? 'INSURANCE').toUpperCase(),
+          'name': p['insured']?.toString() ?? p['customerName']?.toString() ?? '',
+          'policyNo': p['policyId']?.toString() ?? '',
+          'certNo': p['policyId']?.toString() ?? '',
+          'startDate': p['startDate']?.toString() ?? '',
+          'expiryDate': p['endDate']?.toString() ?? '',
+        });
+      }
+    });
+  }
+
+  String _getCertPath(String type) {
+    final t = type.toLowerCase();
+    if (t.contains('home') || t.contains('hp')) return 'hpcert';
+    if (t.contains('shop') || t.contains('shp')) return 'shpcert';
+    if (t.contains('group') || t.contains('gc')) return 'gccert';
+    if (t.contains('family') || t.contains('fc')) return 'fccert';
+    if (t.contains('parcel') || t.contains('pp')) return 'ppcert';
+    if (t.contains('student') || t.contains('sp')) return 'spcert';
+    if (t.contains('personal') || t.contains('pc')) return 'pccert';
+    if (t.contains('royal auto') || t.contains('bronze') || t.contains('silver') || t.contains('comprehensive')) return 'royalautocert';
+    return 'tpcert';
+  }
+
+  String _getCertUrl(Map<String, String> cert) {
+    final certPath = _getCertPath(cert['type'] ?? '');
+    final url = 'https://eportaltest.rexinsure.com/$certPath?policy=${cert['policyNo'] ?? ''}';
+    print('=== CERT URL: $url ===');
+    return url;
+  }
 
   List<Map<String, String>> get _filteredCertificates {
     final query = _searchController.text.toLowerCase().trim();
@@ -57,36 +92,39 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
   Widget build(BuildContext context) {
     final certs = _filteredCertificates;
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('My Certificate', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+        title: Text('My Certificate', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: Consumer<PolicyProvider>(
+        builder: (context, policyProvider, _) {
+          if (policyProvider.loading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             // Search bar
             TextField(
               controller: _searchController,
               onChanged: (_) => setState(() {}),
-              style: const TextStyle(fontSize: 13, color: Colors.black),
+              style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: 'Search certificate',
                 hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
                 suffixIcon: Icon(Icons.search, color: Colors.grey[400]),
                 filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[300]!)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[300]!)),
+                fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primaryNavy)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
@@ -94,12 +132,21 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
             const SizedBox(height: 16),
 
             // Certificate cards
-            ...List.generate(certs.length, (index) {
-              return Padding(
-                padding: EdgeInsets.only(bottom: index < certs.length - 1 ? 16 : 0),
-                child: _buildCertificateCard(certs[index]),
-              );
-            }),
+            if (certs.isEmpty) ...[
+              const SizedBox(height: 40),
+              Center(child: Column(children: [
+                Icon(Icons.description_outlined, size: 60, color: Colors.grey[300]),
+                const SizedBox(height: 12),
+                Text('No certificates found', style: TextStyle(fontSize: 14, color: Colors.grey[500])),
+              ])),
+            ] else ...[
+              ...List.generate(certs.length, (index) {
+                return Padding(
+                  padding: EdgeInsets.only(bottom: index < certs.length - 1 ? 16 : 0),
+                  child: _buildCertificateCard(certs[index]),
+                );
+              }),
+            ],
 
             const SizedBox(height: 20),
 
@@ -114,11 +161,11 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
                       Icon(Icons.support_agent, color: AppTheme.primaryNavy, size: 20),
                       SizedBox(width: 8),
-                      Text('Need Help?', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+                      Text('Need Help?', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -137,23 +184,28 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
             const SizedBox(height: 100),
           ],
         ),
-      ),
-      floatingActionButton: SizedBox(
-        width: 50,
-        height: 50,
-        child: FloatingActionButton(
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-          backgroundColor: AppTheme.accentOrange,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: Colors.white, size: 24),
+      );
+      }),
+      floatingActionButton: Transform.translate(
+        offset: const Offset(0, 15),
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: FloatingActionButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+            backgroundColor: AppTheme.accentOrange,
+            shape: const CircleBorder(),
+            elevation: 1,
+            child: const Icon(Icons.add, color: Colors.white, size: 30),
+          ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
-        notchMargin: 6,
+        notchMargin: 4,
         child: SizedBox(
-          height: 50,
+          height: 44,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -161,7 +213,7 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
                 Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
               }),
               _buildNavItem(Icons.description_outlined, 'Policies', false),
-              const SizedBox(width: 40),
+              const SizedBox(width: 48),
               _buildNavItem(Icons.assignment_outlined, 'Claims', false, onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
               }),
@@ -226,7 +278,10 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
             children: [
               // View button
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  final url = _getCertUrl(cert);
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => _CertWebView(url: url, title: '${cert['type']} Certificate')));
+                },
                 icon: const Icon(Icons.visibility_outlined, size: 16),
                 label: const Text('View', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
@@ -240,7 +295,11 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
               const SizedBox(width: 10),
               // Download button
               OutlinedButton.icon(
-                onPressed: () {},
+                onPressed: () async {
+                  final url = _getCertUrl(cert);
+                  final uri = Uri.parse(url);
+                  try { await launchUrl(uri, mode: LaunchMode.externalApplication); } catch (_) {}
+                },
                 icon: const Icon(Icons.download_outlined, size: 16),
                 label: const Text('Download', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
@@ -291,6 +350,7 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
   }
 
   void _shareCertificate(Map<String, String> cert) {
+    final certUrl = _getCertUrl(cert);
     final text = '''Rex Insurance Certificate
 ${cert['id']} – ${cert['type']}
 
@@ -300,8 +360,12 @@ Certificate No.: ${cert['certNo']}
 Date of Commencement: ${cert['startDate']}
 Date of Expiry: ${cert['expiryDate']}
 
+View Certificate: $certUrl
+
 Rex Insurance – Protecting What Matters Most''';
-    Share.share(text);
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = box != null ? box.localToGlobal(Offset.zero) & box.size : const Rect.fromLTWH(0, 0, 100, 100);
+    Share.share(text, sharePositionOrigin: origin);
   }
 
   Future<void> _callSupport() async {
@@ -335,6 +399,45 @@ Rex Insurance – Protecting What Matters Most''';
           Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
         ],
       ),
+    );
+  }
+}
+
+
+class _CertWebView extends StatefulWidget {
+  final String url;
+  final String title;
+  const _CertWebView({required this.url, required this.title});
+  @override
+  State<_CertWebView> createState() => _CertWebViewState();
+}
+
+class _CertWebViewState extends State<_CertWebView> {
+  late final WebViewController _controller;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageStarted: (_) => setState(() => _isLoading = true),
+        onPageFinished: (_) => setState(() => _isLoading = false),
+      ))
+      ..loadRequest(Uri.parse(widget.url));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+        title: Text(widget.title, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w600)), centerTitle: true),
+      body: Stack(children: [
+        WebViewWidget(controller: _controller),
+        if (_isLoading) const Center(child: CircularProgressIndicator()),
+      ]),
     );
   }
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../utils/app_theme.dart';
 import 'comprehensive_summary_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ComprehensiveNinScreen extends StatefulWidget {
   final String vehicleType;
@@ -11,8 +12,11 @@ class ComprehensiveNinScreen extends StatefulWidget {
   final String regNumber;
   final Map<String, String> personalInfo;
   final Map<String, dynamic> vehicleData;
+  final List<File> imageFiles;
+  final bool isLoggedIn;
+  final bool isAgent;
 
-  const ComprehensiveNinScreen({super.key, required this.vehicleType, required this.sumInsured, required this.premium, required this.regNumber, this.personalInfo = const {}, this.vehicleData = const {}});
+  const ComprehensiveNinScreen({super.key, required this.vehicleType, required this.sumInsured, required this.premium, required this.regNumber, this.personalInfo = const {}, this.vehicleData = const {}, this.imageFiles = const [], this.isLoggedIn = false, this.isAgent = false});
   @override
   State<ComprehensiveNinScreen> createState() => _ComprehensiveNinScreenState();
 }
@@ -20,27 +24,14 @@ class ComprehensiveNinScreen extends StatefulWidget {
 class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
   final _ninController = TextEditingController();
   bool _isVerifying = false;
-  bool _isVerified = false;
-  XFile? _uploadedFile;
-  final ImagePicker _picker = ImagePicker();
-
-  Future<void> _pickNinImage() async {
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(leading: const Icon(Icons.camera_alt), title: const Text('Camera'), onTap: () => Navigator.pop(ctx, ImageSource.camera)),
-            ListTile(leading: const Icon(Icons.photo_library), title: const Text('Gallery'), onTap: () => Navigator.pop(ctx, ImageSource.gallery)),
-          ],
-        ),
-      ),
-    );
-    if (source == null) return;
-    final image = await _picker.pickImage(source: source, imageQuality: 80);
-    if (image != null) setState(() => _uploadedFile = image);
-  }
+  bool _ninVerified = false;
+  bool _ninFailed = false;
+  String _firstName = '';
+  String _lastName = '';
+  String _email = '';
+  String _phone = '';
+  String _dob = '';
+  String _gender = '';
 
   @override
   void dispose() {
@@ -48,21 +39,66 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
     super.dispose();
   }
 
-  Future<void> _handleVerify() async {
-    if (_ninController.text.isEmpty) return;
+  Future<void> _verifyNin() async {
+    if (_ninController.text.trim().length != 11) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('NIN must be 11 digits')));
+      return;
+    }
     setState(() => _isVerifying = true);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() { _isVerifying = false; _isVerified = true; });
+    try {
+      final r = await http.post(
+        Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'Intcode': 'TESTCODE', 'Password': 'royal1234', 'number': _ninController.text.trim()}),
+      ).timeout(const Duration(seconds: 15));
+      setState(() => _isVerifying = false);
+      if (r.statusCode == 200 || r.statusCode == 201) {
+        final d = json.decode(r.body);
+        if (d['status'] == 'success' && d['data']?['data']?['kyc'] != null && d['data']['data']['kyc']['firstname'] != null && (d['data']['data']['kyc']['firstname']?.toString() ?? '').isNotEmpty) {
+          final k = d['data']['data']['kyc'];
+          setState(() {
+            _ninVerified = true;
+            _firstName = k['firstname']?.toString() ?? '';
+            _lastName = k['surname']?.toString() ?? '';
+            _email = k['email']?.toString() ?? '';
+            _phone = k['telephoneno']?.toString() ?? '';
+            _dob = k['birthdate']?.toString() ?? '';
+            _gender = k['gender']?.toString() ?? '';
+          });
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('NIN verified'), backgroundColor: Colors.green));
+        } else {
+          setState(() => _ninFailed = true);
+          final kyc = d['data']?['data']?['kyc'];
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(kyc != null ? (kyc['status']?.toString() ?? 'Verification failed') : 'NIN not found. Proceed to continue.')));
+        }
+      } else {
+        setState(() => _ninFailed = true);
+      }
+    } catch (e) {
+      setState(() { _isVerifying = false; _ninFailed = true; });
+    }
+  }
+
+  Map<String, String> get _mergedPersonalInfo {
+    final info = Map<String, String>.from(widget.personalInfo);
+    if (_ninVerified) {
+      if (_firstName.isNotEmpty) info['ninFirstName'] = _firstName;
+      if (_lastName.isNotEmpty) info['ninLastName'] = _lastName;
+      if (_email.isNotEmpty && (info['email'] ?? '').isEmpty) info['email'] = _email;
+      if (_phone.isNotEmpty && (info['phone'] ?? '').isEmpty) info['phone'] = _phone;
+      if (_dob.isNotEmpty) info['dob'] = _dob;
+      if (_gender.isNotEmpty) info['gender'] = _gender;
+    }
+    return info;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-        title: const Text('NIN', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600)),
+        elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+        title: Text('NIN Verification', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w600)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -89,60 +125,81 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Enter your NIN', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87)),
-                  const SizedBox(height: 8),
-                  TextFormField(
+                  Text('National Identification Number', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
+                  SizedBox(height: 8),
+                  TextField(
                     controller: _ninController,
                     keyboardType: TextInputType.number,
-                    style: const TextStyle(color: Colors.black, fontSize: 14),
-                    decoration: InputDecoration(hintText: 'enter nin', hintStyle: TextStyle(color: Colors.grey[400]), filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2)), contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14)),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(width: double.infinity, child: OutlinedButton(
-                    onPressed: _isVerifying ? null : _handleVerify,
-                    style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primaryNavy, side: const BorderSide(color: AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                    child: _isVerifying ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(_isVerified ? 'Verified ✓' : 'Verify', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                  )),
-                  const SizedBox(height: 24),
-                  const Center(child: Text('OR', style: TextStyle(fontSize: 14, color: Colors.grey))),
-                  const SizedBox(height: 24),
-                  const Text('Upload NIN', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87)),
-                  const SizedBox(height: 12),
-                  InkWell(
-                    onTap: () => _pickNinImage(),
-                    child: Container(
-                      height: 100,
-                      decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!, style: BorderStyle.solid), borderRadius: BorderRadius.circular(8)),
-                      child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Icon(Icons.cloud_upload_outlined, size: 32, color: Colors.grey[400]),
-                        const SizedBox(height: 4),
-                        Text('JPEG, PNG, PDF 2MB', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                        RichText(text: TextSpan(style: TextStyle(fontSize: 12, color: Colors.grey[600]), children: const [TextSpan(text: 'Browse file', style: TextStyle(color: AppTheme.primaryNavy, decoration: TextDecoration.underline)), TextSpan(text: ' from your phone')])),
-                      ])),
+                    maxLength: 11,
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Enter your NIN', hintStyle: TextStyle(color: Colors.grey[400]),
+                      filled: true, fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white, counterText: '',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
                   ),
-                  if (_uploadedFile != null) ...[
+                  const SizedBox(height: 16),
+                  if (!_ninVerified && !_ninFailed)
+                    SizedBox(width: double.infinity, child: OutlinedButton(
+                      onPressed: _isVerifying ? null : _verifyNin,
+                      style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primaryNavy, side: const BorderSide(color: AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                      child: _isVerifying
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                          : Text('Verify NIN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    )),
+                  if (_ninVerified) ...[
+                    SizedBox(height: 16),
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: Colors.green[50], borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.green[200]!)),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(children: [Icon(Icons.check_circle, size: 16, color: Colors.green[700]), SizedBox(width: 8), Text('NIN Verified', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.green[700]))]),
+                        SizedBox(height: 8),
+                        Text('Name: $_firstName $_lastName', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface)),
+                        if (_dob.isNotEmpty) Text('DOB: $_dob', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface)),
+                        if (_gender.isNotEmpty) Text('Gender: $_gender', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface)),
+                      ]),
+                    ),
+                  ],
+                  if (_ninFailed) ...[
                     const SizedBox(height: 12),
-                    Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(8)), child: Row(children: [
-                      ClipRRect(borderRadius: BorderRadius.circular(4), child: Image.file(File(_uploadedFile!.path), width: 40, height: 40, fit: BoxFit.cover)),
-                      const SizedBox(width: 10),
-                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        const Text('NIN Document', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black)),
-                        Text(_uploadedFile!.name, style: TextStyle(fontSize: 9, color: Colors.grey[500]), overflow: TextOverflow.ellipsis),
-                      ])),
-                      IconButton(icon: Icon(Icons.delete_outline, color: Colors.red[400], size: 20), onPressed: () => setState(() => _uploadedFile = null), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-                    ])),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: Colors.orange[50], borderRadius: BorderRadius.circular(8)),
+                      child: Row(children: [
+                        Icon(Icons.info_outline, size: 16, color: Colors.orange[700]),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text('NIN verification failed. You can still proceed.', style: TextStyle(fontSize: 11, color: Colors.orange[700]))),
+                      ]),
+                    ),
                   ],
                 ],
               ),
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(24, 24, 24, 32 + MediaQuery.of(context).padding.bottom),
-              child: SizedBox(width: double.infinity, child: ElevatedButton(
-                onPressed: (_isVerified || _uploadedFile != null) ? () => Navigator.push(context, MaterialPageRoute(builder: (ctx) => ComprehensiveSummaryScreen(vehicleType: widget.vehicleType, sumInsured: widget.sumInsured, premium: widget.premium, regNumber: widget.regNumber, personalInfo: widget.personalInfo, vehicleData: widget.vehicleData))) : null,
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
-                child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              )),
+              padding: EdgeInsets.fromLTRB(24, 40, 24, 32 + MediaQuery.of(context).padding.bottom),
+              child: Column(children: [
+                SizedBox(width: double.infinity, child: ElevatedButton(
+                  onPressed: (_ninVerified || _ninFailed) ? () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => ComprehensiveSummaryScreen(
+                      vehicleType: widget.vehicleType, sumInsured: widget.sumInsured, premium: widget.premium,
+                      regNumber: widget.regNumber, personalInfo: _mergedPersonalInfo, vehicleData: widget.vehicleData,
+                      imageFiles: widget.imageFiles, isLoggedIn: widget.isLoggedIn, isAgent: widget.isAgent,
+                    )));
+                  } : null,
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
+                  child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                )),
+                const SizedBox(height: 12),
+                SizedBox(width: double.infinity, child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primaryNavy, side: const BorderSide(color: AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                  child: const Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                )),
+              ]),
             ),
           ],
         ),

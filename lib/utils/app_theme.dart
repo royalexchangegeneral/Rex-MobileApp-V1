@@ -39,7 +39,7 @@ class AppTheme {
     // Input decoration theme
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: lightGrey,
+      fillColor: white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: Colors.grey[300]!),
@@ -143,7 +143,7 @@ class AppTheme {
     appBarTheme: const AppBarTheme(
       backgroundColor: darkBackground,
       foregroundColor: white,
-      iconTheme: IconThemeData(color: white),
+      iconTheme: IconThemeData(color: accentOrange),
       titleTextStyle: TextStyle(
         color: white,
         fontSize: 18,
@@ -172,7 +172,7 @@ class AppTheme {
     ),
     
     colorScheme: const ColorScheme.dark(
-      primary: primaryBlue,
+      primary: accentOrange,
       secondary: accentOrange,
       surface: darkGrey,
       onSurface: white,
@@ -240,8 +240,8 @@ class AppTheme {
     
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: white,
-        side: const BorderSide(color: white, width: 1.5),
+        foregroundColor: accentOrange,
+        side: const BorderSide(color: accentOrange, width: 1.5),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
