@@ -9,6 +9,7 @@ class AuthProvider with ChangeNotifier {
   String? _userId;
   String? _userName;
   String? _userEmail;
+  String? _loginEmail;
   String? _userType; // 'agent' or 'customer'
   String? _userCode;
   String? _profilePhoto;
@@ -24,6 +25,7 @@ class AuthProvider with ChangeNotifier {
   String? get userId => _userId;
   String? get userName => _userName;
   String? get userEmail => _userEmail;
+  String? get loginEmail => _loginEmail;
   String? get userType => _userType;
   String? get userCode => _userCode;
   String? get profilePhoto => _profilePhoto;
@@ -59,6 +61,7 @@ class AuthProvider with ChangeNotifier {
     _userId = prefs.getString('userId');
     _userName = prefs.getString('userName');
     _userEmail = prefs.getString('userEmail');
+    _loginEmail = prefs.getString('loginEmail');
     _userType = prefs.getString('userType');
     _userCode = prefs.getString('userCode');
     _profilePhoto = prefs.getString('profilePhoto');
@@ -126,6 +129,7 @@ class AuthProvider with ChangeNotifier {
           await prefs.setString('userId', data['Userid']?.toString() ?? '');
           await prefs.setString('userName', userData['FirstName']?.toString() ?? '');
           await prefs.setString('userEmail', userData['Email']?.toString() ?? '');
+          await prefs.setString('loginEmail', email);
           await prefs.setString('userType', userType);
           await prefs.setString('userCode', userData['Usercode']?.toString() ?? '');
           await prefs.setString('profilePhoto', userData['ProfilePhoto']?.toString() ?? '');
@@ -136,6 +140,7 @@ class AuthProvider with ChangeNotifier {
           _userId = data['Userid']?.toString();
           _userName = userData['FirstName']?.toString();
           _userEmail = userData['Email']?.toString();
+          _loginEmail = email;
           _userType = userType;
           _userCode = userData['Usercode']?.toString();
           _profilePhoto = userData['ProfilePhoto'];
@@ -187,11 +192,13 @@ class AuthProvider with ChangeNotifier {
       await prefs.setString('userId', 'user_${DateTime.now().millisecondsSinceEpoch}');
       await prefs.setString('userName', name);
       await prefs.setString('userEmail', email);
+      await prefs.setString('loginEmail', email);
       
       _isAuthenticated = true;
       _userId = prefs.getString('userId');
       _userName = name;
       _userEmail = email;
+      _loginEmail = email;
       
       notifyListeners();
       return true;

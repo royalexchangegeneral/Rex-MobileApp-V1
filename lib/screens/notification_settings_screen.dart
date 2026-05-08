@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/notifications_provider.dart';
 import '../utils/app_theme.dart';
+import '../utils/theme_helper.dart';
 import 'agent_dashboard_screen.dart';
 import 'clients_list_screen.dart';
 import 'reports_screen.dart';
@@ -17,10 +18,12 @@ class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
 
   @override
-  State<NotificationSettingsScreen> createState() => _NotificationSettingsScreenState();
+  State<NotificationSettingsScreen> createState() =>
+      _NotificationSettingsScreenState();
 }
 
-class _NotificationSettingsScreenState extends State<NotificationSettingsScreen> {
+class _NotificationSettingsScreenState
+    extends State<NotificationSettingsScreen> {
   bool _pushNotifications = false;
   bool _emailNotifications = false;
   bool _smsNotifications = false;
@@ -33,7 +36,8 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -41,7 +45,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -51,15 +55,16 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Notification Preference',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Push Notifications
             _buildNotificationItem(
               icon: Icons.notifications_outlined,
@@ -70,9 +75,9 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               value: _pushNotifications,
               onChanged: null,
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Email Notification
             _buildNotificationItem(
               icon: Icons.email_outlined,
@@ -83,9 +88,9 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               value: _emailNotifications,
               onChanged: null,
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // SMS Notifications
             _buildNotificationItem(
               icon: Icons.message_outlined,
@@ -96,24 +101,31 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               value: _smsNotifications,
               onChanged: null,
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Recent Notification Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Recent Notification',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 TextButton(
                   onPressed: () {
-                    final isAgent = Provider.of<AuthProvider>(context, listen: false).isAgent();
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationsScreen(isAgentFlow: isAgent)));
+                    final isAgent =
+                        Provider.of<AuthProvider>(context, listen: false)
+                            .isAgent();
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                NotificationsScreen(isAgentFlow: isAgent)));
                   },
                   child: const Text(
                     'view all',
@@ -126,42 +138,66 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Recent Notifications from API
             Consumer<NotificationsProvider>(builder: (_, notifProvider, __) {
-              if (notifProvider.loading) return const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator()));
-              if (notifProvider.notifications.isEmpty) return Padding(padding: const EdgeInsets.all(12), child: Center(child: Text('No notifications', style: TextStyle(color: Colors.grey[500], fontSize: 12))));
-              final displayNotifs = notifProvider.notifications.take(5).toList();
-              return Column(children: displayNotifs.map((n) {
+              if (notifProvider.loading)
+                return const Center(
+                    child: Padding(
+                        padding: EdgeInsets.all(12),
+                        child: CircularProgressIndicator()));
+              if (notifProvider.notifications.isEmpty)
+                return Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Center(
+                        child: Text('No notifications',
+                            style: TextStyle(
+                                color:
+                                    ThemeHelper.getSecondaryTextColor(context),
+                                fontSize: 12))));
+              final displayNotifs =
+                  notifProvider.notifications.take(5).toList();
+              return Column(
+                  children: displayNotifs.map((n) {
                 final title = n['title']?.toString() ?? '';
-                final desc = n['description']?.toString() ?? n['message']?.toString() ?? '';
+                final desc = n['description']?.toString() ??
+                    n['message']?.toString() ??
+                    '';
                 final time = n['created_at']?.toString() ?? '';
                 final isRead = notifProvider.readIds.contains(n['id']);
-                return Padding(padding: const EdgeInsets.only(bottom: 12), child: _buildRecentNotificationItem(
-                  icon: isRead ? Icons.check : Icons.notifications_outlined,
-                  iconColor: isRead ? Colors.green : Colors.blue,
-                  iconBgColor: isRead ? Colors.green.withValues(alpha: 0.1) : Colors.blue.withValues(alpha: 0.1),
-                  title: title,
-                  subtitle: desc,
-                  time: time,
-                ));
+                return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildRecentNotificationItem(
+                      icon: isRead ? Icons.check : Icons.notifications_outlined,
+                      iconColor: isRead ? Colors.green : Colors.blue,
+                      iconBgColor: isRead
+                          ? Colors.green.withValues(alpha: 0.1)
+                          : Colors.blue.withValues(alpha: 0.1),
+                      title: title,
+                      subtitle: desc,
+                      time: time,
+                    ));
               }).toList());
             }),
-            
+
             const SizedBox(height: 100),
           ],
         ),
       ),
-      floatingActionButton: Provider.of<AuthProvider>(context, listen: false).isCustomer()
+      floatingActionButton: Provider.of<AuthProvider>(context, listen: false)
+              .isCustomer()
           ? Transform.translate(
               offset: const Offset(0, 15),
               child: SizedBox(
                 width: 52,
                 height: 52,
                 child: FloatingActionButton(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const NewPolicyScreen())),
                   backgroundColor: AppTheme.accentOrange,
                   shape: const CircleBorder(),
                   elevation: 1,
@@ -177,7 +213,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
   Widget _buildBottomNav(BuildContext context) {
     final isAgent = Provider.of<AuthProvider>(context, listen: false).isAgent();
-    
+
     if (isAgent) {
       return BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -188,21 +224,33 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         unselectedFontSize: 11,
         onTap: (index) {
           if (index == 0) {
-            Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const AgentDashboardScreen()), (route) => false);
+            Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const AgentDashboardScreen()),
+                (route) => false);
           } else if (index == 2) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientsListScreen()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ClientsListScreen()));
           } else if (index == 3) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ReportsScreen()));
           } else if (index == 4) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const AgentProfileScreen()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const AgentProfileScreen()));
           }
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined, size: 22), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.description_outlined, size: 22), label: 'Policy'),
-          BottomNavigationBarItem(icon: Icon(Icons.people_outline, size: 22), label: 'Clients'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined, size: 22), label: 'Reports'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline, size: 22), label: 'Profile'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined, size: 22), label: 'Home'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.description_outlined, size: 22),
+              label: 'Policy'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.people_outline, size: 22), label: 'Clients'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart_outlined, size: 22), label: 'Reports'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline, size: 22), label: 'Profile'),
         ],
       );
     }
@@ -216,15 +264,25 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildCustomerNavItem(Icons.home_outlined, 'Home', false, () {
-              Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
+              Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const CustomerDashboardScreen()),
+                  (route) => false);
             }),
-            _buildCustomerNavItem(Icons.description_outlined, 'Policies', false, () {}),
+            _buildCustomerNavItem(
+                Icons.description_outlined, 'Policies', false, () {}),
             const SizedBox(width: 48),
-            _buildCustomerNavItem(Icons.assignment_outlined, 'Claims', false, () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
+            _buildCustomerNavItem(Icons.assignment_outlined, 'Claims', false,
+                () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
             }),
             _buildCustomerNavItem(Icons.person_outline, 'Profile', true, () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const CustomerProfileScreen()));
             }),
           ],
         ),
@@ -232,14 +290,19 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     );
   }
 
-  Widget _buildCustomerNavItem(IconData icon, String label, bool isSelected, VoidCallback onTap) {
+  Widget _buildCustomerNavItem(
+      IconData icon, String label, bool isSelected, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
-          Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+          Icon(icon,
+              color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 10,
+                  color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
         ],
       ),
     );
@@ -257,7 +320,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+        color: ThemeHelper.getCardColor(context),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -277,9 +340,10 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -287,7 +351,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                   subtitle,
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.grey[600],
+                    color: ThemeHelper.getSecondaryTextColor(context),
                   ),
                 ),
               ],
@@ -315,7 +379,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+        color: ThemeHelper.getCardColor(context),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -336,9 +400,10 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -346,7 +411,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                   subtitle,
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.grey[600],
+                    color: ThemeHelper.getSecondaryTextColor(context),
                     height: 1.4,
                   ),
                 ),
@@ -357,7 +422,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
             time,
             style: TextStyle(
               fontSize: 10,
-              color: Colors.grey[500],
+              color: ThemeHelper.getSecondaryTextColor(context),
             ),
           ),
         ],

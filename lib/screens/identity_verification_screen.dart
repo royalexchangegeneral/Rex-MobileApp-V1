@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import '../utils/app_theme.dart';
 
@@ -18,7 +17,6 @@ class _IdentityVerificationScreenState extends State<IdentityVerificationScreen>
   final _ninController = TextEditingController();
   bool _isVerifying = false;
   bool _ninVerified = false;
-  bool _hasDocument = false;
   Map<String, dynamic>? _kycData;
 
   @override
@@ -65,14 +63,8 @@ class _IdentityVerificationScreenState extends State<IdentityVerificationScreen>
     }
   }
 
-  Future<void> _pickDocument() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.camera);
-    if (image != null) setState(() => _hasDocument = true);
-  }
-
   Future<void> _continue() async {
-    if (_ninController.text.length == 11 || _hasDocument) {
+    if (_ninController.text.length == 11) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('signup_nin', _ninController.text.trim());
       if (_kycData != null) {
@@ -167,44 +159,12 @@ class _IdentityVerificationScreenState extends State<IdentityVerificationScreen>
               ],
 
               SizedBox(height: 24),
-              Center(child: Text('OR', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface))),
-              const SizedBox(height: 16),
-              Text('Scan or upload a copy of your NIN document', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-              const SizedBox(height: 12),
-
-              // Document upload
-              InkWell(
-                onTap: _pickDocument,
-                child: Container(
-                  width: double.infinity, height: 160,
-                  decoration: BoxDecoration(
-                    color: _hasDocument ? Colors.green[50] : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _hasDocument ? Colors.green : Colors.grey[300]!, width: _hasDocument ? 2 : 1),
-                  ),
-                  child: Center(child: _hasDocument
-                      ? Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                          const Icon(Icons.check_circle, size: 50, color: Colors.green),
-                          const SizedBox(height: 8),
-                          const Text('Document Uploaded', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.green)),
-                          const SizedBox(height: 4),
-                          Text('Tap to change', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-                        ])
-                      : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                          Icon(Icons.camera_alt_outlined, size: 40, color: Colors.grey[400]),
-                          const SizedBox(height: 8),
-                          Text('Tap to scan or upload', style: TextStyle(fontSize: 13, color: Colors.grey[500])),
-                        ])),
-                ),
-              ),
-
-              const SizedBox(height: 32),
 
               // Continue button
               SizedBox(width: double.infinity, height: 50, child: ElevatedButton(
-                onPressed: (_ninController.text.length == 11 || _hasDocument) ? _continue : null,
+                onPressed: _ninController.text.length == 11 ? _continue : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: (_ninController.text.length == 11 || _hasDocument) ? AppTheme.primaryBlue : Colors.grey[300],
+                  backgroundColor: _ninController.text.length == 11 ? AppTheme.primaryBlue : Colors.grey[300],
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
