@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/session_cache_cleaner.dart';
 import '../providers/agent_policy_provider.dart';
 import 'login_screen.dart';
 import 'notification_settings_screen.dart';
@@ -283,6 +284,7 @@ class AgentProfileScreen extends StatelessWidget {
                     title: 'Log out',
                     isLogout: true,
                     onTap: () async {
+                      clearSessionCaches(context);
                       await authProvider.logout();
                       if (context.mounted) {
                         Navigator.pushAndRemoveUntil(

@@ -170,7 +170,21 @@ class AgentPolicyProvider with ChangeNotifier {
     try {
       final end = DateTime.parse(endDate);
       return end.isAfter(DateTime.now()) ? 'Active' : 'Expired';
-    } catch (_) { return 'Unknown'; }
+    } catch (_) {
+      return 'Unknown';
+    }
+  }
+
+  void clear() {
+    _policies = [];
+    _customers = [];
+    _loading = false;
+    _activePolicies = 0;
+    _totalClients = 0;
+    _commission = '0';
+    _totalPremium = '0';
+    _commissionData = null;
+    notifyListeners();
   }
 
   /// Returns policy counts grouped by month for the last 6 months

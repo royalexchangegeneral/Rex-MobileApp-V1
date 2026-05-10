@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/theme_helper.dart';
 import '../providers/auth_provider.dart';
+import '../providers/session_cache_cleaner.dart';
 import '../providers/theme_provider.dart';
 import 'notification_settings_screen.dart';
 import 'security_settings_screen.dart';
@@ -283,10 +284,13 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: Colors.red)),
-                  onTap: () {
-                    authProvider.logout();
-                    Navigator.pushNamedAndRemoveUntil(
-                        context, '/login', (route) => false);
+                  onTap: () async {
+                    clearSessionCaches(context);
+                    await authProvider.logout();
+                    if (context.mounted) {
+                      Navigator.pushNamedAndRemoveUntil(
+                          context, '/login', (route) => false);
+                    }
                   },
                 ),
               ),

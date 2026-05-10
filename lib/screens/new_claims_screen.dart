@@ -1,9 +1,11 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import 'dart:io';
-import 'dart:convert';
 import '../utils/app_theme.dart';
 import '../widgets/agent_bottom_nav.dart';
 import '../providers/auth_provider.dart';
@@ -15,7 +17,8 @@ import 'agent_dashboard_screen.dart';
 class NewClaimsScreen extends StatefulWidget {
   final String? policyNumber;
   final bool isAgentFlow;
-  const NewClaimsScreen({super.key, this.policyNumber, this.isAgentFlow = false});
+  const NewClaimsScreen(
+      {super.key, this.policyNumber, this.isAgentFlow = false});
   @override
   State<NewClaimsScreen> createState() => _NewClaimsScreenState();
 }
@@ -29,8 +32,10 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.policyNumber != null) _policyNoController.text = widget.policyNumber!;
+    if (widget.policyNumber != null)
+      _policyNoController.text = widget.policyNumber!;
   }
+
   // Step 2
   final _claimantNameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -49,13 +54,34 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
   final _witnessAddressController = TextEditingController();
   final List<File> _photos = [];
   final ImagePicker _picker = ImagePicker();
+  static const int _maxPhotoSizeBytes = 5 * 1024 * 1024;
+  static const Duration _claimUploadTimeout = Duration(seconds: 60);
+
+  Future<bool> _validatePhotoSize(File photo) async {
+    final size = await photo.length();
+    if (size <= _maxPhotoSizeBytes) return true;
+
+    if (!mounted) return false;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(
+          'File too large (${(size / (1024 * 1024)).toStringAsFixed(1)} MB). Please select a photo under 5 MB.'),
+      backgroundColor: Colors.red,
+    ));
+    return false;
+  }
+
   // Step 4
   bool _confirmAccuracy = false;
   bool _agreePrivacy = false;
   bool _verifying = false;
   bool _submitting = false;
 
-  final List<String> _stepLabels = ['Claim Details', 'Profile Details', 'Incident Details', 'Claim Details'];
+  final List<String> _stepLabels = [
+    'Claim Details',
+    'Profile Details',
+    'Incident Details',
+    'Claim Details'
+  ];
   List<String> _itemCodes = [];
 
   @override
@@ -91,10 +117,16 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final userData = auth.userData;
-      final userName = '${userData?['FirstName'] ?? ''} ${userData?['LastName'] ?? userData?['Lastname'] ?? ''}'.trim();
+      final userName =
+          '${userData?['FirstName'] ?? ''} ${userData?['LastName'] ?? userData?['Lastname'] ?? ''}'
+              .trim();
 
-      final request = http.MultipartRequest('POST', Uri.parse('https://eportaltest.rexinsure.com/api/claim_notification'));
+      final request = http.MultipartRequest(
+          'POST',
+          Uri.parse(
+              'https://eportaltest.rexinsure.com/api/claim_notification'));
       request.headers['Accept'] = 'application/json';
+      request.headers['User-Agent'] = 'RexMobileApp/1.0';
 
       request.fields['Address'] = _addressController.text;
       request.fields['Email'] = _emailController.text;
@@ -103,36 +135,68 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
       request.fields['Subject'] = _incidentSubjectController.text;
       request.fields['Description'] = _descriptionController.text;
       request.fields['PolicyNo'] = _policyNoController.text;
-      request.fields['Insured'] = _claimantNameController.text.isNotEmpty ? _claimantNameController.text : userName;
+      request.fields['Insured'] = _claimantNameController.text.isNotEmpty
+          ? _claimantNameController.text
+          : userName;
       request.fields['ProductClass'] = _productTypeController.text;
       request.fields['ProductCover'] = _riskTypeController.text;
-      request.fields['Claimant'] = _claimantNameController.text.isNotEmpty ? _claimantNameController.text : userName;
+      request.fields['Claimant'] = _claimantNameController.text.isNotEmpty
+          ? _claimantNameController.text
+          : userName;
 
       for (final photo in _photos) {
-        request.files.add(await http.MultipartFile.fromPath('Files[]', photo.path));
+        final length = await photo.length();
+        print('=== UPLOADING PHOTO: ${photo.path} (${(length / (1024 * 1024)).toStringAsFixed(2)} MB)');
+        request.files
+            .add(await http.MultipartFile.fromPath('Files[]', photo.path));
       }
 
       print('=== CLAIM SUBMISSION ===');
       print('Fields: ${request.fields}');
       print('Files: ${request.files.length}');
 
-      final streamed = await request.send().timeout(const Duration(seconds: 20));
-      final response = await http.Response.fromStream(streamed);
+      final streamed = await request.send().timeout(_claimUploadTimeout);
+      final response = await http.Response.fromStream(streamed).timeout(_claimUploadTimeout);
 
-      print('=== CLAIM RESPONSE: ${response.statusCode} ===');
-      print('Body: ${response.body}');
+      final errorMessage =
+          'Failed to submit claim: ${response.statusCode} ${response.reasonPhrase ?? ''}'
+              .trim();
+      print(
+          '=== CLAIM RESPONSE: ${response.statusCode} ${response.reasonPhrase ?? ''} ===');
+      print('Response body: ${response.body}');
+      print('Exact API error: $errorMessage');
 
       if (mounted) {
         if (response.statusCode == 200 || response.statusCode == 201) {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => _ClaimSuccessScreen(isAgentFlow: widget.isAgentFlow)));
+          Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (_) =>
+                      _ClaimSuccessScreen(isAgentFlow: widget.isAgentFlow)));
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to submit claim: ${response.statusCode}'), backgroundColor: Colors.red));
+          final displayMessage = response.body.isNotEmpty
+              ? '${response.statusCode} ${response.reasonPhrase ?? ''} - ${response.body}'
+              : errorMessage;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(displayMessage), backgroundColor: Colors.red));
         }
+      }
+    } on TimeoutException catch (e) {
+      print('Claim submission timeout: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Claim submission timed out. Please check your network and try again.'),
+            backgroundColor: Colors.red));
       }
     } catch (e) {
       print('Claim submission error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+        final message = e is SocketException
+            ? 'Network error. Please check your connection.'
+            : 'Error: $e';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(message), backgroundColor: Colors.red));
       }
     }
     if (mounted) setState(() => _submitting = false);
@@ -149,15 +213,20 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
   Future<void> _verifyPolicy() async {
     final policyNo = _policyNoController.text.trim();
     if (policyNo.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a policy number'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Please enter a policy number'),
+          backgroundColor: Colors.red));
       return;
     }
 
     setState(() => _verifying = true);
     try {
-      final url = 'https://eportaltest.rexinsure.com/api/getpolicy?IntCode=TESTCODE&Password=royal1234&PolicyNo=$policyNo';
+      final url =
+          'https://eportaltest.rexinsure.com/api/getpolicy?IntCode=TESTCODE&Password=royal1234&PolicyNo=$policyNo';
       print('=== VERIFY POLICY: $url ===');
-      final r = await http.get(Uri.parse(url), headers: {'Accept': 'application/json'}).timeout(const Duration(seconds: 15));
+      final r = await http.get(Uri.parse(url), headers: {
+        'Accept': 'application/json'
+      }).timeout(const Duration(seconds: 15));
       print('=== POLICY RESPONSE: ${r.statusCode} ===');
       print('Body: ${r.body}');
 
@@ -181,12 +250,16 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
         }
 
         print('=== POLICY KEYS: ${pd.keys.toList()} ===');
-        print('=== Insured: ${pd['Insured']}, ProductClass: ${pd['ProductClass']}, ProductCover: ${pd['ProductCover']} ===');
+        print(
+            '=== Insured: ${pd['Insured']}, ProductClass: ${pd['ProductClass']}, ProductCover: ${pd['ProductCover']} ===');
 
         _claimantNameController.text = (pd['Insured'] ?? '').toString();
         _emailController.text = (pd['Email'] ?? pd['email'] ?? '').toString();
-        _phoneController.text = (pd['MobileNo'] ?? pd['Phone'] ?? pd['PhoneNumber'] ?? '').toString();
-        _addressController.text = (pd['Address'] ?? pd['address'] ?? '').toString();
+        _phoneController.text =
+            (pd['MobileNo'] ?? pd['Phone'] ?? pd['PhoneNumber'] ?? '')
+                .toString();
+        _addressController.text =
+            (pd['Address'] ?? pd['address'] ?? '').toString();
         _productTypeController.text = (pd['ProductClass'] ?? '').toString();
         _riskTypeController.text = (pd['ProductCover'] ?? '').toString();
 
@@ -196,7 +269,6 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           for (final item in pd['items']) {
             if (item is Map) {
               final code = item['item_code']?.toString() ?? '';
-              final desc = item['desc']?.toString() ?? '';
               if (code.isNotEmpty) items.add(code);
             }
           }
@@ -208,15 +280,23 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
         print('=== ITEM CODES: $_itemCodes ===');
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Policy verified successfully'), backgroundColor: Colors.green));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Policy verified successfully'),
+              backgroundColor: Colors.green));
           setState(() => _currentStep = 1);
         }
       } else {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Policy not found: ${r.statusCode}'), backgroundColor: Colors.red));
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Policy not found: ${r.statusCode}'),
+              backgroundColor: Colors.red));
       }
     } catch (e) {
       print('Verify policy error: $e');
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error verifying policy: $e'), backgroundColor: Colors.red));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Error verifying policy: $e'),
+            backgroundColor: Colors.red));
     }
     setState(() => _verifying = false);
   }
@@ -226,8 +306,15 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: _prevStep),
-        title: Text('New Claims', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+        leading: IconButton(
+            icon: Icon(Icons.arrow_back,
+                color: Theme.of(context).colorScheme.onSurface),
+            onPressed: _prevStep),
+        title: Text('New Claims',
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface)),
         centerTitle: true,
       ),
       body: Column(
@@ -240,22 +327,32 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Step ${_currentStep + 1} of 4', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1E2D64))),
-                    Text(_stepLabels[_currentStep], style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                    Text('Step ${_currentStep + 1} of 4',
+                        style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1E2D64))),
+                    Text(_stepLabels[_currentStep],
+                        style:
+                            TextStyle(fontSize: 11, color: Colors.grey[500])),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
-                  children: List.generate(4, (i) => Expanded(
-                    child: Container(
-                      height: 3,
-                      margin: EdgeInsets.only(right: i < 3 ? 4 : 0),
-                      decoration: BoxDecoration(
-                        color: i <= _currentStep ? const Color(0xFF1E2D64) : Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  )),
+                  children: List.generate(
+                      4,
+                      (i) => Expanded(
+                            child: Container(
+                              height: 3,
+                              margin: EdgeInsets.only(right: i < 3 ? 4 : 0),
+                              decoration: BoxDecoration(
+                                color: i <= _currentStep
+                                    ? const Color(0xFF1E2D64)
+                                    : Colors.grey[300],
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          )),
                 ),
               ],
             ),
@@ -263,49 +360,110 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           Expanded(
             child: IndexedStack(
               index: _currentStep,
-              children: [_buildStep1(), _buildStep2(), _buildStep3(), _buildStep4()],
+              children: [
+                _buildStep1(),
+                _buildStep2(),
+                _buildStep3(),
+                _buildStep4()
+              ],
             ),
           ),
         ],
       ),
-      floatingActionButton: widget.isAgentFlow ? null : SizedBox(
-        width: 60, height: 60,
-        child: FloatingActionButton(onPressed: () {}, backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), elevation: 1, child: const Icon(Icons.add, color: Colors.white, size: 30)),
-      ),
+      floatingActionButton: widget.isAgentFlow
+          ? null
+          : SizedBox(
+              width: 60,
+              height: 60,
+              child: FloatingActionButton(
+                  onPressed: () {},
+                  backgroundColor: AppTheme.accentOrange,
+                  shape: const CircleBorder(),
+                  elevation: 1,
+                  child: const Icon(Icons.add, color: Colors.white, size: 30)),
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 1) : BottomAppBar(
-        shape: const CircularNotchedRectangle(), notchMargin: 4,
-        child: SizedBox(
-          height: 44,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _navItem(Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
-              _navItem(Icons.description_outlined, 'Policies', false, () {}),
-              const SizedBox(width: 48),
-              _navItem(Icons.assignment_outlined, 'Claims', true, () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()))),
-              _navItem(Icons.person_outline, 'Profile', false, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()))),
-            ],
-          ),
-        ),
-      ),
+      bottomNavigationBar: widget.isAgentFlow
+          ? buildAgentBottomNav(context, currentIndex: 1)
+          : BottomAppBar(
+              shape: const CircularNotchedRectangle(),
+              notchMargin: 4,
+              child: SizedBox(
+                height: 44,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _navItem(
+                        Icons.home_outlined,
+                        'Home',
+                        false,
+                        () => Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    const CustomerDashboardScreen()),
+                            (r) => false)),
+                    _navItem(
+                        Icons.description_outlined, 'Policies', false, () {}),
+                    const SizedBox(width: 48),
+                    _navItem(
+                        Icons.assignment_outlined,
+                        'Claims',
+                        true,
+                        () => Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const MyClaimsScreen()))),
+                    _navItem(
+                        Icons.person_outline,
+                        'Profile',
+                        false,
+                        () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    const CustomerProfileScreen()))),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
   InputDecoration _inputDeco(String hint, {Widget? suffix}) => InputDecoration(
-    hintText: hint, hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
-    filled: true, fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xFF1E2D64))),
-    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-    suffixIcon: suffix,
-  );
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
+        filled: true,
+        fillColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1E1E1E)
+            : Colors.white,
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[700]!
+                    : Colors.grey[300]!)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[700]!
+                    : Colors.grey[300]!)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Color(0xFF1E2D64))),
+        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        suffixIcon: suffix,
+      );
 
   Widget _label(String text) => Padding(
-    padding: EdgeInsets.only(bottom: 6),
-    child: Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
-  );
+        padding: EdgeInsets.only(bottom: 6),
+        child: Text(text,
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface)),
+      );
 
   // STEP 1: Enter Policy No
   Widget _buildStep1() {
@@ -316,25 +474,49 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _label('Enter Policy No.'),
-          TextField(controller: _policyNoController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('enter policy number')),
+          TextField(
+              controller: _policyNoController,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+              decoration: _inputDeco('enter policy number')),
           const Padding(padding: EdgeInsets.only(top: 280)),
           SizedBox(
-            width: double.infinity, height: 46,
+            width: double.infinity,
+            height: 46,
             child: ElevatedButton(
               onPressed: _verifying ? null : _verifyPolicy,
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E2D64), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1E2D64),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  elevation: 0),
               child: _verifying
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Verify', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : const Text('Verify',
+                      style:
+                          TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             ),
           ),
           const SizedBox(height: 12),
           SizedBox(
-            width: double.infinity, height: 46,
+            width: double.infinity,
+            height: 46,
             child: OutlinedButton(
               onPressed: _prevStep,
-              style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF1E2D64)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-              child: const Text('Back', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1E2D64))),
+              style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF1E2D64)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10))),
+              child: const Text('Back',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1E2D64))),
             ),
           ),
         ],
@@ -350,54 +532,112 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Policy Details', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+          Text('Policy Details',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface)),
           SizedBox(height: 16),
           _label('Claimant Name'),
-          TextField(controller: _claimantNameController, autofillHints: const [AutofillHints.name], style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('John Doe')),
+          TextField(
+              controller: _claimantNameController,
+              autofillHints: const [AutofillHints.name],
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+              decoration: _inputDeco('John Doe')),
           SizedBox(height: 14),
           _label('Phone Number'),
-          TextField(controller: _phoneController, autofillHints: const [AutofillHints.telephoneNumber], style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), keyboardType: TextInputType.phone, decoration: _inputDeco('+23481234578')),
+          TextField(
+              controller: _phoneController,
+              autofillHints: const [AutofillHints.telephoneNumber],
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+              keyboardType: TextInputType.phone,
+              decoration: _inputDeco('+23481234578')),
           SizedBox(height: 14),
           _label('Contact Address'),
-          TextField(controller: _addressController, autofillHints: const [AutofillHints.streetAddressLine1], style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('24, upheld street, kingsland')),
+          TextField(
+              controller: _addressController,
+              autofillHints: const [AutofillHints.streetAddressLine1],
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+              decoration: _inputDeco('24, upheld street, kingsland')),
           SizedBox(height: 14),
           _label('Email Address'),
-          TextField(controller: _emailController, autofillHints: const [AutofillHints.email], style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), keyboardType: TextInputType.emailAddress, decoration: _inputDeco('example@gmail.com')),
+          TextField(
+              controller: _emailController,
+              autofillHints: const [AutofillHints.email],
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+              keyboardType: TextInputType.emailAddress,
+              decoration: _inputDeco('example@gmail.com')),
           SizedBox(height: 14),
           _label('Product type'),
-          TextField(controller: _productTypeController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('Motor')),
+          TextField(
+              controller: _productTypeController,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+              decoration: _inputDeco('Motor')),
           SizedBox(height: 14),
           _label('Risk Type'),
-          TextField(controller: _riskTypeController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('lorem ipsum')),
+          TextField(
+              controller: _riskTypeController,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+              decoration: _inputDeco('lorem ipsum')),
           const SizedBox(height: 14),
           _label('Select Item Code'),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 14),
-            decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(10)),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
-                value: _selectedItemCode, isExpanded: true,
-                hint: Text('select item code', style: TextStyle(color: Colors.grey[400], fontSize: 12)),
-                icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[500], size: 20),
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface),
-                items: _itemCodes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                value: _selectedItemCode,
+                isExpanded: true,
+                hint: Text('select item code',
+                    style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+                icon: Icon(Icons.keyboard_arrow_down,
+                    color: Colors.grey[500], size: 20),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurface),
+                items: _itemCodes
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                    .toList(),
                 onChanged: (v) => setState(() => _selectedItemCode = v),
               ),
             ),
           ),
           const SizedBox(height: 24),
           SizedBox(
-            width: double.infinity, height: 46,
+            width: double.infinity,
+            height: 46,
             child: ElevatedButton(
               onPressed: () {
-                if (_claimantNameController.text.isEmpty || _phoneController.text.isEmpty || _addressController.text.isEmpty || _emailController.text.isEmpty || _productTypeController.text.isEmpty || _riskTypeController.text.isEmpty || _selectedItemCode == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All fields are compulsory'), backgroundColor: Colors.red));
+                if (_claimantNameController.text.isEmpty ||
+                    _phoneController.text.isEmpty ||
+                    _addressController.text.isEmpty ||
+                    _emailController.text.isEmpty ||
+                    _productTypeController.text.isEmpty ||
+                    _riskTypeController.text.isEmpty ||
+                    _selectedItemCode == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('All fields are compulsory'),
+                      backgroundColor: Colors.red));
                   return;
                 }
                 _nextStep();
               },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E2D64), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
-              child: const Text('Continue', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1E2D64),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  elevation: 0),
+              child: const Text('Continue',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             ),
           ),
           const SizedBox(height: 80),
@@ -414,34 +654,78 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Incident Details', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+          Text('Incident Details',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface)),
           SizedBox(height: 16),
           _label('Incident Date'),
           GestureDetector(
             onTap: () async {
-              final picked = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2020), lastDate: DateTime.now());
-              if (picked != null) setState(() => _incidentDateController.text = '${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year}');
+              final picked = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime.now());
+              if (picked != null)
+                setState(() => _incidentDateController.text =
+                    '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}');
             },
-            child: AbsorbPointer(child: TextField(controller: _incidentDateController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('dd-mm-yyyy', suffix: Icon(Icons.calendar_today_outlined, color: Colors.grey[400], size: 18)))),
+            child: AbsorbPointer(
+                child: TextField(
+                    controller: _incidentDateController,
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 12),
+                    decoration: _inputDeco('dd/mm/yyyy',
+                        suffix: Icon(Icons.calendar_today_outlined,
+                            color: Colors.grey[400], size: 18)))),
           ),
           SizedBox(height: 14),
           _label('Incident Subject'),
-          TextField(controller: _incidentSubjectController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('enter incident subject')),
+          TextField(
+              controller: _incidentSubjectController,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+              decoration: _inputDeco('enter incident subject')),
           SizedBox(height: 14),
           _label('Time of Incident / Loss'),
-          TextField(controller: _incidentTimeController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('enter time of incident')),
+          TextField(
+              controller: _incidentTimeController,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+              decoration: _inputDeco('enter time of incident')),
           SizedBox(height: 14),
           _label('Place of Incident / Loss'),
-          TextField(controller: _incidentPlaceController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('enter place the incident')),
+          TextField(
+              controller: _incidentPlaceController,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+              decoration: _inputDeco('enter place the incident')),
           SizedBox(height: 14),
           _label('Describe your Request'),
-          TextField(controller: _descriptionController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), maxLines: 3, decoration: _inputDeco('')),
+          TextField(
+              controller: _descriptionController,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+              maxLines: 3,
+              decoration: _inputDeco('')),
           SizedBox(height: 14),
           _label('Witness Name'),
-          TextField(controller: _witnessNameController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), maxLines: 2, decoration: _inputDeco('')),
+          TextField(
+              controller: _witnessNameController,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+              maxLines: 2,
+              decoration: _inputDeco('')),
           SizedBox(height: 14),
           _label('Witness Address'),
-          TextField(controller: _witnessAddressController, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), decoration: _inputDeco('select item code')),
+          TextField(
+              controller: _witnessAddressController,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+              decoration: _inputDeco('select item code')),
           const SizedBox(height: 18),
           _label('Upload Supporting Document'),
           Wrap(
@@ -456,29 +740,43 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           if (_photos.isNotEmpty) ...[
             const SizedBox(height: 8),
             ..._photos.map((f) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                children: [
-                  Icon(Icons.image_outlined, color: Colors.grey[500], size: 16),
-                  const SizedBox(width: 6),
-                  Expanded(child: Text(f.path.split('/').last, style: TextStyle(fontSize: 10, color: Colors.grey[700]), overflow: TextOverflow.ellipsis)),
-                  GestureDetector(
-                    onTap: () => setState(() => _photos.remove(f)),
-                    child: const Icon(Icons.close, color: Colors.red, size: 16),
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.image_outlined,
+                          color: Colors.grey[500], size: 16),
+                      const SizedBox(width: 6),
+                      Expanded(
+                          child: Text(f.path.split('/').last,
+                              style: TextStyle(
+                                  fontSize: 10, color: Colors.grey[700]),
+                              overflow: TextOverflow.ellipsis)),
+                      GestureDetector(
+                        onTap: () => setState(() => _photos.remove(f)),
+                        child: const Icon(Icons.close,
+                            color: Colors.red, size: 16),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            )),
+                )),
           ],
           const SizedBox(height: 6),
-          Text('Upload up to 5 photos (Max 5MB each)', style: TextStyle(fontSize: 10, color: Colors.grey[500])),
+          Text('Upload up to 5 photos (Max 5MB each)',
+              style: TextStyle(fontSize: 10, color: Colors.grey[500])),
           const SizedBox(height: 24),
           SizedBox(
-            width: double.infinity, height: 46,
+            width: double.infinity,
+            height: 46,
             child: ElevatedButton(
               onPressed: _nextStep,
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E2D64), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
-              child: const Text('Continue', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1E2D64),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  elevation: 0),
+              child: const Text('Continue',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             ),
           ),
           const SizedBox(height: 80),
@@ -495,12 +793,14 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           child: Image.file(photo, width: 120, height: 80, fit: BoxFit.cover),
         ),
         Positioned(
-          top: 4, right: 4,
+          top: 4,
+          right: 4,
           child: GestureDetector(
             onTap: () => setState(() => _photos.remove(photo)),
             child: Container(
               padding: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+              decoration: const BoxDecoration(
+                  color: Colors.red, shape: BoxShape.circle),
               child: const Icon(Icons.close, color: Colors.white, size: 14),
             ),
           ),
@@ -515,31 +815,59 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
         showModalBottomSheet(
           context: context,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
           builder: (ctx) => SafeArea(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               const SizedBox(height: 12),
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+              Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2))),
               ListTile(
                 leading: const Icon(Icons.camera_alt, color: Color(0xFF1E2D64)),
                 title: const Text('Take Photo', style: TextStyle(fontSize: 14)),
                 onTap: () async {
                   Navigator.pop(ctx);
                   try {
-                    final XFile? image = await _picker.pickImage(source: ImageSource.camera, maxWidth: 1920, imageQuality: 85);
-                    if (image != null) setState(() => _photos.add(File(image.path)));
-                  } catch (e) { print('Camera error: $e'); }
+                    final XFile? image = await _picker.pickImage(
+                        source: ImageSource.camera,
+                        maxWidth: 1920,
+                        imageQuality: 85);
+                    if (image != null) {
+                      final photo = File(image.path);
+                      if (await _validatePhotoSize(photo)) {
+                        setState(() => _photos.add(photo));
+                      }
+                    }
+                  } catch (e) {
+                    print('Camera error: $e');
+                  }
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library, color: Color(0xFF1E2D64)),
-                title: const Text('Choose from Gallery', style: TextStyle(fontSize: 14)),
+                leading:
+                    const Icon(Icons.photo_library, color: Color(0xFF1E2D64)),
+                title: const Text('Choose from Gallery',
+                    style: TextStyle(fontSize: 14)),
                 onTap: () async {
                   Navigator.pop(ctx);
                   try {
-                    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, maxWidth: 1920, imageQuality: 85);
-                    if (image != null) setState(() => _photos.add(File(image.path)));
-                  } catch (e) { print('Gallery error: $e'); }
+                    final XFile? image = await _picker.pickImage(
+                        source: ImageSource.gallery,
+                        maxWidth: 1920,
+                        imageQuality: 85);
+                    if (image != null) {
+                      final photo = File(image.path);
+                      if (await _validatePhotoSize(photo)) {
+                        setState(() => _photos.add(photo));
+                      }
+                    }
+                  } catch (e) {
+                    print('Gallery error: $e');
+                  }
                 },
               ),
               const SizedBox(height: 12),
@@ -548,17 +876,21 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
         );
       },
       child: Container(
-        width: 120, height: 80,
+        width: 120,
+        height: 80,
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!, style: BorderStyle.solid),
+          border:
+              Border.all(color: Colors.grey[300]!, style: BorderStyle.solid),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_photo_alternate_outlined, color: Colors.grey[400], size: 24),
+            Icon(Icons.add_photo_alternate_outlined,
+                color: Colors.grey[400], size: 24),
             const SizedBox(height: 4),
-            Text('Add Photo', style: TextStyle(fontSize: 10, color: Colors.grey[500])),
+            Text('Add Photo',
+                style: TextStyle(fontSize: 10, color: Colors.grey[500])),
           ],
         ),
       ),
@@ -576,11 +908,17 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           // Contact Information
           Container(
             padding: EdgeInsets.all(14),
-            decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Contact Information', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                Text('Contact Information',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 12),
                 _summaryRow('Claimant Name', _claimantNameController.text),
                 _summaryRow('Phone Number', _phoneController.text),
@@ -596,14 +934,21 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           // Incident Details
           Container(
             padding: EdgeInsets.all(14),
-            decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Incident Details', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                Text('Incident Details',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 12),
                 _summaryRow('Incident Date', _incidentDateController.text),
-                _summaryRow('Incident Subject', _incidentSubjectController.text),
+                _summaryRow(
+                    'Incident Subject', _incidentSubjectController.text),
                 _summaryRow('Incident Time', _incidentTimeController.text),
                 _summaryRow('Incident Location', _incidentPlaceController.text),
                 _summaryRow('Description', _descriptionController.text),
@@ -614,19 +959,26 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           // Attachments
           Container(
             padding: EdgeInsets.all(14),
-            decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Attachments', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                Text('Attachments',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 12),
                 if (_photos.isEmpty)
-                  Text('No attachments', style: TextStyle(fontSize: 11, color: Colors.grey[500]))
+                  Text('No attachments',
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500]))
                 else
                   ..._photos.map((f) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: _attachmentRow(f.path.split('/').last),
-                  )),
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _attachmentRow(f.path.split('/').last),
+                      )),
               ],
             ),
           ),
@@ -635,29 +987,67 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(width: 24, height: 24, child: Checkbox(value: _confirmAccuracy, onChanged: (v) => setState(() => _confirmAccuracy = v!), activeColor: const Color(0xFF1E2D64), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)))),
+              SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Checkbox(
+                      value: _confirmAccuracy,
+                      onChanged: (v) => setState(() => _confirmAccuracy = v!),
+                      activeColor: const Color(0xFF1E2D64),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4)))),
               const SizedBox(width: 8),
-              const Expanded(child: Text('I confirm that all information provided is accurate and complete. I understand that providing false information may result in denial of my claim', style: TextStyle(fontSize: 11, color: Colors.black87, height: 1.4))),
+              const Expanded(
+                  child: Text(
+                      'I confirm that all information provided is accurate and complete. I understand that providing false information may result in denial of my claim',
+                      style: TextStyle(
+                          fontSize: 11, color: Colors.black87, height: 1.4))),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(width: 24, height: 24, child: Checkbox(value: _agreePrivacy, onChanged: (v) => setState(() => _agreePrivacy = v!), activeColor: const Color(0xFF1E2D64), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)))),
+              SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Checkbox(
+                      value: _agreePrivacy,
+                      onChanged: (v) => setState(() => _agreePrivacy = v!),
+                      activeColor: const Color(0xFF1E2D64),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4)))),
               const SizedBox(width: 8),
-              const Expanded(child: Text('I agree to the processing of my personal data in accordance with the Privacy Policy and Terms of Service', style: TextStyle(fontSize: 11, color: Colors.black87, height: 1.4))),
+              const Expanded(
+                  child: Text(
+                      'I agree to the processing of my personal data in accordance with the Privacy Policy and Terms of Service',
+                      style: TextStyle(
+                          fontSize: 11, color: Colors.black87, height: 1.4))),
             ],
           ),
           const SizedBox(height: 20),
           SizedBox(
-            width: double.infinity, height: 46,
+            width: double.infinity,
+            height: 46,
             child: ElevatedButton(
-              onPressed: (_confirmAccuracy && _agreePrivacy && !_submitting) ? _nextStep : null,
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E2D64), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
+              onPressed: (_confirmAccuracy && _agreePrivacy && !_submitting)
+                  ? _nextStep
+                  : null,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1E2D64),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  elevation: 0),
               child: _submitting
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Submit Claim', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : const Text('Submit Claim',
+                      style:
+                          TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             ),
           ),
           const SizedBox(height: 80),
@@ -673,7 +1063,13 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-          Flexible(child: Text(value.isNotEmpty ? value : '-', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface), textAlign: TextAlign.end)),
+          Flexible(
+              child: Text(value.isNotEmpty ? value : '-',
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface),
+                  textAlign: TextAlign.end)),
         ],
       ),
     );
@@ -684,18 +1080,25 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
       children: [
         Icon(Icons.image_outlined, color: Colors.grey[500], size: 18),
         const SizedBox(width: 8),
-        Expanded(child: Text(name, style: TextStyle(fontSize: 11, color: Colors.grey[700]))),
+        Expanded(
+            child: Text(name,
+                style: TextStyle(fontSize: 11, color: Colors.grey[700]))),
         const Icon(Icons.check, color: Colors.green, size: 18),
       ],
     );
   }
 
-  Widget _navItem(IconData icon, String label, bool isSelected, VoidCallback onTap) {
+  Widget _navItem(
+      IconData icon, String label, bool isSelected, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
-        Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+        Icon(icon,
+            color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
+        Text(label,
+            style: TextStyle(
+                fontSize: 10,
+                color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
       ]),
     );
   }
@@ -718,11 +1121,14 @@ class _ClaimSuccessScreen extends StatelessWidget {
               children: [
                 // Check icon
                 Container(
-                  width: 100, height: 100,
+                  width: 100,
+                  height: 100,
                   decoration: BoxDecoration(
                     color: const Color(0xFF1E2D64),
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF1E2D64).withValues(alpha: 0.3), width: 8),
+                    border: Border.all(
+                        color: const Color(0xFF1E2D64).withValues(alpha: 0.3),
+                        width: 8),
                   ),
                   child: Icon(Icons.check, color: Colors.white, size: 44),
                 ),
@@ -730,7 +1136,11 @@ class _ClaimSuccessScreen extends StatelessWidget {
                 Text(
                   'Your claim has been received\nand is now under review.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface, height: 1.4),
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      height: 1.4),
                 ),
                 SizedBox(height: 16),
                 RichText(
@@ -738,28 +1148,59 @@ class _ClaimSuccessScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 13, color: Colors.black87),
                     children: [
                       TextSpan(text: 'Claim Number: '),
-                      TextSpan(text: '#CLM-203874', style: TextStyle(fontWeight: FontWeight.bold)),
+                      TextSpan(
+                          text: '#CLM-203874',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
                 const SizedBox(height: 10),
-                Text('Thank you for trusting us, your coverage\nbegins immediately', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.grey[500], height: 1.4)),
+                Text(
+                    'Thank you for trusting us, your coverage\nbegins immediately',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 11, color: Colors.grey[500], height: 1.4)),
                 const SizedBox(height: 36),
                 SizedBox(
-                  width: double.infinity, height: 46,
+                  width: double.infinity,
+                  height: 46,
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => isAgentFlow ? const AgentDashboardScreen() : const CustomerDashboardScreen()), (r) => false),
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E2D64), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
-                    child: const Text('Homepage', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    onPressed: () => Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => isAgentFlow
+                                ? const AgentDashboardScreen()
+                                : const CustomerDashboardScreen()),
+                        (r) => false),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E2D64),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        elevation: 0),
+                    child: const Text('Homepage',
+                        style: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600)),
                   ),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
-                  width: double.infinity, height: 46,
+                  width: double.infinity,
+                  height: 46,
                   child: OutlinedButton(
-                    onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen())),
-                    style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF1E2D64)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                    child: const Text('Track Claim', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1E2D64))),
+                    onPressed: () => Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const MyClaimsScreen())),
+                    style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF1E2D64)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10))),
+                    child: const Text('Track Claim',
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1E2D64))),
                   ),
                 ),
               ],

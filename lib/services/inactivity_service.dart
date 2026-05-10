@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/session_cache_cleaner.dart';
 
 /// Monitors user inactivity and triggers auto-logout after a timeout period.
 /// Wraps the app's widget tree to detect taps, scrolls, and other gestures.
@@ -9,12 +10,14 @@ class InactivityService extends StatefulWidget {
   final Widget child;
   final Duration timeout;
   final VoidCallback? onTimeout;
+  final GlobalKey<NavigatorState>? navigatorKey;
 
   const InactivityService({
     super.key,
     required this.child,
-    this.timeout = const Duration(minutes: 5),
+    this.timeout = const Duration(minutes: 3),
     this.onTimeout,
+    this.navigatorKey,
   });
 
   @override
@@ -26,19 +29,24 @@ class InactivityService extends StatefulWidget {
   }
 }
 
-class InactivityServiceState extends State<InactivityService> with WidgetsBindingObserver {
+class InactivityServiceState extends State<InactivityService>
+    with WidgetsBindingObserver {
   Timer? _timer;
+  AuthProvider? _auth;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _auth = Provider.of<AuthProvider>(context, listen: false);
+    _auth?.addListener(_authStateListener);
     _resetTimer();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _auth?.removeListener(_authStateListener);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -52,6 +60,14 @@ class InactivityServiceState extends State<InactivityService> with WidgetsBindin
     }
   }
 
+  void _authStateListener() {
+    if (_auth?.isAuthenticated ?? false) {
+      _resetTimer();
+    } else {
+      _timer?.cancel();
+    }
+  }
+
   /// Reset the inactivity timer. Called on every user interaction.
   void _resetTimer() {
     final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -62,10 +78,12 @@ class InactivityServiceState extends State<InactivityService> with WidgetsBindin
 
     _timer?.cancel();
     _timer = Timer(widget.timeout, _handleTimeout);
+    debugPrint('Inactivity timer reset');
   }
 
   /// Called when the inactivity timeout expires.
   void _handleTimeout() {
+    debugPrint('Inactivity timeout triggered');
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (!auth.isAuthenticated) return;
 
@@ -78,39 +96,54 @@ class InactivityServiceState extends State<InactivityService> with WidgetsBindin
 
   /// Perform the auto-logout and navigate to login.
   void _performAutoLogout() async {
+    debugPrint('Performing auto-logout');
+    clearSessionCaches(context);
     final auth = Provider.of<AuthProvider>(context, listen: false);
     await auth.logout();
 
     if (!mounted) return;
 
     // Show session expired dialog then navigate to login
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.timer_off, color: Colors.orange, size: 24),
-            SizedBox(width: 8),
-            Text('Session Expired', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      debugPrint('Showing logout dialog');
+      if (!mounted) return;
+      final navigatorContext = widget.navigatorKey?.currentContext;
+      if (navigatorContext == null) {
+        debugPrint('No navigator context available for logout dialog');
+        return;
+      }
+      showDialog(
+        context: navigatorContext,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.timer_off, color: Colors.orange, size: 24),
+              SizedBox(width: 8),
+              Text('Session Expired',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: const Text(
+            'You have been logged out due to inactivity. Please log in again to continue.',
+            style: TextStyle(fontSize: 14, height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                debugPrint('Navigating to login');
+                Navigator.of(ctx).pop();
+                Navigator.of(navigatorContext, rootNavigator: true)
+                    .pushNamedAndRemoveUntil('/login', (route) => false);
+              },
+              child: const Text('Log In',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+            ),
           ],
         ),
-        content: const Text(
-          'You have been logged out due to inactivity. Please log in again to continue.',
-          style: TextStyle(fontSize: 14, height: 1.4),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-            },
-            child: const Text('Log In', style: TextStyle(fontWeight: FontWeight.w600)),
-          ),
-        ],
-      ),
-    );
+      );
+    });
   }
 
   /// Manually pause the timer (e.g., during payment WebView).
@@ -125,12 +158,16 @@ class InactivityServiceState extends State<InactivityService> with WidgetsBindin
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Listener(
       behavior: HitTestBehavior.translucent,
-      onTap: _resetTimer,
-      onPanDown: (_) => _resetTimer(),
-      onScaleStart: (_) => _resetTimer(),
-      child: widget.child,
+      onPointerDown: (_) => _resetTimer(),
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: _resetTimer,
+        onPanDown: (_) => _resetTimer(),
+        onScaleStart: (_) => _resetTimer(),
+        child: widget.child,
+      ),
     );
   }
 }

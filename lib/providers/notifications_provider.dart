@@ -51,6 +51,13 @@ class NotificationsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void clear() {
+    _notifications = [];
+    _readIds = {};
+    _loading = false;
+    notifyListeners();
+  }
+
   Future<void> markAsRead(BuildContext context, int notifId) async {
     if (_readIds.contains(notifId)) return;
 

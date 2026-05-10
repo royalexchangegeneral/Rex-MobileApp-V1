@@ -33,19 +33,21 @@ import 'services/inactivity_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
     ),
   );
-  
-  runApp(const MyApp());
+
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key});
+
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   Widget build(BuildContext context) {
@@ -60,9 +62,8 @@ class MyApp extends StatelessWidget {
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
-          return InactivityService(
-            timeout: const Duration(minutes: 5),
-            child: MaterialApp(
+          return MaterialApp(
+            navigatorKey: _navigatorKey,
             title: 'Rex Insurance',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
@@ -74,7 +75,11 @@ class MyApp extends StatelessWidget {
                 data: MediaQuery.of(context).copyWith(
                   textScaler: const TextScaler.linear(1.1),
                 ),
-                child: child!,
+                child: InactivityService(
+                  timeout: const Duration(minutes: 3),
+                  navigatorKey: _navigatorKey,
+                  child: child!,
+                ),
               );
             },
             initialRoute: '/',
@@ -86,18 +91,24 @@ class MyApp extends StatelessWidget {
               '/forgot-password': (context) => const ForgotPasswordScreen(),
               '/explore-services': (context) => const ExploreServicesScreen(),
               '/signup': (context) => const SignupScreen(),
-              '/verification-success': (context) => const VerificationSuccessScreen(),
-              '/identity-verification': (context) => const IdentityVerificationScreen(),
+              '/verification-success': (context) =>
+                  const VerificationSuccessScreen(),
+              '/identity-verification': (context) =>
+                  const IdentityVerificationScreen(),
               '/enter-nin': (context) => const EnterNinScreen(),
               '/enter-bvn': (context) => const EnterBvnScreen(),
               '/enter-passport': (context) => const EnterPassportScreen(),
-              '/enter-drivers-license': (context) => const EnterDriversLicenseScreen(),
+              '/enter-drivers-license': (context) =>
+                  const EnterDriversLicenseScreen(),
               '/create-password': (context) => const CreatePasswordScreen(),
-              '/existing-policy-question': (context) => const ExistingPolicyQuestionScreen(),
+              '/existing-policy-question': (context) =>
+                  const ExistingPolicyQuestionScreen(),
               '/get-covered': (context) => const GetCoveredScreen(),
-              '/enter-policy-details': (context) => const EnterPolicyDetailsScreen(),
+              '/enter-policy-details': (context) =>
+                  const EnterPolicyDetailsScreen(),
               '/agent-dashboard': (context) => const AgentDashboardScreen(),
-              '/select-client-type': (context) => const SelectClientTypeScreen(),
+              '/select-client-type': (context) =>
+                  const SelectClientTypeScreen(),
             },
             onGenerateRoute: (settings) {
               if (settings.name == '/verify-code') {
@@ -123,7 +134,6 @@ class MyApp extends StatelessWidget {
               }
               return null;
             },
-          ),
           );
         },
       ),

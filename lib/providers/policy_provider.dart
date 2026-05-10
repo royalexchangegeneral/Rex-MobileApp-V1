@@ -34,8 +34,21 @@ class PolicyProvider with ChangeNotifier {
       print('Payload: ${json.encode(requestBody)}');
       print('===================================');
 
+      final uri = Uri.https(
+        'eportaltest.rexinsure.com',
+        '/api/getcustomerpolicy',
+        {
+          'IntCode': 'TESTCODE',
+          'Password': 'royal1234',
+          'MobileNo': phone,
+        },
+      );
+
+      print('=== GET CUSTOMER POLICY URL ===');
+      print(uri.toString());
+
       final r = await http.get(
-        Uri.parse('https://eportaltest.rexinsure.com/api/getcustomerpolicy?IntCode=TESTCODE&Password=royal1234&MobileNo=$phone'),
+        uri,
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 15));
 
@@ -96,6 +109,16 @@ class PolicyProvider with ChangeNotifier {
     try {
       final end = DateTime.parse(endDate);
       return end.isAfter(DateTime.now()) ? 'Active' : 'Expired';
-    } catch (_) { return 'Unknown'; }
+    } catch (_) {
+      return 'Unknown';
+    }
+  }
+
+  void clear() {
+    _policies = [];
+    _claims = [];
+    _activePolicies = 0;
+    _loading = false;
+    notifyListeners();
   }
 }

@@ -209,17 +209,26 @@ class AuthProvider with ChangeNotifier {
   // Logout
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    
+    await prefs.remove('isAuthenticated');
+    await prefs.remove('userId');
+    await prefs.remove('userName');
+    await prefs.remove('userEmail');
+    await prefs.remove('loginEmail');
+    await prefs.remove('userType');
+    await prefs.remove('userCode');
+    await prefs.remove('profilePhoto');
+    await prefs.remove('userData');
+
     _isAuthenticated = false;
     _userId = null;
     _userName = null;
     _userEmail = null;
+    _loginEmail = null;
     _userType = null;
     _userCode = null;
     _profilePhoto = null;
     _userData = null;
-    
+
     notifyListeners();
   }
 }
