@@ -489,11 +489,11 @@ class _ExistingPolicyQuestionScreenState
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: _selectedOption == 'yes'
-                          ? AppTheme.primaryBlue
-                          : Colors.grey[300]!,
-                      width: _selectedOption == 'yes' ? 2 : 1,
+                            ? AppTheme.primaryBlue
+                            : Colors.grey[300]!,
+                        width: _selectedOption == 'yes' ? 2 : 1,
+                      ),
                     ),
-                  ),
                   child: Row(
                     children: [
                       Container(
