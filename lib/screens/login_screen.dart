@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
 import '../services/biometric_service.dart';
@@ -421,8 +422,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/signup');
+                        onPressed: () async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('is_signup_flow', true);
+                          if (mounted) {
+                            Navigator.pushNamed(context, '/existing-policy-question');
+                          }
                         },
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,

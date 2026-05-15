@@ -21,6 +21,44 @@ class _ExistingPolicyQuestionScreenState
     extends State<ExistingPolicyQuestionScreen> {
   String? _selectedOption;
   bool _isCreating = false;
+  late TextEditingController _firstNameController;
+  late TextEditingController _lastNameController;
+  late TextEditingController _emailController;
+  bool _showUserInfoForm = false;
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _firstNameController = TextEditingController();
+    _lastNameController = TextEditingController();
+    _emailController = TextEditingController();
+    _checkAndLoadUserInfo();
+  }
+
+  Future<void> _checkAndLoadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final firstName = prefs.getString('signup_first_name') ?? '';
+    final lastName = prefs.getString('signup_last_name') ?? '';
+    final email = prefs.getString('signup_email') ?? '';
+    
+    // Show form if no user info is saved (new signup flow)
+    if (firstName.isEmpty || lastName.isEmpty || email.isEmpty) {
+      setState(() => _showUserInfoForm = true);
+    } else {
+      _firstNameController.text = firstName;
+      _lastNameController.text = lastName;
+      _emailController.text = email;
+    }
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
 
   String? _safeValue(String? value) =>
       (value == null || value.isEmpty) ? null : value;
@@ -50,6 +88,17 @@ class _ExistingPolicyQuestionScreenState
   }
 
   Future<void> _handleContinue() async {
+    // Validate user info form if shown
+    if (_showUserInfoForm) {
+      if (!_formKey.currentState!.validate()) {
+        return;
+      }
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('signup_first_name', _firstNameController.text.trim());
+      await prefs.setString('signup_last_name', _lastNameController.text.trim());
+      await prefs.setString('signup_email', _emailController.text.trim());
+    }
+
     if (_selectedOption == null) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please select an option')));
@@ -257,47 +306,189 @@ class _ExistingPolicyQuestionScreenState
         ],
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // User Info Form (only shown if needed)
+                if (_showUserInfoForm) ...[
+                  Text(
+                    'Sign up',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  
+                  Text(
+                    'First Name',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _firstNameController,
+                    autofillHints: const [AutofillHints.givenName],
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Enter first name',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 2),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter your first name';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  Text(
+                    'Last Name',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _lastNameController,
+                    autofillHints: const [AutofillHints.familyName],
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Enter last name',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 2),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter your last name';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  Text(
+                    'Email',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.email],
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Enter your email',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 2),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter your email';
+                      }
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                        return 'Please enter a valid email';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 40),
+                ],
 
-              Text(
-                'Do You Have An Existing Insurance Policy?',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
+                SizedBox(height: _showUserInfoForm ? 0 : 20),
+
+                Text(
+                  'Do You Have An Existing Insurance Policy?',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              Text(
-                'If you have an existing policy, we will link it to your account for easy access',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                  height: 1.5,
+                Text(
+                  'If you have an existing policy, we will link it to your account for easy access',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    height: 1.5,
+                  ),
                 ),
-              ),
 
-              SizedBox(height: 32),
+                SizedBox(height: 32),
 
-              // Yes Option
-              GestureDetector(
-                onTap: () => setState(() => _selectedOption = 'yes'),
-                child: Container(
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF1A1F2E)
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _selectedOption == 'yes'
+                // Yes Option
+                GestureDetector(
+                  onTap: () => setState(() => _selectedOption = 'yes'),
+                  child: Container(
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1A1F2E)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _selectedOption == 'yes'
                           ? AppTheme.primaryBlue
                           : Colors.grey[300]!,
                       width: _selectedOption == 'yes' ? 2 : 1,
