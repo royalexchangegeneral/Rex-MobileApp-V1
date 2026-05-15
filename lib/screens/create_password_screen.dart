@@ -48,15 +48,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
         final hasExistingPolicy = prefs.getBool('has_existing_policy') ?? false;
         
         if (hasExistingPolicy) {
-          setState(() => _isLoading = false);
-          await prefs.remove('is_signup_flow');
-          await prefs.remove('has_existing_policy');
-          if (!mounted) return;
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()),
-            (r) => false,
-          );
+          await _createLoginForExistingPolicy();
         } else {
           // User doesn't have existing policy - create customer account
           await _createSignupCustomer();
@@ -217,6 +209,102 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       return false;
     }
     return true;
+  }
+
+  Future<void> _createLoginForExistingPolicy() async {
+    final prefs = await SharedPreferences.getInstance();
+    final firstName = prefs.getString('signup_first_name') ?? '';
+    final lastName = prefs.getString('signup_last_name') ?? '';
+    final email = prefs.getString('signup_email') ?? '';
+    final phone = prefs.getString('signup_phone') ?? '';
+    final password = prefs.getString('signup_password') ?? '';
+
+    try {
+      final loginPayload = {
+        'cust_first_name': firstName,
+        'cust_middle_name': '',
+        'cust_last_name': lastName,
+        'cust_occupation': 'Business',
+        'cust_phone_no': phone,
+        'cust_email': email,
+        'cust_password': password,
+      };
+      print('=== CREATE LOGIN FOR EXISTING POLICY ===');
+      print('Payload: ${json.encode(loginPayload)}');
+
+      final loginResponse = await http
+          .post(
+            Uri.parse('https://eportaltest.rexinsure.com/api/createlogin'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(loginPayload),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      print('Response: ${loginResponse.statusCode} - ${loginResponse.body}');
+      setState(() => _isLoading = false);
+
+      if (loginResponse.statusCode == 200 || loginResponse.statusCode == 201) {
+        final loginData = json.decode(loginResponse.body);
+        if (loginData['Status']?.toString().toLowerCase() == 'success') {
+          final authenticated = await _authenticateUser(email, password);
+          if (authenticated) {
+            for (final key in [
+              'signup_first_name',
+              'signup_last_name',
+              'signup_email',
+              'signup_phone',
+              'signup_nin',
+              'signup_password',
+              'signup_dob',
+              'signup_state',
+              'signup_lga',
+              'signup_address',
+              'is_signup_flow',
+              'has_existing_policy',
+            ]) {
+              await prefs.remove(key);
+            }
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('Account created successfully!'),
+                  backgroundColor: Colors.green));
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()),
+                (r) => false,
+              );
+            }
+            return;
+          }
+        }
+
+        final errorMsg = json.decode(loginResponse.body)['Message']?.toString() ??
+            json.decode(loginResponse.body)['message']?.toString() ??
+            'Failed to create login for existing policy';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(errorMsg),
+              backgroundColor: Colors.red));
+        }
+      } else {
+        String errorMsg = 'Failed to create login for existing policy';
+        try {
+          final d = json.decode(loginResponse.body);
+          errorMsg = d['Message']?.toString() ?? d['message']?.toString() ?? errorMsg;
+        } catch (_) {}
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(errorMsg),
+              backgroundColor: Colors.red));
+        }
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      }
+    }
   }
 
   String? _safeValue(String? value) =>
