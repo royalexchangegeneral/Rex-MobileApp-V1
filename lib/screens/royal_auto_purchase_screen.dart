@@ -222,7 +222,7 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
           ],
           const SizedBox(height: 20),
           SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/user-portal', (r) => false),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
             child: const Text('Home', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600))))])));
       else if (res != null && !res.success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res.message ?? 'Payment verification failed'), backgroundColor: Colors.red));
@@ -342,7 +342,10 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
       const SizedBox(width: 8),
       SizedBox(width: 80, height: 48, child: ElevatedButton(
         onPressed: _isVerifyingReg ? null : _verifyRegNo,
-        style: ElevatedButton.styleFrom(backgroundColor: _regVerifyStatus=='verified'?Colors.green:AppTheme.primaryNavy, foregroundColor: Colors.white, padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+        style: ElevatedButton.styleFrom(backgroundColor: _regVerifyStatus == 'verified'
+            ? Colors.green
+            : Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
+          foregroundColor: Colors.white, padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
         child: _isVerifyingReg ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
             : Text(_regVerifyStatus=='verified'?'✓':'Verify', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
       )),
@@ -556,10 +559,10 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
       style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13), decoration: InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
       icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]), items: items.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(), onChanged: onChanged));
   Widget _btn(String t, VoidCallback? onPressed, {bool loading=false}) => SizedBox(width: double.infinity, child: ElevatedButton(onPressed: onPressed,
-    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
+    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
     child: loading?const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)):Text(t, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))));
   Widget _outBtn(String t, VoidCallback onPressed) => SizedBox(width: double.infinity, child: OutlinedButton(onPressed: onPressed,
-    style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primaryNavy, side: const BorderSide(color: AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+    style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
     child: Text(t, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))));
 }
 

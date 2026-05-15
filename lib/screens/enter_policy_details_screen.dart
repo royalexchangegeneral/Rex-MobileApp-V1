@@ -461,7 +461,7 @@ class _EnterPolicyDetailsScreenState extends State<EnterPolicyDetailsScreen> {
                                   ? _handleContinue
                                   : null,
                           style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryNavy,
+                              backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),

@@ -56,10 +56,35 @@ class _ExistingPolicyQuestionScreenState
       return;
     }
 
+    final prefs = await SharedPreferences.getInstance();
+    final isSignupFlow = prefs.getBool('is_signup_flow') ?? false;
+    
     if (_selectedOption == 'yes') {
-      Navigator.pushNamed(context, '/enter-policy-details');
+      if (isSignupFlow) {
+        // Signup flow with existing insurance - mark as YES and go directly to verify phone
+        await prefs.setBool('has_existing_policy', true);
+        final email = prefs.getString('signup_email') ?? '';
+        if (mounted) {
+          Navigator.pushNamed(context, '/verify-phone', arguments: email);
+        }
+      } else {
+        // Normal flow with existing insurance - go to enter policy details
+        if (mounted) {
+          Navigator.pushNamed(context, '/enter-policy-details');
+        }
+      }
     } else {
-      await _createCustomerAndLogin();
+      if (isSignupFlow) {
+        // Signup flow without existing insurance - mark as NO and continue to phone verification
+        await prefs.setBool('has_existing_policy', false);
+        final email = prefs.getString('signup_email') ?? '';
+        if (mounted) {
+          Navigator.pushNamed(context, '/verify-phone', arguments: email);
+        }
+      } else {
+        // Normal flow without existing insurance - create customer and login
+        await _createCustomerAndLogin();
+      }
     }
   }
 

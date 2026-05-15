@@ -104,7 +104,7 @@ class ClaimsProcessScreen extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewClaimsScreen())),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryNavy,
+                        backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         padding: const EdgeInsets.symmetric(vertical: 14),

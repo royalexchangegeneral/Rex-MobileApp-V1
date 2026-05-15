@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/occupations.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/searchable_dropdown.dart';
 import 'vehicle_information_screen.dart';
@@ -37,6 +38,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _occupationController = TextEditingController();
+  String? _selectedOccupation;
   final _addressController = TextEditingController();
   
   String? _selectedState;
@@ -76,6 +78,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
         _phoneController.text = c['cust_phone']?.toString() ?? '';
         _addressController.text = c['cust_address']?.toString() ?? '';
         _occupationController.text = c['cust_occupation']?.toString() ?? '';
+        _selectedOccupation = _occupationController.text.isNotEmpty ? _occupationController.text : null;
       } else {
         final auth = Provider.of<AuthProvider>(context, listen: false);
         final userData = auth.userData;
@@ -85,6 +88,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
           _emailController.text = userData['Email']?.toString() ?? '';
           _phoneController.text = userData['Phone']?.toString() ?? userData['PhoneNo']?.toString() ?? userData['MobileNo']?.toString() ?? '';
           _occupationController.text = userData['Occupation']?.toString() ?? '';
+          _selectedOccupation = _occupationController.text.isNotEmpty ? _occupationController.text : null;
           _addressController.text = userData['Address']?.toString() ?? '';
         }
       }
@@ -180,7 +184,18 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                     const SizedBox(height: 14),
                     _buildTextField('Phone Number*', 'enter your phone number', _phoneController, keyboardType: TextInputType.phone, autofillHints: [AutofillHints.telephoneNumber]),
                     const SizedBox(height: 14),
-                    _buildTextField('Occupation', 'enter your occupation', _occupationController),
+                    Text('Occupation', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
+                    const SizedBox(height: 8),
+                    SearchableDropdown(
+                      hint: 'select your occupation',
+                      value: _selectedOccupation,
+                      items: occupations,
+                      fontSize: 14,
+                      onChanged: (val) => setState(() {
+                        _selectedOccupation = val;
+                        _occupationController.text = val ?? '';
+                      }),
+                    ),
                     const SizedBox(height: 14),
                     _buildTextField('Address*', 'enter your address', _addressController, maxLines: 3, autofillHints: [AutofillHints.streetAddressLine1]),
                     const SizedBox(height: 14),
@@ -236,7 +251,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                       }
                     }
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                   child: const Text('Continue', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 ),
               ),

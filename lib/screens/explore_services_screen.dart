@@ -191,9 +191,9 @@ class _ExploreServicesScreenState extends State<ExploreServicesScreen> {
                     // Description
                     Text(
                       service['description']!,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 10,
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white,
                         height: 1.3,
                       ),
                       textAlign: TextAlign.center,

@@ -345,7 +345,7 @@ class PolicyDetailsScreen extends StatelessWidget {
                         label: const Text('Call Now',
                             style: TextStyle(fontSize: 11)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryNavy,
+                          backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
@@ -371,7 +371,7 @@ class PolicyDetailsScreen extends StatelessWidget {
                             policyNumber: policyNumber,
                             isAgentFlow: isAgentFlow))),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryNavy,
+                  backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(

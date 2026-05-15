@@ -30,7 +30,10 @@ class _SignupScreenState extends State<SignupScreen> {
       await prefs.setString('signup_first_name', _firstNameController.text.trim());
       await prefs.setString('signup_last_name', _lastNameController.text.trim());
       await prefs.setString('signup_email', _emailController.text.trim());
-      Navigator.pushNamed(context, '/verify-phone', arguments: _emailController.text);
+      await prefs.setBool('is_signup_flow', true);
+      if (mounted) {
+        Navigator.pushNamed(context, '/existing-policy-question');
+      }
     }
   }
 
@@ -212,7 +215,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   child: ElevatedButton(
                     onPressed: _handleNext,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryBlue,
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryBlue,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -220,7 +223,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       elevation: 0,
                     ),
                     child: const Text(
-                      'Next',
+                      'Sign up',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,

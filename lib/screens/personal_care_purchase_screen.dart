@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/payment_service.dart';
 import '../utils/app_theme.dart';
+import '../utils/occupations.dart';
 import '../widgets/paystack_webview.dart';
 import '../widgets/searchable_dropdown.dart';
 import 'customer_dashboard_screen.dart';
@@ -55,6 +56,7 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
   // Step 1: Socioeconomic
   final _emailController = TextEditingController();
   final _occupationController = TextEditingController();
+  String? _selectedOccupation;
   String? _selectedBusinessSector;
   final _tinController = TextEditingController();
   String? _selectedQualification;
@@ -263,7 +265,7 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
               const SizedBox(height: 20),
               SizedBox(width: double.infinity, child: ElevatedButton(
                 onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/user-portal', (r) => false),
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                 child: const Text('Home', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               )),
             ]),
@@ -357,7 +359,7 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
           const SizedBox(height: 40),
           SizedBox(width: double.infinity, child: ElevatedButton(
             onPressed: _isVerifying || _ninController.text.trim().length != 11 ? null : _verifyNin,
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
             child: _isVerifying
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : const Text('Verify', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
@@ -417,7 +419,7 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
                     });
                   }
                 : null,
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
             child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           )),
         ],
@@ -475,14 +477,14 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
                     });
                   }
                 : null,
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
             child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           )),
         ],
         const SizedBox(height: 12),
         SizedBox(width: double.infinity, child: OutlinedButton(
           onPressed: () => Navigator.pop(context),
-          style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primaryNavy, side: const BorderSide(color: AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+          style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
           child: const Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         )),
       ]),
@@ -503,7 +505,15 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
         ],
         _label('Occupation'),
         const SizedBox(height: 6),
-        _textField('enter your occupation', _occupationController),
+        SearchableDropdown(
+          hint: 'select your occupation',
+          value: _selectedOccupation,
+          items: occupations,
+          onChanged: (val) => setState(() {
+            _selectedOccupation = val;
+            _occupationController.text = val ?? '';
+          }),
+        ),
         const SizedBox(height: 16),
         _label('Business Sector'),
         const SizedBox(height: 6),
@@ -528,13 +538,13 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
                   _email = _emailController.text.trim();
                   setState(() => _currentStep = 2);
                 } : null,
-          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
+          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
           child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         )),
         const SizedBox(height: 12),
         SizedBox(width: double.infinity, child: OutlinedButton(
           onPressed: () => setState(() => _currentStep = 0),
-          style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primaryNavy, side: const BorderSide(color: AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+          style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
           child: const Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         )),
       ]),
@@ -578,13 +588,13 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
         SizedBox(width: double.infinity, child: ElevatedButton(
           onPressed: _nokNameController.text.trim().isNotEmpty && _nokAddressController.text.trim().isNotEmpty && _nokPhoneController.text.trim().isNotEmpty && _selectedRelationship != null && _consentChecked
               ? () => setState(() => _currentStep = 3) : null,
-          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
+          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
           child: const Text('Submit', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         )),
         const SizedBox(height: 12),
         SizedBox(width: double.infinity, child: OutlinedButton(
           onPressed: () => setState(() => _currentStep = 1),
-          style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primaryNavy, side: const BorderSide(color: AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+          style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
           child: const Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         )),
       ]),
@@ -632,7 +642,7 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
         const SizedBox(height: 30),
         SizedBox(width: double.infinity, child: ElevatedButton(
           onPressed: _isPayingNow ? null : _initiatePayment,
-          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
           child: _isPayingNow
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : const Text('Pay Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),

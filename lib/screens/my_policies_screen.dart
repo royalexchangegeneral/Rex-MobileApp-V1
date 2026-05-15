@@ -409,7 +409,7 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
                                 policy['rawData'] as Map<String, dynamic>?,
                           ))),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryNavy,
+                backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),

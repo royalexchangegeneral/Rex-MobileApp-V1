@@ -384,7 +384,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                     ElevatedButton(
                         onPressed: () => _callAgent(),
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryNavy,
+                            backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8))),

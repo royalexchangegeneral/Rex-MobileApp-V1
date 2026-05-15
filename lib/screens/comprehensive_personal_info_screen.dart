@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/occupations.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/searchable_dropdown.dart';
 import 'comprehensive_vehicle_info_screen.dart';
@@ -23,6 +24,7 @@ class _ComprehensivePersonalInfoScreenState extends State<ComprehensivePersonalI
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _occupationController = TextEditingController();
+  String? _selectedOccupation;
   final _addressController = TextEditingController();
   
   String? _selectedState;
@@ -61,6 +63,7 @@ class _ComprehensivePersonalInfoScreenState extends State<ComprehensivePersonalI
         _emailController.text = userData['Email']?.toString() ?? '';
         _phoneController.text = userData['Phone']?.toString() ?? userData['PhoneNo']?.toString() ?? userData['Phoneno']?.toString() ?? userData['MobileNo']?.toString() ?? userData['Mobile']?.toString() ?? userData['PhoneNumber']?.toString() ?? userData['Telephone']?.toString() ?? '';
         _occupationController.text = userData['Occupation']?.toString() ?? '';
+        _selectedOccupation = _occupationController.text.isNotEmpty ? _occupationController.text : null;
         _addressController.text = userData['Address']?.toString() ?? '';
       }
     });
@@ -149,7 +152,18 @@ class _ComprehensivePersonalInfoScreenState extends State<ComprehensivePersonalI
                     const SizedBox(height: 16),
                     _buildTextField('Phone Number', _phoneController, 'enter your phone number', keyboardType: TextInputType.phone, autofillHints: [AutofillHints.telephoneNumber]),
                     const SizedBox(height: 16),
-                    _buildTextField('Occupation', _occupationController, 'enter your occupation'),
+                    Text('Occupation', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
+                    const SizedBox(height: 8),
+                    SearchableDropdown(
+                      hint: 'select your occupation',
+                      value: _selectedOccupation,
+                      items: occupations,
+                      fontSize: 14,
+                      onChanged: (val) => setState(() {
+                        _selectedOccupation = val;
+                        _occupationController.text = val ?? '';
+                      }),
+                    ),
                     const SizedBox(height: 16),
                     _buildTextField('Address', _addressController, 'enter your address', maxLines: 3, autofillHints: [AutofillHints.streetAddressLine1]),
                     const SizedBox(height: 16),
@@ -199,7 +213,7 @@ class _ComprehensivePersonalInfoScreenState extends State<ComprehensivePersonalI
                     Navigator.push(context, MaterialPageRoute(builder: (_) => ComprehensiveVehicleInfoScreen(vehicleType: widget.vehicleType, personalInfo: personalInfo, isLoggedIn: widget.isLoggedIn, isAgent: widget.isAgent)));
                   }
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                 child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               )),
             ),

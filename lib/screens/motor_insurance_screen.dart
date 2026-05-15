@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import '../utils/theme_helper.dart';
 import 'private_car_purchase_screen.dart';
 import 'comprehensive_personal_info_screen.dart';
 import 'royal_auto_purchase_screen.dart';
@@ -62,7 +63,7 @@ class MotorInsuranceScreen extends StatelessWidget {
                         ),
                       ),
                       Container(
-                        color: Colors.white,
+                        color: ThemeHelper.getCardColor(context),
                         padding: EdgeInsets.all(24),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

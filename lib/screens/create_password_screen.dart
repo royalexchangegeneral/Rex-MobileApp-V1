@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../providers/auth_provider.dart';
+import 'customer_dashboard_screen.dart';
 
 class CreatePasswordScreen extends StatefulWidget {
   const CreatePasswordScreen({super.key});
@@ -36,11 +41,208 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       // Notify the platform to save credentials to Keychain / password manager
       TextInput.finishAutofillContext();
       
-      setState(() => _isLoading = false);
+      final isSignupFlow = prefs.getBool('is_signup_flow') ?? false;
       
-      if (mounted) {
-        Navigator.of(context).pushNamed('/existing-policy-question');
+      if (isSignupFlow) {
+        // Signup flow
+        final hasExistingPolicy = prefs.getBool('has_existing_policy') ?? false;
+        
+        if (hasExistingPolicy) {
+          setState(() => _isLoading = false);
+          await prefs.remove('is_signup_flow');
+          await prefs.remove('has_existing_policy');
+          if (!mounted) return;
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()),
+            (r) => false,
+          );
+        } else {
+          // User doesn't have existing policy - create customer account
+          await _createSignupCustomer();
+        }
+      } else {
+        // Normal flow - go to existing policy question
+        setState(() => _isLoading = false);
+        if (mounted) {
+          Navigator.of(context).pushNamed('/existing-policy-question');
+        }
       }
+    }
+  }
+
+  Future<void> _createSignupCustomer() async {
+    final prefs = await SharedPreferences.getInstance();
+    final firstName = prefs.getString('signup_first_name') ?? '';
+    final lastName = prefs.getString('signup_last_name') ?? '';
+    final email = prefs.getString('signup_email') ?? '';
+    final phone = prefs.getString('signup_phone') ?? '';
+    final nin = prefs.getString('signup_nin') ?? '';
+    final password = prefs.getString('signup_password') ?? '';
+    final dob = prefs.getString('signup_dob') ?? '';
+    final formattedDob = _normalizeDob(dob);
+    final state = prefs.getString('signup_state') ?? '';
+    final lga = prefs.getString('signup_lga') ?? '';
+    final address = prefs.getString('signup_address') ?? '';
+
+    try {
+      // Step 1: Create Customer
+      final customerPayload = {
+        'cust_first_name': firstName,
+        'cust_middle_name': null,
+        'cust_last_name': lastName,
+        'cust_type': 'Individual',
+        'cust_occupation': 'Business',
+        'cust_phone_no': phone,
+        'cust_email': email,
+        'cust_address': _safeAddress(address),
+        'cust_town': null,
+        'cust_nationality': 'Nigerian',
+        'cust_state': _safeValue(state),
+        'cust_lga': _safeValue(lga),
+        'cust_dob': _safeValue(formattedDob),
+        'cust_national_id_name': 'NIN',
+        'cust_national_id_no': nin,
+      };
+      print('=== CREATE CUSTOMER ===');
+      print('Payload: ${json.encode(customerPayload)}');
+
+      final custResponse = await http
+          .post(
+            Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(customerPayload),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      print('Response: ${custResponse.statusCode} - ${custResponse.body}');
+
+      if (custResponse.statusCode == 200 || custResponse.statusCode == 201) {
+        final custData = json.decode(custResponse.body);
+        if (custData['Status']?.toString().toLowerCase() == 'success' &&
+            custData['StatusCode'] != 409) {
+          // Step 2: Create Login
+          final loginPayload = {
+            'cust_first_name': firstName,
+            'cust_middle_name': '',
+            'cust_last_name': lastName,
+            'cust_occupation': 'Business',
+            'cust_phone_no': phone,
+            'cust_email': email,
+            'cust_password': password,
+          };
+          print('=== CREATE LOGIN ===');
+          print('Payload: ${json.encode(loginPayload)}');
+
+          final loginResponse = await http
+              .post(
+                Uri.parse('https://eportaltest.rexinsure.com/api/createlogin'),
+                headers: {'Content-Type': 'application/json'},
+                body: json.encode(loginPayload),
+              )
+              .timeout(const Duration(seconds: 15));
+
+          print(
+              'Response: ${loginResponse.statusCode} - ${loginResponse.body}');
+
+          setState(() => _isLoading = false);
+
+          final bool authenticated = await _authenticateUser(email, password);
+
+          if (authenticated) {
+            // Clear signup data
+            await prefs.remove('signup_first_name');
+            await prefs.remove('signup_last_name');
+            await prefs.remove('signup_email');
+            await prefs.remove('signup_phone');
+            await prefs.remove('signup_nin');
+            await prefs.remove('signup_password');
+            await prefs.remove('signup_dob');
+            await prefs.remove('signup_state');
+            await prefs.remove('signup_lga');
+            await prefs.remove('signup_address');
+            await prefs.remove('is_signup_flow');
+            await prefs.remove('has_existing_policy');
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('Account created successfully!'),
+                  backgroundColor: Colors.green));
+              Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const CustomerDashboardScreen()),
+                  (r) => false);
+            }
+          }
+        } else {
+          setState(() => _isLoading = false);
+          if (mounted)
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(custData['Message']?.toString() ??
+                    custData['message']?.toString() ??
+                    'Customer creation failed'),
+                backgroundColor: Colors.red));
+        }
+      } else {
+        setState(() => _isLoading = false);
+        String errorMsg = 'Customer creation failed';
+        try {
+          final d = json.decode(custResponse.body);
+          errorMsg =
+              d['Message']?.toString() ?? d['message']?.toString() ?? errorMsg;
+        } catch (_) {}
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(errorMsg), backgroundColor: Colors.red));
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+    }
+  }
+
+  Future<bool> _authenticateUser(String email, String password) async {
+    final authProvider = context.read<AuthProvider>();
+    final loginResult = await authProvider.login(email, password);
+    if (!loginResult.success) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(loginResult.message ?? 'Unable to authenticate user.'),
+          backgroundColor: Colors.red,
+        ));
+      }
+      return false;
+    }
+    return true;
+  }
+
+  String? _safeValue(String? value) =>
+      (value == null || value.isEmpty) ? null : value;
+
+  String _safeAddress(String? value) =>
+      (value == null || value.isEmpty) ? 'Lagos' : value;
+
+  String _normalizeDob(String? dob) {
+    const defaultDob = '1990-01-01';
+    if (dob == null || dob.trim().isEmpty) return defaultDob;
+    final normalized = dob.trim().replaceAll('/', '-');
+    final parts = normalized.split('-');
+    if (parts.length == 3) {
+      if (parts[0].length == 4) {
+        return '${parts[0]}-${parts[1].padLeft(2, '0')}-${parts[2].padLeft(2, '0')}';
+      }
+      if (parts[2].length == 4) {
+        return '${parts[2]}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}';
+      }
+    }
+    try {
+      final date = DateTime.parse(normalized);
+      return date.toIso8601String().split('T').first;
+    } catch (_) {
+      return defaultDob;
     }
   }
 

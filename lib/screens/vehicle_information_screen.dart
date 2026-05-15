@@ -233,7 +233,7 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
                     child: ElevatedButton(
                       onPressed: _isVerifying || _isVerified ? null : _handleVerify,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _isVerified ? Colors.green : AppTheme.primaryNavy,
+                        backgroundColor: _isVerified ? Colors.green : (Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -360,7 +360,7 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
                               }
                             : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white,
+                          backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           disabledBackgroundColor: Colors.grey[300],

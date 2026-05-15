@@ -156,13 +156,13 @@ class _ComprehensiveImageUploadScreenState extends State<ComprehensiveImageUploa
                       imageFiles: _imageFiles, isLoggedIn: widget.isLoggedIn, isAgent: widget.isAgent,
                     )));
                   } : null,
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
+                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
                   child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 )),
                 const SizedBox(height: 12),
                 SizedBox(width: double.infinity, child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primaryNavy, side: const BorderSide(color: AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                  style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                   child: const Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 )),
               ]),

@@ -345,7 +345,7 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
                 child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submitTicket,
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryNavy,
+                        backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(

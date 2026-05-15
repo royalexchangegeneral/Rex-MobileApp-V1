@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import '../utils/theme_helper.dart';
 import 'family_care_purchase_screen.dart';
 import 'customer_renewal_screen.dart';
 
@@ -61,7 +62,7 @@ class RoyalFamilyCareScreen extends StatelessWidget {
                 SizedBox(height: 12),
                 Row(mainAxisAlignment: MainAxisAlignment.end, children: [
                   ElevatedButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FamilyCarePurchaseScreen(optionTitle: d['title']!, price: d['price']!))),
-                    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                     child: Text('Buy Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)))]),
                 SizedBox(height: 10),
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -69,7 +70,7 @@ class RoyalFamilyCareScreen extends StatelessWidget {
                     Text('Premium', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
                     Text('Parent: ${d['parentPremium']} / Child: ${d['childPremium']} yearly', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface))]),
                   OutlinedButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerRenewalScreen())),
-                    style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primaryNavy, side: const BorderSide(color: AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                    style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                     child: Text('Renew Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)))]),
               ])),
             ));
@@ -83,7 +84,7 @@ class RoyalFamilyCareScreen extends StatelessWidget {
     TextSpan(text: '$v ', style: const TextStyle(fontWeight: FontWeight.bold)), TextSpan(text: l, style: const TextStyle(color: Colors.grey))]));
 
   Widget _buildExploreLayout(BuildContext context) {
-    return Scaffold(body: CustomScrollView(slivers: [
+    return Scaffold(backgroundColor: Theme.of(context).scaffoldBackgroundColor, body: CustomScrollView(slivers: [
       SliverAppBar(expandedHeight: 450, pinned: false,
         leading: Container(margin: EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.3), shape: BoxShape.circle),
           child: IconButton(icon: Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context))),
@@ -92,7 +93,7 @@ class RoyalFamilyCareScreen extends StatelessWidget {
             Image.asset('assets/images/e3.png', fit: BoxFit.cover),
             Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.black.withValues(alpha: 0.2), Colors.black.withValues(alpha: 0.5)]))),
           ])),
-          Container(color: Colors.white, padding: EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(color: ThemeHelper.getCardColor(context), padding: EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Royal Family Care', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)), SizedBox(height: 8),
             Text('Ensure your family have adequate provision against unexpected events such as accidents. This product provides compensation for you and your family members in case of such event. Stay safe, stay protected.', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface, height: 1.4)),
           ])),

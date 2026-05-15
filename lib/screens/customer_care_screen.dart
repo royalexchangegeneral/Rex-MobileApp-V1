@@ -205,7 +205,7 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
                       style:
                           TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryNavy,
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(

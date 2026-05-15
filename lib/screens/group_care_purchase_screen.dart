@@ -7,7 +7,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/payment_service.dart';
 import '../utils/app_theme.dart';
+import '../utils/occupations.dart';
 import '../widgets/paystack_webview.dart';
+import '../widgets/searchable_dropdown.dart';
 import 'customer_dashboard_screen.dart';
 
 class GroupCarePurchaseScreen extends StatefulWidget {
@@ -53,6 +55,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
   String? _memberGender;
   final _memberDobController = TextEditingController();
   final _memberOccupationController = TextEditingController();
+  String? _selectedMemberOccupation;
   final _memberPhoneController = TextEditingController();
   final _memberEmailController = TextEditingController();
   // Next of Kin per member
@@ -182,7 +185,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
               const SizedBox(height: 20),
               SizedBox(width: double.infinity, child: ElevatedButton(
                 onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/user-portal', (r) => false),
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                 child: const Text('Home', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               )),
             ]),
@@ -309,7 +312,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
         const SizedBox(width: 8),
         SizedBox(width: 80, height: 48, child: ElevatedButton(
           onPressed: _isVerifyingChairNin ? null : () => _verifyNin(_chairNinController, _chairNameController, _chairPhoneController, isChairman: true),
-          style: ElevatedButton.styleFrom(backgroundColor: _chairNinStatus == 'verified' ? Colors.green : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+          style: ElevatedButton.styleFrom(backgroundColor: _chairNinStatus == 'verified' ? Colors.green : (Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy), foregroundColor: Colors.white, padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
           child: _isVerifyingChairNin ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : Text(_chairNinStatus == 'verified' ? '✓' : 'Verify', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
         )),
@@ -327,7 +330,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
         const SizedBox(width: 8),
         SizedBox(width: 80, height: 48, child: ElevatedButton(
           onPressed: _isVerifyingSecNin ? null : () => _verifyNin(_secNinController, _secNameController, _secPhoneController, isChairman: false),
-          style: ElevatedButton.styleFrom(backgroundColor: _secNinStatus == 'verified' ? Colors.green : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+          style: ElevatedButton.styleFrom(backgroundColor: _secNinStatus == 'verified' ? Colors.green : (Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy), foregroundColor: Colors.white, padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
           child: _isVerifyingSecNin ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : Text(_secNinStatus == 'verified' ? '✓' : 'Verify', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
         )),
@@ -363,7 +366,16 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
       _label('Date of Birth *'), const SizedBox(height: 6),
       GestureDetector(onTap: _pickDob, child: AbsorbPointer(child: _tf('dd/mm/yyyy', _memberDobController, suffixIcon: const Icon(Icons.calendar_today, size: 18, color: Colors.grey)))),
       const SizedBox(height: 12),
-      _label('Occupation'), const SizedBox(height: 6), _tf('enter occupation', _memberOccupationController),
+      _label('Occupation'), const SizedBox(height: 6),
+      SearchableDropdown(
+        hint: 'select occupation',
+        value: _selectedMemberOccupation,
+        items: occupations,
+        onChanged: (val) => setState(() {
+          _selectedMemberOccupation = val;
+          _memberOccupationController.text = val ?? '';
+        }),
+      ),
       const SizedBox(height: 12),
       _label('Phone Number *'), const SizedBox(height: 6), _tf('enter phone number', _memberPhoneController, keyboardType: TextInputType.phone, autofillHints: [AutofillHints.telephoneNumber]),
       const SizedBox(height: 12),
@@ -378,7 +390,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
       _label('Relationship *'), const SizedBox(height: 6), _dd('select the type of relationship', _nokRelationship, _relationships, (v) => setState(() => _nokRelationship = v)),
       const SizedBox(height: 16),
       SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _addMember,
-        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+        style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
         child: const Text('Add', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)))),
       if (_coverMembers.isNotEmpty) ...[
         const SizedBox(height: 8),
@@ -397,10 +409,10 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
       const SizedBox(height: 8),
       Row(children: [
         OutlinedButton.icon(onPressed: _downloadSampleFile, icon: const Icon(Icons.download, size: 16), label: const Text('Download sample file', style: TextStyle(fontSize: 12)),
-          style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primaryNavy, side: const BorderSide(color: AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)))),
+          style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)))),
         const SizedBox(width: 8),
         ElevatedButton.icon(onPressed: _pickFile, icon: const Icon(Icons.upload, size: 16), label: const Text('upload', style: TextStyle(fontSize: 12)),
-          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)))),
+          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)))),
       ]),
       const SizedBox(height: 8),
       Text('Upload a file (Upload an Excel file max 2 MB)', style: TextStyle(fontSize: 11, color: Colors.grey[500])),
@@ -451,7 +463,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
       const SizedBox(height: 30),
       SizedBox(width: double.infinity, child: ElevatedButton(
         onPressed: _isPayingNow ? null : _initiatePayment,
-        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+        style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
         child: _isPayingNow ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text('Pay Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       )),
       SizedBox(height: 20),
@@ -509,11 +521,11 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
       icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]), items: items.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(), onChanged: onChanged));
 
   Widget _btn(String text, VoidCallback? onPressed) => SizedBox(width: double.infinity, child: ElevatedButton(onPressed: onPressed,
-    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
+    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
     child: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))));
 
   Widget _outlineBtn(String text, VoidCallback onPressed) => SizedBox(width: double.infinity, child: OutlinedButton(onPressed: onPressed,
-    style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primaryNavy, side: const BorderSide(color: AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+    style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
     child: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))));
 }
 

@@ -4,9 +4,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/payment_service.dart';
 import '../utils/app_theme.dart';
+import '../utils/occupations.dart';
 import '../widgets/paystack_webview.dart';
 import '../widgets/searchable_dropdown.dart';
-import 'customer_dashboard_screen.dart';
 
 class ShopProtectionPurchaseScreen extends StatefulWidget {
   final String optionTitle;
@@ -47,9 +47,21 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
     'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara',
   ];
 
+  final Map<String, int> _stateIdMap = {
+    'Abia': 1, 'Adamawa': 2, 'Akwa Ibom': 3, 'Anambra': 4, 'Bauchi': 5,
+    'Bayelsa': 6, 'Benue': 7, 'Borno': 8, 'Cross River': 9, 'Delta': 10,
+    'Ebonyi': 11, 'Edo': 12, 'Ekiti': 13, 'Enugu': 14, 'Federal Capital Territory': 15,
+    'Gombe': 16, 'Imo': 17, 'Jigawa': 18, 'Kaduna': 19, 'Kano': 20,
+    'Katsina': 21, 'Kebbi': 22, 'Kogi': 23, 'Kwara': 24, 'Lagos': 25,
+    'Nasarawa': 26, 'Niger': 27, 'Ogun': 28, 'Ondo': 29, 'Osun': 30,
+    'Oyo': 31, 'Plateau': 32, 'Rivers': 33, 'Sokoto': 34, 'Taraba': 35,
+    'Yobe': 36, 'Zamfara': 37,
+  };
+
   // Step 1: Socioeconomic
   final _emailController = TextEditingController();
   final _occupationController = TextEditingController();
+  String? _selectedOccupation;
   String? _selectedBusinessSector;
   final _tinController = TextEditingController();
   final _ninDisplayController = TextEditingController();
@@ -61,6 +73,11 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
 
   // Step 2: Risk Information
   final _shopAddressController = TextEditingController();
+  final _shopStateController = TextEditingController();
+  String? _selectedShopState;
+  String? _selectedShopLga;
+  List<Map<String, dynamic>> _shopLgaList = [];
+  bool _isLoadingShopLgas = false;
   String? _selectedShopDesc;
   String? _selectedRoofing;
   String? _selectedConstruction;
@@ -77,7 +94,7 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
   void dispose() {
     _ninController.dispose(); _emailController.dispose(); _occupationController.dispose();
     _tinController.dispose(); _ninDisplayController.dispose(); _annualIncomeController.dispose();
-    _shopAddressController.dispose();
+    _shopAddressController.dispose(); _shopStateController.dispose();
     _tempAmountController.dispose();
     _manualFirstNameController.dispose(); _manualLastNameController.dispose();
     _manualEmailController.dispose(); _manualPhoneController.dispose();
@@ -93,8 +110,8 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'Intcode': 'TESTCODE', 'Password': 'royal1234', 'number': _ninController.text.trim()}),
       ).timeout(const Duration(seconds: 15));
-      print('=== NIN VERIFY: ${response.statusCode} ===');
-      print('Body: ${response.body}');
+      debugPrint('=== NIN VERIFY: ${response.statusCode} ===');
+      debugPrint('Body: ${response.body}');
       setState(() => _isVerifying = false);
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
@@ -140,6 +157,35 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
     }
   }
 
+  Future<void> _fetchShopLgas(String stateName) async {
+    final stateId = _stateIdMap[stateName];
+    if (stateId == null) return;
+    setState(() { _isLoadingShopLgas = true; _shopLgaList = []; _selectedShopLga = null; });
+    try {
+      final response = await http.get(
+        Uri.parse('https://eportal.rexinsure.com/api/get-lga?state_id=$stateId'),
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = json.decode(response.body);
+        List<Map<String, dynamic>> lgaList = [];
+        if (data is List) {
+          lgaList = List<Map<String, dynamic>>.from(data);
+        } else if (data is Map && data['data'] is List) {
+          lgaList = List<Map<String, dynamic>>.from(data['data']);
+        } else if (data is Map && data['lgas'] is List) {
+          lgaList = List<Map<String, dynamic>>.from(data['lgas']);
+        }
+        setState(() { _shopLgaList = lgaList; _isLoadingShopLgas = false; });
+      } else {
+        setState(() => _isLoadingShopLgas = false);
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load LGAs: ${response.statusCode}')));
+      }
+    } catch (e) {
+      setState(() => _isLoadingShopLgas = false);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading LGAs: $e')));
+    }
+  }
+
   double _getBaseAmount() { final m = RegExp(r'[\d,]+\.?\d*').firstMatch(widget.price); return m != null ? (double.tryParse(m.group(0)!.replaceAll(',', '')) ?? 0) : 0; }
   double _getPaystackCharge() { double c = (_getBaseAmount() * 0.015) + 100; return c > 2000 ? 2000 : c; }
   double _getTotalAmount() => _getBaseAmount() + _getPaystackCharge();
@@ -170,7 +216,7 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
           'nin': _ninController.text.trim(),
           'qualification': _selectedQualification ?? '',
           'address': _address,
-          'insuredaddress': _shopAddressController.text.trim(),
+          'insuredaddress': '${_shopAddressController.text.trim()}, ${_selectedShopState ?? ''}, ${_selectedShopLga ?? ''}',
           'insureddesc': _selectedShopDesc ?? '',
           'roofingmat': _selectedRoofing ?? '',
           'constructionmat': _selectedConstruction ?? '',
@@ -198,7 +244,7 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
               ],
               const SizedBox(height: 20),
               SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/user-portal', (r) => false),
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                 child: const Text('Home', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)))),
             ])));
         } else if (res != null && !res.success && mounted) {
@@ -219,7 +265,11 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(elevation: 0,
-        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () { if (_currentStep > 0) setState(() => _currentStep--); else Navigator.pop(context); }),
+        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () { if (_currentStep > 0) {
+          setState(() => _currentStep--);
+        } else {
+          Navigator.pop(context);
+        } }),
         title: Text(widget.productName, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)), centerTitle: true),
       body: SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), child: Column(children: [
         _stepIndicator(), const Divider(height: 1),
@@ -234,9 +284,9 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
   Widget _stepIndicator() {
     final labels = ['Mode of Identification', 'Socioeconomic Information', 'Risk Information', 'Summary'];
     final stepNum = _currentStep + 1;
-    return Padding(padding: EdgeInsets.fromLTRB(16, 8, 16, 12), child: Column(children: [
+    return Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 12), child: Column(children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text('Step $stepNum of 4', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+        Text('Step $stepNum of 4', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
         Flexible(child: Text(labels[_currentStep], style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface), textAlign: TextAlign.right)),
       ]),
       const SizedBox(height: 8),
@@ -245,8 +295,8 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
     ]));
   }
 
-  Widget _ninStep() => Padding(padding: EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text('National Identification Number', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)), SizedBox(height: 8),
+  Widget _ninStep() => Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Text('National Identification Number *', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)), const SizedBox(height: 8),
     TextField(
       controller: _ninController, keyboardType: TextInputType.number, maxLength: 11,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -376,45 +426,61 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
     final needsEmail = _emailController.text.trim().isEmpty;
     return Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       if (needsEmail) ...[_label('Email *'), const SizedBox(height: 6), _tf('enter your email', _emailController, keyboardType: TextInputType.emailAddress, autofillHints: [AutofillHints.email]), const SizedBox(height: 16)],
-      _label('Occupation'), const SizedBox(height: 6), _tf('enter your occupation', _occupationController),
+      _label('Occupation *'), const SizedBox(height: 6),
+      SearchableDropdown(
+        hint: 'select your occupation',
+        value: _selectedOccupation,
+        items: occupations,
+        onChanged: (val) => setState(() {
+          _selectedOccupation = val;
+          _occupationController.text = val ?? '';
+        }),
+      ),
       const SizedBox(height: 16),
-      _label('Business Sector'), const SizedBox(height: 6), _dd('select your business sector', _selectedBusinessSector, _businessSectors, (v) => setState(() => _selectedBusinessSector = v)),
+      _label('Business Sector *'), const SizedBox(height: 6), _dd('select your business sector', _selectedBusinessSector, _businessSectors, (v) => setState(() => _selectedBusinessSector = v)),
       const SizedBox(height: 16),
       _label('Tax Identification No (TIN)'), const SizedBox(height: 6), _tf('enter your TIN', _tinController),
       const SizedBox(height: 16),
-      _label('Average Annual Income'), const SizedBox(height: 6), _tf('e.g 23,000,000.00', _annualIncomeController, keyboardType: TextInputType.number),
+      _label('Average Annual Income *'), const SizedBox(height: 6), _tf('e.g 23,000,000.00', _annualIncomeController, keyboardType: TextInputType.number),
       const SizedBox(height: 16),
-      _label('Highest Academic Qualification *'), const SizedBox(height: 6), _dd('select', _selectedQualification, _qualifications, (v) => setState(() => _selectedQualification = v)),
+      _label('Highest Academic Qualification'), const SizedBox(height: 6), _dd('select', _selectedQualification, _qualifications, (v) => setState(() => _selectedQualification = v)),
       const SizedBox(height: 40),
-      _btn('Continue', _selectedQualification != null && _emailController.text.trim().isNotEmpty
+      _btn('Continue', _emailController.text.trim().isNotEmpty
           ? () { _email = _emailController.text.trim(); setState(() => _currentStep = 2); } : null),
       const SizedBox(height: 12), _outBtn('Back', () => setState(() => _currentStep = 0)),
     ]));
   }
 
   Widget _riskStep() => Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    _label(widget.productName.contains('Home') ? 'Address of the home to be Insured' : 'Address of the Shop to be Insured'), SizedBox(height: 6), _tf('enter your address', _shopAddressController, autofillHints: [AutofillHints.streetAddressLine1]),
-    SizedBox(height: 16),
-    _label(widget.productName.contains('Home') ? 'Home Description' : 'Shop Description'), SizedBox(height: 6), _dd('select the type of home you live', _selectedShopDesc, _shopDescriptions, (v) => setState(() => _selectedShopDesc = v)),
-    SizedBox(height: 16),
-    _label('Type of Material - Roofing'), SizedBox(height: 6), _dd('select roofing material', _selectedRoofing, const ['Zinc', 'Aluminum', 'Concrete/Slab', 'Tiles'], (v) => setState(() => _selectedRoofing = v)),
-    SizedBox(height: 16),
-    _label('Construction Material'), SizedBox(height: 6), _dd('select construction material', _selectedConstruction, const ['Metal', 'Brick/Concrete'], (v) => setState(() => _selectedConstruction = v)),
-    SizedBox(height: 20),
+    _label('Address of the Shop to be Insured *'), const SizedBox(height: 6), _tf('enter shop address', _shopAddressController, autofillHints: [AutofillHints.streetAddressLine1]),
+    const SizedBox(height: 16),
+    _label('State *'), const SizedBox(height: 6), _dd('select state', _selectedShopState, _nigerianStates, (v) { setState(() => _selectedShopState = v); if (v != null) _fetchShopLgas(v); }),
+    const SizedBox(height: 16),
+    _label('LGA *'), const SizedBox(height: 6), 
+    _isLoadingShopLgas 
+      ? const SizedBox(height: 48, child: Center(child: CircularProgressIndicator()))
+      : _dd('select LGA', _selectedShopLga, _shopLgaList.map((lga) => lga['name']?.toString() ?? '').where((name) => name.isNotEmpty).toList(), (v) => setState(() => _selectedShopLga = v)),
+    const SizedBox(height: 16),
+    _label('Shop Description *'), const SizedBox(height: 6), _dd('select the type of shop', _selectedShopDesc, _shopDescriptions, (v) => setState(() => _selectedShopDesc = v)),
+    const SizedBox(height: 16),
+    _label('Type of Material - Roofing *'), const SizedBox(height: 6), _dd('select roofing material', _selectedRoofing, const ['Zinc', 'Aluminum', 'Concrete/Slab', 'Tiles'], (v) => setState(() => _selectedRoofing = v)),
+    const SizedBox(height: 16),
+    _label('Construction Material *'), const SizedBox(height: 6), _dd('select construction material', _selectedConstruction, const ['Metal', 'Brick/Concrete'], (v) => setState(() => _selectedConstruction = v)),
+    const SizedBox(height: 20),
     Row(children: [
-      Text('ADD CATEGORIES OF ITEMS\nFOR INSURANCE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+      Text('ADD CATEGORIES OF ITEMS\nFOR INSURANCE *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
       const Spacer(),
-      GestureDetector(onTap: _addCategory, child: Container(padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4), decoration: BoxDecoration(color: AppTheme.accentOrange, borderRadius: BorderRadius.circular(16)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [Text('Add ', style: TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)), Icon(Icons.add_circle_outline, color: Colors.white, size: 16)]))),
+      GestureDetector(onTap: _addCategory, child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), decoration: BoxDecoration(color: AppTheme.accentOrange, borderRadius: BorderRadius.circular(16)),
+        child: const Row(mainAxisSize: MainAxisSize.min, children: [Text('Add ', style: TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)), Icon(Icons.add_circle_outline, color: Colors.white, size: 16)]))),
     ]),
-    SizedBox(height: 12),
-    Container(padding: EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey[200]!)),
+    const SizedBox(height: 12),
+    Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey[200]!)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('CATEGORY ${_itemCategories.length + 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface, letterSpacing: 1)),
         const SizedBox(height: 8),
-        _label('Categories'), const SizedBox(height: 6), _dd('furniture', _tempCategory, _categoryOptions, (v) => setState(() => _tempCategory = v)),
+        _label('Categories *'), const SizedBox(height: 6), _dd('furniture', _tempCategory, _categoryOptions, (v) => setState(() => _tempCategory = v)),
         const SizedBox(height: 12),
-        _label('Amount'), const SizedBox(height: 6), _tf('enter price', _tempAmountController, keyboardType: TextInputType.number),
+        _label('Total Amount *'), const SizedBox(height: 6), _tf('enter price', _tempAmountController, keyboardType: TextInputType.number),
         const SizedBox(height: 12),
         SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _addCategory,
           style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentOrange, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
@@ -432,7 +498,7 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
               const SizedBox(height: 6),
               Row(children: [Expanded(flex: 2, child: Text('Category', style: TextStyle(fontSize: 11, color: Colors.grey[600]))), Expanded(flex: 3, child: Text(item['category']!, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500), textAlign: TextAlign.right))]),
               const SizedBox(height: 4),
-              Row(children: [Expanded(flex: 2, child: Text('Amount', style: TextStyle(fontSize: 11, color: Colors.grey[600]))), Expanded(flex: 3, child: Text('₦${item['amount']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500), textAlign: TextAlign.right))]),
+              Row(children: [Expanded(flex: 2, child: Text('Total Amount', style: TextStyle(fontSize: 11, color: Colors.grey[600]))), Expanded(flex: 3, child: Text('₦${item['amount']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500), textAlign: TextAlign.right))]),
             ])),
             GestureDetector(onTap: () => setState(() => _itemCategories.removeAt(i)), child: const Icon(Icons.cancel, color: Colors.grey, size: 20)),
           ]));
@@ -446,7 +512,7 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
         style: TextStyle(fontSize: 10, color: Colors.grey[700], height: 1.4))),
     ]),
     const SizedBox(height: 24),
-    _btn('Continue', _shopAddressController.text.trim().isNotEmpty && _selectedShopDesc != null && _selectedRoofing != null && _selectedConstruction != null && _itemCategories.isNotEmpty && _consentChecked
+    _btn('Continue', _shopAddressController.text.trim().isNotEmpty && _selectedShopState != null && _selectedShopLga != null && _selectedShopDesc != null && _selectedRoofing != null && _selectedConstruction != null && _itemCategories.isNotEmpty && _consentChecked
         ? () => setState(() => _currentStep = 3) : null),
     const SizedBox(height: 12), _outBtn('Back', () => setState(() => _currentStep = 1)),
   ]));
@@ -458,21 +524,21 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
     const SizedBox(height: 20),
     _sec('Socioeconomic Information', [_sRow('Occupation', _occupationController.text), _sRow('Business Sector', _selectedBusinessSector ?? '-'), _sRow('Tax Identification No', _tinController.text.isNotEmpty ? _tinController.text : '-'), _sRow('Highest Academic Qualification', _selectedQualification ?? '-'), _sRow('Average Annual Income', _annualIncomeController.text)]),
     const SizedBox(height: 20),
-    _sec('Risk Information', [_sRow('Shop Address', _shopAddressController.text), _sRow('Shop Description', _selectedShopDesc ?? '-'), _sRow('Roofing Material', _selectedRoofing ?? '-'), _sRow('Construction Material', _selectedConstruction ?? '-'),
+    _sec('Risk Information', [_sRow('Shop Address', '${_shopAddressController.text.trim()}, ${_selectedShopState ?? ''}, ${_selectedShopLga ?? ''}'), _sRow('Shop Description', _selectedShopDesc ?? '-'), _sRow('Roofing Material', _selectedRoofing ?? '-'), _sRow('Construction Material', _selectedConstruction ?? '-'),
       ..._itemCategories.map((item) => _sRow(item['category']!, '₦${item['amount']}')),
     ]),
-    SizedBox(height: 30),
+    const SizedBox(height: 30),
     _btn('Pay Now', _isPayingNow ? null : _initiatePayment, loading: _isPayingNow),
-    SizedBox(height: 20),
+    const SizedBox(height: 20),
   ]));
 
   // Helpers
-  Widget _sec(String t, List<Widget> r) => Container(width: double.infinity, padding: EdgeInsets.all(16),
+  Widget _sec(String t, List<Widget> r) => Container(width: double.infinity, padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(t, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)), SizedBox(height: 12), ...r]));
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(t, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)), const SizedBox(height: 12), ...r]));
 
-  Widget _sRow(String l, String v) => Padding(padding: EdgeInsets.only(bottom: 10), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Expanded(flex: 2, child: Text(l, style: TextStyle(fontSize: 12, color: Colors.grey[600]))), SizedBox(width: 8),
+  Widget _sRow(String l, String v) => Padding(padding: const EdgeInsets.only(bottom: 10), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Expanded(flex: 2, child: Text(l, style: TextStyle(fontSize: 12, color: Colors.grey[600]))), const SizedBox(width: 8),
     Expanded(flex: 3, child: Text(v.isNotEmpty ? v : '-', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface), textAlign: TextAlign.right))]));
 
   Widget _label(String t) {
@@ -502,27 +568,27 @@ class _ShopProtectionPurchaseScreenState extends State<ShopProtectionPurchaseScr
       style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
       decoration: InputDecoration(hintText: h, hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13), filled: true, fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white, counterText: '', suffixIcon: suffixIcon,
         errorText: errorText,
-        errorStyle: TextStyle(fontSize: 11),
-        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.red, width: 1.5)),
-        focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.red, width: 2)),
+        errorStyle: const TextStyle(fontSize: 11),
+        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.red, width: 1.5)),
+        focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.red, width: 2)),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppTheme.primaryNavy, width: 2)),
-        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12)));
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12)));
   }
 
   Widget _dd(String h, String? v, List<String> items, ValueChanged<String?> onChanged) => Container(
     decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey[300]!)),
-    child: DropdownButtonFormField<String>(value: v, hint: Text(h, style: TextStyle(color: Colors.grey[400], fontSize: 13)),
-      style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13), decoration: InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
+    child: DropdownButtonFormField<String>(initialValue: v, hint: Text(h, style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+      style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13), decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
       icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]), items: items.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(), onChanged: onChanged));
 
   Widget _btn(String t, VoidCallback? onPressed, {bool loading = false}) => SizedBox(width: double.infinity, child: ElevatedButton(onPressed: onPressed,
-    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
+    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
     child: loading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(t, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))));
 
   Widget _outBtn(String t, VoidCallback onPressed) => SizedBox(width: double.infinity, child: OutlinedButton(onPressed: onPressed,
-    style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primaryNavy, side: const BorderSide(color: AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+    style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
     child: Text(t, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))));
 }
 

@@ -275,7 +275,7 @@ class _AgentPoliciesScreenState extends State<AgentPoliciesScreen> {
                 isAgentFlow: true,
               ))),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryNavy,
+                backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 elevation: 0,

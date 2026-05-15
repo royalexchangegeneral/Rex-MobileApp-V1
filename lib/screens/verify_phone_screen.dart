@@ -218,10 +218,17 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
         if (data['status'] == true || data['Status']?.toString().toLowerCase() == 'success') {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Phone verified successfully'), backgroundColor: Colors.green));
-            Navigator.pushNamed(context, '/verification-success');
-          }
+          final prefs = await SharedPreferences.getInstance();
+          final isSignupFlow = prefs.getBool('is_signup_flow') ?? false;
+          final hasExistingPolicy = prefs.getBool('has_existing_policy') ?? false;
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Phone verified successfully'), backgroundColor: Colors.green));
+          Navigator.pushNamed(
+            context,
+            isSignupFlow && hasExistingPolicy
+                ? '/create-password'
+                : '/verification-success',
+          );
         } else {
           final msg = data['message']?.toString() ?? data['Message']?.toString() ?? 'Invalid OTP';
           if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));

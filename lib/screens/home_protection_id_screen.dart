@@ -129,7 +129,7 @@ class _HomeProtectionIdScreenState extends State<HomeProtectionIdScreen> {
                     // Navigate to quote screen for now
                     Navigator.push(context, MaterialPageRoute(builder: (_) => QuoteScreen(insuranceType: 'Home Protection - ${widget.planType}')));
                   } : null,
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
+                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
                   child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 ),
               ),

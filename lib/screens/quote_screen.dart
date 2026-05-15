@@ -171,7 +171,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _submitQuote,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryNavy,
+                  backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
