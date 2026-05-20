@@ -28,6 +28,10 @@ class _NotificationSettingsScreenState
   bool _emailNotifications = false;
   bool _smsNotifications = false;
 
+  Color get _actionColor => Theme.of(context).brightness == Brightness.dark
+      ? AppTheme.accentOrange
+      : AppTheme.primaryNavy;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -143,12 +147,13 @@ class _NotificationSettingsScreenState
 
             // Recent Notifications from API
             Consumer<NotificationsProvider>(builder: (_, notifProvider, __) {
-              if (notifProvider.loading)
+              if (notifProvider.loading) {
                 return const Center(
                     child: Padding(
                         padding: EdgeInsets.all(12),
                         child: CircularProgressIndicator()));
-              if (notifProvider.notifications.isEmpty)
+              }
+              if (notifProvider.notifications.isEmpty) {
                 return Padding(
                     padding: const EdgeInsets.all(12),
                     child: Center(
@@ -157,6 +162,7 @@ class _NotificationSettingsScreenState
                                 color:
                                     ThemeHelper.getSecondaryTextColor(context),
                                 fontSize: 12))));
+              }
               final displayNotifs =
                   notifProvider.notifications.take(5).toList();
               return Column(
@@ -217,8 +223,8 @@ class _NotificationSettingsScreenState
     if (isAgent) {
       return BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF1E2D64),
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: AppTheme.bottomNavSelectedColor(context),
+        unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
         currentIndex: 4,
         selectedFontSize: 11,
         unselectedFontSize: 11,
@@ -256,6 +262,7 @@ class _NotificationSettingsScreenState
     }
 
     return BottomAppBar(
+      color: AppTheme.bottomNavBackgroundColor(context),
       shape: const CircularNotchedRectangle(),
       notchMargin: 4,
       child: SizedBox(
@@ -298,11 +305,16 @@ class _NotificationSettingsScreenState
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon,
-              color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
+              color: isSelected
+                  ? AppTheme.bottomNavSelectedColor(context)
+                  : AppTheme.bottomNavUnselectedColor(context),
+              size: 20),
           Text(label,
               style: TextStyle(
                   fontSize: 10,
-                  color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+                  color: isSelected
+                      ? AppTheme.bottomNavSelectedColor(context)
+                      : AppTheme.bottomNavUnselectedColor(context))),
         ],
       ),
     );
@@ -318,10 +330,11 @@ class _NotificationSettingsScreenState
     required ValueChanged<bool>? onChanged,
   }) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: ThemeHelper.getCardColor(context),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ThemeHelper.getBorderColor(context)),
       ),
       child: Row(
         children: [
@@ -361,7 +374,7 @@ class _NotificationSettingsScreenState
             value: value,
             onChanged: onChanged,
             activeThumbColor: Colors.white,
-            activeTrackColor: const Color(0xFF1E2D64),
+            activeTrackColor: _actionColor,
           ),
         ],
       ),
@@ -377,10 +390,11 @@ class _NotificationSettingsScreenState
     required String time,
   }) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: ThemeHelper.getCardColor(context),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ThemeHelper.getBorderColor(context)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

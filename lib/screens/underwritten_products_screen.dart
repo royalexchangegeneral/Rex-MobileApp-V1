@@ -9,22 +9,44 @@ import 'my_claims_screen.dart';
 
 class UnderwrittenProductsScreen extends StatelessWidget {
   final bool isAgent;
-  
+
   const UnderwrittenProductsScreen({super.key, this.isAgent = false});
+
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  Color _cardColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF111827) : const Color(0xFFFAFAFA);
+
+  Color _borderColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF334155) : Colors.grey.shade200;
+
+  Color _secondaryTextColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('New Insurance', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text('New Insurance',
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+                fontSize: 18)),
         centerTitle: true,
         actions: [
-          IconButton(icon: Icon(Icons.tune, color: Theme.of(context).colorScheme.onSurface), onPressed: () {}),
+          IconButton(
+              icon: Icon(Icons.tune,
+                  color: Theme.of(context).colorScheme.onSurface),
+              onPressed: () {}),
         ],
       ),
       body: SingleChildScrollView(
@@ -32,124 +54,154 @@ class UnderwrittenProductsScreen extends StatelessWidget {
         child: Column(
           children: [
             _buildInsuranceCard(
+              context,
               title: 'Fire Insurance',
               subtitle: 'Protect your home',
               iconBgColor: const Color(0xFFFFF5F5),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
-              cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => const QuoteScreen(insuranceType: 'Fire Insurance'),
-              )),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const QuoteScreen(insuranceType: 'Fire Insurance'),
+                  )),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
+              context,
               title: 'General Accident',
               subtitle: 'Protect your vehicle',
               iconBgColor: const Color(0xFFFFF5E6),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
-              cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => const QuoteScreen(insuranceType: 'General Accident'),
-              )),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const QuoteScreen(insuranceType: 'General Accident'),
+                  )),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
+              context,
               title: 'Engineering Insurance',
               subtitle: 'Protect your equipment',
               iconBgColor: const Color(0xFFE8F4FD),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
-              cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => const QuoteScreen(insuranceType: 'Engineering Insurance'),
-              )),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const QuoteScreen(
+                        insuranceType: 'Engineering Insurance'),
+                  )),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
+              context,
               title: 'Marine Insurance',
               subtitle: 'This policy covers Single Transit only',
               iconBgColor: const Color(0xFFF3E8FF),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
-              cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => const QuoteScreen(insuranceType: 'Marine Insurance'),
-              )),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const QuoteScreen(insuranceType: 'Marine Insurance'),
+                  )),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
+              context,
               title: 'Industrial All Risk',
               subtitle: 'Protect your tools',
               iconBgColor: const Color(0xFFE0F5F5),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
-              cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => const QuoteScreen(insuranceType: 'Industrial All Risk'),
-              )),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const QuoteScreen(insuranceType: 'Industrial All Risk'),
+                  )),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
+              context,
               title: 'Energy Insurance',
               subtitle: 'Protect your tools',
               iconBgColor: const Color(0xFFFFF9DB),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
-              cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => const QuoteScreen(insuranceType: 'Energy Insurance'),
-              )),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const QuoteScreen(insuranceType: 'Energy Insurance'),
+                  )),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
+              context,
               title: 'Agriculture Insurance',
               subtitle: 'Protect your food',
               iconBgColor: const Color(0xFFE8F5E9),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
-              cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => const QuoteScreen(insuranceType: 'Agriculture Insurance'),
-              )),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const QuoteScreen(
+                        insuranceType: 'Agriculture Insurance'),
+                  )),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
+              context,
               title: 'Bond Insurance',
               subtitle: 'Protect your Assets',
               iconBgColor: const Color(0xFFF3E8FF),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
-              cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => const QuoteScreen(insuranceType: 'Bond Insurance'),
-              )),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const QuoteScreen(insuranceType: 'Bond Insurance'),
+                  )),
             ),
             const SizedBox(height: 20),
           ],
         ),
       ),
-      floatingActionButton: isAgent ? null : Transform.translate(
-        offset: const Offset(0, 15),
-        child: SizedBox(
-          width: 52,
-          height: 52,
-          child: FloatingActionButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewPolicyScreen(isAgent: isAgent))),
-            backgroundColor: AppTheme.accentOrange,
-            shape: const CircleBorder(),
-            elevation: 1,
-            child: const Icon(Icons.add, color: Colors.white, size: 30),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: isAgent ? null : FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: isAgent
+          ? null
+          : Transform.translate(
+              offset: const Offset(0, 15),
+              child: SizedBox(
+                width: 52,
+                height: 52,
+                child: FloatingActionButton(
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => NewPolicyScreen(isAgent: isAgent))),
+                  backgroundColor: AppTheme.accentOrange,
+                  shape: const CircleBorder(),
+                  elevation: 1,
+                  child: const Icon(Icons.add, color: Colors.white, size: 30),
+                ),
+              ),
+            ),
+      floatingActionButtonLocation:
+          isAgent ? null : FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: isAgent
           ? BottomNavigationBar(
               type: BottomNavigationBarType.fixed,
-              selectedItemColor: const Color(0xFF1E2D64),
-              unselectedItemColor: Colors.grey,
+              selectedItemColor: AppTheme.bottomNavSelectedColor(context),
+              unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
               currentIndex: 1,
               selectedFontSize: 11,
               unselectedFontSize: 11,
@@ -177,6 +229,7 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               ],
             )
           : BottomAppBar(
+              color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),
               notchMargin: 4,
               child: SizedBox(
@@ -184,16 +237,32 @@ class UnderwrittenProductsScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildNavItem(context, Icons.home_outlined, 'Home', false, onTap: () {
-                      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
+                    _buildNavItem(context, Icons.home_outlined, 'Home', false,
+                        onTap: () {
+                      Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const CustomerDashboardScreen()),
+                          (route) => false);
                     }),
-                    _buildNavItem(context, Icons.description_outlined, 'Policies', true),
+                    _buildNavItem(
+                        context, Icons.description_outlined, 'Policies', true),
                     const SizedBox(width: 48),
-                    _buildNavItem(context, Icons.assignment_outlined, 'Claims', false, onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
+                    _buildNavItem(
+                        context, Icons.assignment_outlined, 'Claims', false,
+                        onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const MyClaimsScreen()));
                     }),
-                    _buildNavItem(context, Icons.person_outline, 'Profile', false, onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
+                    _buildNavItem(
+                        context, Icons.person_outline, 'Profile', false,
+                        onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const CustomerProfileScreen()));
                     }),
                   ],
                 ),
@@ -202,13 +271,13 @@ class UnderwrittenProductsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInsuranceCard({
+  Widget _buildInsuranceCard(
+    BuildContext context, {
     required String title,
     required String subtitle,
     required Color iconBgColor,
     required String svgIcon,
     required String trailingSvgIcon,
-    required Color cardBgColor,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -216,9 +285,9 @@ class UnderwrittenProductsScreen extends StatelessWidget {
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
-          color: cardBgColor,
+          color: _cardColor(context),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: _borderColor(context)),
         ),
         child: Stack(
           children: [
@@ -234,14 +303,24 @@ class UnderwrittenProductsScreen extends StatelessWidget {
                     ),
                     child: SvgPicture.asset(svgIcon, width: 22, height: 22),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
+                        Text(title,
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color:
+                                    Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 2),
-                        Text(subtitle, style: TextStyle(fontSize: 10, color: Colors.grey[600]), maxLines: 2, overflow: TextOverflow.ellipsis),
+                        Text(subtitle,
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: _secondaryTextColor(context)),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   ),
@@ -267,14 +346,25 @@ class UnderwrittenProductsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(BuildContext context, IconData icon, String label, bool isSelected, {VoidCallback? onTap}) {
+  Widget _buildNavItem(
+      BuildContext context, IconData icon, String label, bool isSelected,
+      {VoidCallback? onTap}) {
     return InkWell(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
-          Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+          Icon(icon,
+              color: isSelected
+                  ? AppTheme.bottomNavSelectedColor(context)
+                  : AppTheme.bottomNavUnselectedColor(context),
+              size: 20),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 10,
+                  color: isSelected
+                      ? AppTheme.bottomNavSelectedColor(context)
+                      : AppTheme.bottomNavUnselectedColor(context))),
         ],
       ),
     );

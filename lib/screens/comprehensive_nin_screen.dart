@@ -16,7 +16,17 @@ class ComprehensiveNinScreen extends StatefulWidget {
   final bool isLoggedIn;
   final bool isAgent;
 
-  const ComprehensiveNinScreen({super.key, required this.vehicleType, required this.sumInsured, required this.premium, required this.regNumber, this.personalInfo = const {}, this.vehicleData = const {}, this.imageFiles = const [], this.isLoggedIn = false, this.isAgent = false});
+  const ComprehensiveNinScreen(
+      {super.key,
+      required this.vehicleType,
+      required this.sumInsured,
+      required this.premium,
+      required this.regNumber,
+      this.personalInfo = const {},
+      this.vehicleData = const {},
+      this.imageFiles = const [],
+      this.isLoggedIn = false,
+      this.isAgent = false});
   @override
   State<ComprehensiveNinScreen> createState() => _ComprehensiveNinScreenState();
 }
@@ -41,20 +51,31 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
 
   Future<void> _verifyNin() async {
     if (_ninController.text.trim().length != 11) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('NIN must be 11 digits')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('NIN must be 11 digits')));
       return;
     }
     setState(() => _isVerifying = true);
     try {
-      final r = await http.post(
-        Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'Intcode': 'TESTCODE', 'Password': 'royal1234', 'number': _ninController.text.trim()}),
-      ).timeout(const Duration(seconds: 15));
+      final r = await http
+          .post(
+            Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              'Intcode': 'TESTCODE',
+              'Password': 'royal1234',
+              'number': _ninController.text.trim()
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
       setState(() => _isVerifying = false);
       if (r.statusCode == 200 || r.statusCode == 201) {
         final d = json.decode(r.body);
-        if (d['status'] == 'success' && d['data']?['data']?['kyc'] != null && d['data']['data']['kyc']['firstname'] != null && (d['data']['data']['kyc']['firstname']?.toString() ?? '').isNotEmpty) {
+        if (d['status'] == 'success' &&
+            d['data']?['data']?['kyc'] != null &&
+            d['data']['data']['kyc']['firstname'] != null &&
+            (d['data']['data']['kyc']['firstname']?.toString() ?? '')
+                .isNotEmpty) {
           final k = d['data']['data']['kyc'];
           setState(() {
             _ninVerified = true;
@@ -65,17 +86,26 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
             _dob = k['birthdate']?.toString() ?? '';
             _gender = k['gender']?.toString() ?? '';
           });
-          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('NIN verified'), backgroundColor: Colors.green));
+          if (mounted)
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('NIN verified'), backgroundColor: Colors.green));
         } else {
           setState(() => _ninFailed = true);
           final kyc = d['data']?['data']?['kyc'];
-          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(kyc != null ? (kyc['status']?.toString() ?? 'Verification failed') : 'NIN not found. Proceed to continue.')));
+          if (mounted)
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(kyc != null
+                    ? (kyc['status']?.toString() ?? 'Verification failed')
+                    : 'NIN not found. Proceed to continue.')));
         }
       } else {
         setState(() => _ninFailed = true);
       }
     } catch (e) {
-      setState(() { _isVerifying = false; _ninFailed = true; });
+      setState(() {
+        _isVerifying = false;
+        _ninFailed = true;
+      });
     }
   }
 
@@ -84,8 +114,10 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
     if (_ninVerified) {
       if (_firstName.isNotEmpty) info['ninFirstName'] = _firstName;
       if (_lastName.isNotEmpty) info['ninLastName'] = _lastName;
-      if (_email.isNotEmpty && (info['email'] ?? '').isEmpty) info['email'] = _email;
-      if (_phone.isNotEmpty && (info['phone'] ?? '').isEmpty) info['phone'] = _phone;
+      if (_email.isNotEmpty && (info['email'] ?? '').isEmpty)
+        info['email'] = _email;
+      if (_phone.isNotEmpty && (info['phone'] ?? '').isEmpty)
+        info['phone'] = _phone;
       if (_dob.isNotEmpty) info['dob'] = _dob;
       if (_gender.isNotEmpty) info['gender'] = _gender;
     }
@@ -97,8 +129,15 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
-        title: Text('NIN Verification', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w600)),
+        leading: IconButton(
+            icon: Icon(Icons.arrow_back,
+                color: Theme.of(context).colorScheme.onSurface),
+            onPressed: () => Navigator.pop(context)),
+        title: Text('NIN Verification',
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 18,
+                fontWeight: FontWeight.w600)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -111,12 +150,32 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Row(children: [
-                    Text('Step 4 of 5', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+                    Text('Step 4 of 5',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryNavy)),
                     Spacer(),
-                    Text('Identification', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+                    Text('Identification',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryNavy)),
                   ]),
                   const SizedBox(height: 12),
-                  Row(children: List.generate(5, (i) => Expanded(child: Container(height: 4, margin: EdgeInsets.only(right: i < 4 ? 4 : 0), decoration: BoxDecoration(color: i < 4 ? AppTheme.primaryNavy : Colors.grey[300], borderRadius: BorderRadius.circular(2)))))),
+                  Row(
+                      children: List.generate(
+                          5,
+                          (i) => Expanded(
+                              child: Container(
+                                  height: 4,
+                                  margin: EdgeInsets.only(right: i < 4 ? 4 : 0),
+                                  decoration: BoxDecoration(
+                                      color: i < 4
+                                          ? AppTheme.primaryNavy
+                                          : Colors.grey[300],
+                                      borderRadius:
+                                          BorderRadius.circular(2)))))),
                 ],
               ),
             ),
@@ -125,54 +184,140 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('National Identification Number', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
+                  Text('National Identification Number',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.onSurface)),
                   SizedBox(height: 8),
                   TextField(
                     controller: _ninController,
                     keyboardType: TextInputType.number,
                     maxLength: 11,
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 14),
                     decoration: InputDecoration(
-                      hintText: 'Enter your NIN', hintStyle: TextStyle(color: Colors.grey[400]),
-                      filled: true, fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white, counterText: '',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      hintText: 'Enter your NIN',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1E1E1E)
+                          : Colors.white,
+                      counterText: '',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.grey[700]!
+                                  : Colors.grey[300]!)),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.grey[700]!
+                                  : Colors.grey[300]!)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                              color: AppTheme.primaryNavy, width: 2)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
                     ),
                   ),
                   const SizedBox(height: 16),
                   if (!_ninVerified && !_ninFailed)
-                    SizedBox(width: double.infinity, child: OutlinedButton(
-                      onPressed: _isVerifying ? null : _verifyNin,
-                      style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                      child: _isVerifying
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : Text('Verify NIN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    )),
+                    SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: _isVerifying ? null : _verifyNin,
+                          style: OutlinedButton.styleFrom(
+                              foregroundColor: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white
+                                  : AppTheme.primaryNavy,
+                              side: BorderSide(
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : AppTheme.primaryNavy),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8))),
+                          child: _isVerifying
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2))
+                              : Text('Verify NIN',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600)),
+                        )),
                   if (_ninVerified) ...[
                     SizedBox(height: 16),
                     Container(
                       padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: Colors.green[50], borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.green[200]!)),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Row(children: [Icon(Icons.check_circle, size: 16, color: Colors.green[700]), SizedBox(width: 8), Text('NIN Verified', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.green[700]))]),
-                        SizedBox(height: 8),
-                        Text('Name: $_firstName $_lastName', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface)),
-                        if (_dob.isNotEmpty) Text('DOB: $_dob', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface)),
-                        if (_gender.isNotEmpty) Text('Gender: $_gender', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface)),
-                      ]),
+                      decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green[200]!)),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(children: [
+                              Icon(Icons.check_circle,
+                                  size: 16, color: Colors.green[700]),
+                              SizedBox(width: 8),
+                              Text('NIN Verified',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.green[700]))
+                            ]),
+                            SizedBox(height: 8),
+                            Text('Name: $_firstName $_lastName',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface)),
+                            if (_dob.isNotEmpty)
+                              Text('DOB: $_dob',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface)),
+                            if (_gender.isNotEmpty)
+                              Text('Gender: $_gender',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface)),
+                          ]),
                     ),
                   ],
                   if (_ninFailed) ...[
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: Colors.orange[50], borderRadius: BorderRadius.circular(8)),
+                      decoration: BoxDecoration(
+                          color: Colors.orange[50],
+                          borderRadius: BorderRadius.circular(8)),
                       child: Row(children: [
-                        Icon(Icons.info_outline, size: 16, color: Colors.orange[700]),
+                        Icon(Icons.info_outline,
+                            size: 16, color: Colors.orange[700]),
                         const SizedBox(width: 8),
-                        Expanded(child: Text('NIN verification failed. You can still proceed.', style: TextStyle(fontSize: 11, color: Colors.orange[700]))),
+                        Expanded(
+                            child: Text(
+                                'NIN verification failed. You can still proceed.',
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.orange[700]))),
                       ]),
                     ),
                   ],
@@ -180,25 +325,70 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
               ),
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(24, 40, 24, 32 + MediaQuery.of(context).padding.bottom),
+              padding: EdgeInsets.fromLTRB(
+                  24, 40, 24, 32 + MediaQuery.of(context).padding.bottom),
               child: Column(children: [
-                SizedBox(width: double.infinity, child: ElevatedButton(
-                  onPressed: (_ninVerified || _ninFailed) ? () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => ComprehensiveSummaryScreen(
-                      vehicleType: widget.vehicleType, sumInsured: widget.sumInsured, premium: widget.premium,
-                      regNumber: widget.regNumber, personalInfo: _mergedPersonalInfo, vehicleData: widget.vehicleData,
-                      imageFiles: widget.imageFiles, isLoggedIn: widget.isLoggedIn, isAgent: widget.isAgent,
-                    )));
-                  } : null,
-                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
-                  child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                )),
+                SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: (_ninVerified || _ninFailed)
+                          ? () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) =>
+                                          ComprehensiveSummaryScreen(
+                                            vehicleType: widget.vehicleType,
+                                            sumInsured: widget.sumInsured,
+                                            premium: widget.premium,
+                                            regNumber: widget.regNumber,
+                                            personalInfo: _mergedPersonalInfo,
+                                            vehicleData: widget.vehicleData,
+                                            imageFiles: widget.imageFiles,
+                                            isLoggedIn: widget.isLoggedIn,
+                                            isAgent: widget.isAgent,
+                                          )));
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? AppTheme.accentOrange
+                                  : AppTheme.primaryNavy,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          disabledBackgroundColor:
+                              AppTheme.disabledButtonColor(context),
+                          disabledForegroundColor:
+                              AppTheme.disabledButtonTextColor(context)),
+                      child: const Text('Continue',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600)),
+                    )),
                 const SizedBox(height: 12),
-                SizedBox(width: double.infinity, child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                  child: const Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                )),
+                SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : AppTheme.primaryNavy,
+                          side: BorderSide(
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white
+                                  : AppTheme.primaryNavy),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8))),
+                      child: const Text('Back',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600)),
+                    )),
               ]),
             ),
           ],

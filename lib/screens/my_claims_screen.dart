@@ -297,6 +297,7 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
         bottomNavigationBar: widget.isAgentFlow
             ? buildAgentBottomNav(context, currentIndex: 0)
             : BottomAppBar(
+                color: AppTheme.bottomNavBackgroundColor(context),
                 shape: const CircularNotchedRectangle(),
                 notchMargin: 4,
                 child: SizedBox(
@@ -500,11 +501,16 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon,
-              color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
+              color: isSelected
+                  ? AppTheme.bottomNavSelectedColor(context)
+                  : AppTheme.bottomNavUnselectedColor(context),
+              size: 20),
           Text(label,
               style: TextStyle(
                   fontSize: 10,
-                  color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+                  color: isSelected
+                      ? AppTheme.bottomNavSelectedColor(context)
+                      : AppTheme.bottomNavUnselectedColor(context))),
         ],
       ),
     );

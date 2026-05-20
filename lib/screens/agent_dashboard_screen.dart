@@ -31,14 +31,31 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
     'this_month': 'This Month',
   };
 
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get _cardColor => _isDark ? const Color(0xFF111827) : Colors.grey[50]!;
+
+  Color get _borderColor =>
+      _isDark ? const Color(0xFF334155) : Colors.grey[200]!;
+
+  Color get _secondaryTextColor =>
+      _isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
+  Color get _agentAccent =>
+      _isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AgentPolicyProvider>(context, listen: false).fetchAgentPolicies(context);
-      Provider.of<AgentPolicyProvider>(context, listen: false).fetchCustomerCount(context);
-      Provider.of<AgentPolicyProvider>(context, listen: false).fetchCommission(context);
-      Provider.of<NotificationsProvider>(context, listen: false).fetchNotifications(context);
+      Provider.of<AgentPolicyProvider>(context, listen: false)
+          .fetchAgentPolicies(context);
+      Provider.of<AgentPolicyProvider>(context, listen: false)
+          .fetchCustomerCount(context);
+      Provider.of<AgentPolicyProvider>(context, listen: false)
+          .fetchCommission(context);
+      Provider.of<NotificationsProvider>(context, listen: false)
+          .fetchNotifications(context);
     });
   }
 
@@ -51,7 +68,8 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
         elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: Icon(Icons.menu, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+            icon: Icon(Icons.menu,
+                color: Theme.of(context).colorScheme.onSurface),
             onPressed: () {
               Scaffold.of(context).openDrawer();
             },
@@ -66,10 +84,33 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
           Consumer<NotificationsProvider>(
             builder: (context, notifProvider, child) => Stack(children: [
               IconButton(
-                icon: Icon(Icons.notifications_outlined, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen(isAgentFlow: true))).then((_) => notifProvider.fetchNotifications(context)),
+                icon: Icon(Icons.notifications_outlined,
+                    color: Theme.of(context).colorScheme.onSurface),
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const NotificationsScreen(isAgentFlow: true),
+                    ),
+                  );
+                  if (!context.mounted) return;
+                  notifProvider.fetchNotifications(context);
+                },
               ),
-              if (notifProvider.unreadCount > 0) Positioned(right: 8, top: 8, child: Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle), child: Text('${notifProvider.unreadCount}', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)))),
+              if (notifProvider.unreadCount > 0)
+                Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                            color: Colors.red, shape: BoxShape.circle),
+                        child: Text('${notifProvider.unreadCount}',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold)))),
             ]),
           ),
         ],
@@ -101,13 +142,20 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Consumer<AgentPolicyProvider>(builder: (_, ap, __) {
+                        child:
+                            Consumer<AgentPolicyProvider>(builder: (_, ap, __) {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('₦${ap.commission}', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white)),
+                              Text('₦${ap.commission}',
+                                  style: const TextStyle(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white)),
                               const SizedBox(height: 4),
-                              const Text('Commission', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                              const Text('Commission',
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.white70)),
                             ],
                           );
                         }),
@@ -115,72 +163,95 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                       PopupMenuButton<String>(
                         onSelected: (value) {
                           setState(() => _selectedPeriod = value);
-                          Provider.of<AgentPolicyProvider>(context, listen: false).fetchCommission(context, period: value);
+                          Provider.of<AgentPolicyProvider>(context,
+                                  listen: false)
+                              .fetchCommission(context, period: value);
                         },
-                        itemBuilder: (_) => _periodLabels.entries.map((e) => PopupMenuItem(value: e.key, child: Text(e.value, style: const TextStyle(fontSize: 13)))).toList(),
+                        itemBuilder: (_) => _periodLabels.entries
+                            .map((e) => PopupMenuItem(
+                                value: e.key,
+                                child: Text(e.value,
+                                    style: const TextStyle(fontSize: 13))))
+                            .toList(),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white.withOpacity(0.3)),
+                            border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.3)),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(_periodLabels[_selectedPeriod] ?? 'This Month', style: const TextStyle(fontSize: 11, color: Colors.white)),
+                              Text(
+                                  _periodLabels[_selectedPeriod] ??
+                                      'This Month',
+                                  style: const TextStyle(
+                                      fontSize: 11, color: Colors.white)),
                               const SizedBox(width: 4),
-                              const Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 16),
+                              const Icon(Icons.keyboard_arrow_down,
+                                  color: Colors.white, size: 16),
                             ],
                           ),
                         ),
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Stats Row
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
-                        Expanded(child: Consumer<AgentPolicyProvider>(builder: (_, ap, __) => _buildStatItem('${ap.totalClients}', 'Total Client'))),
+                        Expanded(
+                            child: Consumer<AgentPolicyProvider>(
+                                builder: (_, ap, __) => _buildStatItem(
+                                    '${ap.totalClients}', 'Total Client'))),
                         Container(
                           width: 1,
                           height: 30,
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                         ),
                         Expanded(child: _buildStatItem('0', 'Pending Claims')),
                         Container(
                           width: 1,
                           height: 30,
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                         ),
-                        Expanded(child: Consumer<AgentPolicyProvider>(builder: (_, ap, __) => _buildStatItem('${ap.activePolicies}', 'Active Policies'))),
+                        Expanded(
+                            child: Consumer<AgentPolicyProvider>(
+                                builder: (_, ap, __) => _buildStatItem(
+                                    '${ap.activePolicies}',
+                                    'Active Policies'))),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Quick Access
-            const Text(
+            Text(
               'Quick Access',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             Row(
               children: [
                 Expanded(
@@ -188,7 +259,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                     context,
                     'Add Client',
                     Icons.person_add_outlined,
-                    const Color(0xFF1E2D64),
+                    _agentAccent,
                     () {
                       Navigator.push(
                         context,
@@ -205,7 +276,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                     context,
                     'New Policy',
                     Icons.add_circle_outline,
-                    const Color(0xFF1E2D64),
+                    _agentAccent,
                     () {
                       Navigator.push(
                         context,
@@ -222,30 +293,38 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                     context,
                     'File a Claim',
                     Icons.assignment_outlined,
-                    const Color(0xFF1E2D64),
+                    _agentAccent,
                     () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NewClaimsScreen(isAgentFlow: true)));
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) =>
+                                  const NewClaimsScreen(isAgentFlow: true)));
                     },
                   ),
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // My Policies
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'My Policies',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 TextButton(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AgentPoliciesScreen())),
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const AgentPoliciesScreen())),
                   child: const Text(
                     'View All',
                     style: TextStyle(
@@ -257,69 +336,111 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Policy List from API
             Consumer<AgentPolicyProvider>(builder: (_, ap, __) {
-              if (ap.loading) return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
-              if (ap.policies.isEmpty) return Padding(padding: const EdgeInsets.all(20), child: Center(child: Text('No policies found', style: TextStyle(color: Colors.grey[500], fontSize: 12))));
-              final sortedPolicies = List<Map<String, dynamic>>.from(ap.policies);
+              if (ap.loading) {
+                return const Center(
+                    child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: CircularProgressIndicator()));
+              }
+              if (ap.policies.isEmpty) {
+                return Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Center(
+                        child: Text('No policies found',
+                            style: TextStyle(
+                                color: _secondaryTextColor, fontSize: 12))));
+              }
+              final sortedPolicies =
+                  List<Map<String, dynamic>>.from(ap.policies);
               sortedPolicies.sort((a, b) {
-                final dateA = DateTime.tryParse(a['startDate']?.toString() ?? '') ?? DateTime(1900);
-                final dateB = DateTime.tryParse(b['startDate']?.toString() ?? '') ?? DateTime(1900);
+                final dateA =
+                    DateTime.tryParse(a['startDate']?.toString() ?? '') ??
+                        DateTime(1900);
+                final dateB =
+                    DateTime.tryParse(b['startDate']?.toString() ?? '') ??
+                        DateTime(1900);
                 return dateB.compareTo(dateA); // most recent first
               });
               final displayPolicies = sortedPolicies.take(5).toList();
-              return Column(children: displayPolicies.map((p) {
+              return Column(
+                  children: displayPolicies.map((p) {
                 final isActive = p['status'] == 'Active';
                 final policyClass = p['policyClass']?.toString() ?? '';
-                final icon = policyClass.toLowerCase().contains('motor') || policyClass.toLowerCase().contains('comprehensive') ? Icons.directions_car_outlined
-                  : policyClass.toLowerCase().contains('shop') ? Icons.store_outlined
-                  : policyClass.toLowerCase().contains('home') ? Icons.home_outlined
-                  : policyClass.toLowerCase().contains('personal') ? Icons.person_outline
-                  : policyClass.toLowerCase().contains('family') ? Icons.family_restroom_outlined
-                  : policyClass.toLowerCase().contains('student') ? Icons.school_outlined
-                  : policyClass.toLowerCase().contains('parcel') ? Icons.local_shipping_outlined
-                  : policyClass.toLowerCase().contains('driver') ? Icons.two_wheeler_outlined
-                  : Icons.description_outlined;
-                return Padding(padding: const EdgeInsets.only(bottom: 12), child: _buildPolicyItem(
-                  context,
-                  '$policyClass Insurance',
-                  'Policy #${p['policyId']}',
-                  p['endDate'] ?? '',
-                  isActive ? 'Active' : 'Expired',
-                  icon,
-                  isActive ? const Color(0xFF4CAF50) : Colors.grey,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PolicyDetailsScreen(
-                    policyType: '$policyClass Insurance',
-                    policyNumber: p['policyId']?.toString() ?? '',
-                    policyData: p,
-                    isAgentFlow: true,
-                  ))),
-                ));
+                final icon = policyClass.toLowerCase().contains('motor') ||
+                        policyClass.toLowerCase().contains('comprehensive')
+                    ? Icons.directions_car_outlined
+                    : policyClass.toLowerCase().contains('shop')
+                        ? Icons.store_outlined
+                        : policyClass.toLowerCase().contains('home')
+                            ? Icons.home_outlined
+                            : policyClass.toLowerCase().contains('personal')
+                                ? Icons.person_outline
+                                : policyClass.toLowerCase().contains('family')
+                                    ? Icons.family_restroom_outlined
+                                    : policyClass
+                                            .toLowerCase()
+                                            .contains('student')
+                                        ? Icons.school_outlined
+                                        : policyClass
+                                                .toLowerCase()
+                                                .contains('parcel')
+                                            ? Icons.local_shipping_outlined
+                                            : policyClass
+                                                    .toLowerCase()
+                                                    .contains('driver')
+                                                ? Icons.two_wheeler_outlined
+                                                : Icons.description_outlined;
+                return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildPolicyItem(
+                      context,
+                      '$policyClass Insurance',
+                      'Policy #${p['policyId']}',
+                      p['endDate'] ?? '',
+                      isActive ? 'Active' : 'Expired',
+                      icon,
+                      isActive ? const Color(0xFF4CAF50) : Colors.grey,
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => PolicyDetailsScreen(
+                                    policyType: '$policyClass Insurance',
+                                    policyNumber:
+                                        p['policyId']?.toString() ?? '',
+                                    policyData: p,
+                                    isAgentFlow: true,
+                                  ))),
+                    ));
               }).toList());
             }),
-            
+
             const SizedBox(height: 24),
-            
+
             // Policy Analytics
-            const Text(
+            Text(
               'Policy Analytics',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Chart Container
             Consumer<AgentPolicyProvider>(builder: (_, ap, __) {
               final monthData = ap.getPolicyCountsByMonth();
               final labels = monthData.keys.toList();
               final values = monthData.values.toList();
-              final maxVal = values.isEmpty ? 1.0 : (values.reduce((a, b) => a > b ? a : b)).toDouble();
+              final maxVal = values.isEmpty
+                  ? 1.0
+                  : (values.reduce((a, b) => a > b ? a : b)).toDouble();
               final yMax = maxVal < 5 ? 5.0 : maxVal;
               final dataPoints = values.map((v) => v.toDouble()).toList();
 
@@ -327,9 +448,9 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                 height: 220,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: _cardColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: _borderColor),
                 ),
                 child: Column(
                   children: [
@@ -343,18 +464,37 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text('${yMax.toInt()}', style: TextStyle(fontSize: 9, color: Colors.grey[600])),
-                                Text('${(yMax * 0.75).toInt()}', style: TextStyle(fontSize: 9, color: Colors.grey[600])),
-                                Text('${(yMax * 0.5).toInt()}', style: TextStyle(fontSize: 9, color: Colors.grey[600])),
-                                Text('${(yMax * 0.25).toInt()}', style: TextStyle(fontSize: 9, color: Colors.grey[600])),
-                                Text('0', style: TextStyle(fontSize: 9, color: Colors.grey[600])),
+                                Text('${yMax.toInt()}',
+                                    style: TextStyle(
+                                        fontSize: 9,
+                                        color: _secondaryTextColor)),
+                                Text('${(yMax * 0.75).toInt()}',
+                                    style: TextStyle(
+                                        fontSize: 9,
+                                        color: _secondaryTextColor)),
+                                Text('${(yMax * 0.5).toInt()}',
+                                    style: TextStyle(
+                                        fontSize: 9,
+                                        color: _secondaryTextColor)),
+                                Text('${(yMax * 0.25).toInt()}',
+                                    style: TextStyle(
+                                        fontSize: 9,
+                                        color: _secondaryTextColor)),
+                                Text('0',
+                                    style: TextStyle(
+                                        fontSize: 9,
+                                        color: _secondaryTextColor)),
                               ],
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: CustomPaint(
-                              painter: LineChartPainter(dataPoints, maxValue: yMax),
+                              painter: LineChartPainter(
+                                dataPoints,
+                                maxValue: yMax,
+                                color: _agentAccent,
+                              ),
                             ),
                           ),
                         ],
@@ -365,52 +505,83 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                       padding: const EdgeInsets.only(left: 38),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: labels.map((m) => Text(m, style: TextStyle(fontSize: 9, color: Colors.grey[600]))).toList(),
+                        children: labels
+                            .map((m) => Text(m,
+                                style: TextStyle(
+                                    fontSize: 9, color: _secondaryTextColor)))
+                            .toList(),
                       ),
                     ),
                   ],
                 ),
               );
             }),
-            
+
             const SizedBox(height: 24),
-            
+
             // Recent Notifications
-            const Text(
+            Text(
               'Recent Notifications',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             Consumer<NotificationsProvider>(builder: (_, notifProvider, __) {
-              if (notifProvider.loading) return const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator()));
-              if (notifProvider.notifications.isEmpty) return Padding(padding: const EdgeInsets.all(12), child: Center(child: Text('No notifications', style: TextStyle(color: Colors.grey[500], fontSize: 12))));
-              final displayNotifs = notifProvider.notifications.take(4).toList();
-              return Column(children: displayNotifs.map((n) {
+              if (notifProvider.loading) {
+                return const Center(
+                    child: Padding(
+                        padding: EdgeInsets.all(12),
+                        child: CircularProgressIndicator()));
+              }
+              if (notifProvider.notifications.isEmpty) {
+                return Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Center(
+                        child: Text('No notifications',
+                            style: TextStyle(
+                                color: _secondaryTextColor, fontSize: 12))));
+              }
+              final displayNotifs =
+                  notifProvider.notifications.take(4).toList();
+              return Column(
+                  children: displayNotifs.map((n) {
                 final title = n['title']?.toString() ?? '';
-                final desc = n['description']?.toString() ?? n['message']?.toString() ?? '';
+                final desc = n['description']?.toString() ??
+                    n['message']?.toString() ??
+                    '';
                 final time = n['created_at']?.toString() ?? '';
                 final isRead = notifProvider.readIds.contains(n['id']);
-                return Padding(padding: const EdgeInsets.only(bottom: 12), child: _buildActivityItem(
-                  context, title, desc, time,
-                  isRead ? Icons.check_circle : Icons.notifications_outlined,
-                  isRead ? const Color(0xFF4CAF50) : const Color(0xFF2196F3),
-                ));
+                return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildActivityItem(
+                      context,
+                      title,
+                      desc,
+                      time,
+                      isRead
+                          ? Icons.check_circle
+                          : Icons.notifications_outlined,
+                      isRead
+                          ? const Color(0xFF4CAF50)
+                          : const Color(0xFF2196F3),
+                    ));
               }).toList());
             }),
-            
+
             const SizedBox(height: 24),
           ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF1E2D64),
-        unselectedItemColor: Colors.grey,
+        backgroundColor: AppTheme.bottomNavBackgroundColor(context),
+        selectedItemColor: AppTheme.bottomNavSelectedColor(context),
+        unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
         currentIndex: 0,
         onTap: (index) {
           if (index == 1) {
@@ -471,7 +642,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
       ),
     );
   }
-  
+
   Widget _buildStatItem(String value, String label) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -489,7 +660,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
           label,
           style: TextStyle(
             fontSize: 9,
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
           ),
           textAlign: TextAlign.center,
           maxLines: 2,
@@ -499,14 +670,16 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
     );
   }
 
-  Widget _buildQuickActionButton(BuildContext context, String label, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildQuickActionButton(BuildContext context, String label,
+      IconData icon, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
+          color: _cardColor,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _borderColor),
         ),
         child: Column(
           children: [
@@ -516,7 +689,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
               label,
               style: TextStyle(
                 fontSize: 11,
-                color: Colors.grey[800],
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
@@ -540,96 +713,98 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[200]!),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E2D64).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: const Color(0xFF1E2D64), size: 24),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  policyNumber,
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  status,
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: statusColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _borderColor),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _agentAccent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
               ),
-              const SizedBox(height: 4),
-              Row(
+              child: Icon(icon, color: _agentAccent, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Renewal Date',
+                    title,
                     style: TextStyle(
-                      fontSize: 8,
-                      color: Colors.grey[600],
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    policyNumber,
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: _secondaryTextColor,
                     ),
                   ),
                 ],
               ),
-              Text(
-                renewalDate,
-                style: const TextStyle(
-                  fontSize: 9,
-                  color: AppTheme.accentOrange,
-                  fontWeight: FontWeight.w500,
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: statusColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      'Renewal Date',
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: _secondaryTextColor,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  renewalDate,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: AppTheme.accentOrange,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
-  
+
   Widget _buildDrawer(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final userName = authProvider.userName ?? 'User';
     final userEmail = authProvider.userEmail ?? 'user@example.com';
-    
+
     return Drawer(
       child: Column(
         children: [
@@ -647,7 +822,8 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                   children: [
                     CircleAvatar(
                       radius: 28,
-                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                      backgroundColor:
+                          Theme.of(context).scaffoldBackgroundColor,
                       child: Icon(
                         Icons.person,
                         size: 32,
@@ -685,7 +861,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
               ],
             ),
           ),
-          
+
           // Menu items
           Expanded(
             child: ListView(
@@ -720,7 +896,10 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                   title: 'Policies',
                   onTap: () {
                     Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const AgentPoliciesScreen()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const AgentPoliciesScreen()));
                   },
                 ),
                 _buildDrawerItem(
@@ -729,7 +908,11 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                   title: 'Claims',
                   onTap: () {
                     Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen(isAgentFlow: true)));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                const MyClaimsScreen(isAgentFlow: true)));
                   },
                 ),
                 _buildDrawerItem(
@@ -738,7 +921,10 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                   title: 'Reports',
                   onTap: () {
                     Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ReportsScreen()));
                   },
                 ),
                 _buildDrawerItem(
@@ -763,7 +949,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
       ),
     );
   }
-  
+
   Widget _buildDrawerItem(
     BuildContext context, {
     required IconData icon,
@@ -773,7 +959,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
     bool isLogout = false,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       decoration: BoxDecoration(
@@ -809,7 +995,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
       ),
     );
   }
-  
+
   Widget _buildActivityItem(
     BuildContext context,
     String name,
@@ -819,18 +1005,18 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
     Color iconColor,
   ) {
     return Container(
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+        color: _cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[200]!),
+        border: Border.all(color: _borderColor),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: iconColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: iconColor, size: 20),
@@ -842,9 +1028,10 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -852,7 +1039,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                   activity,
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.grey[600],
+                    color: _secondaryTextColor,
                   ),
                 ),
               ],
@@ -862,7 +1049,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
             time,
             style: TextStyle(
               fontSize: 9,
-              color: Colors.grey[500],
+              color: _secondaryTextColor,
             ),
           ),
         ],
@@ -875,33 +1062,41 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
 class LineChartPainter extends CustomPainter {
   final List<double> dataPoints;
   final double maxValue;
-  
-  LineChartPainter(this.dataPoints, {this.maxValue = 1000.0});
-  
+  final Color color;
+
+  LineChartPainter(
+    this.dataPoints, {
+    this.maxValue = 1000.0,
+    required this.color,
+  });
+
   @override
   void paint(Canvas canvas, Size size) {
     if (dataPoints.length < 2) return;
-    
+
     final paint = Paint()
-      ..color = const Color(0xFF1E2D64)
+      ..color = color
       ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
     // Fill gradient
     final fillPaint = Paint()
-      ..shader = const LinearGradient(
+      ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [Color(0x331E2D64), Color(0x001E2D64)],
+        colors: [
+          color.withValues(alpha: 0.2),
+          color.withValues(alpha: 0),
+        ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.fill;
-    
+
     final path = Path();
     final fillPath = Path();
     final stepX = size.width / (dataPoints.length - 1);
     final effectiveMax = maxValue == 0 ? 1.0 : maxValue;
-    
+
     for (int i = 0; i < dataPoints.length; i++) {
       final x = i * stepX;
       final y = size.height - (dataPoints[i] / effectiveMax * size.height);
@@ -914,21 +1109,23 @@ class LineChartPainter extends CustomPainter {
         fillPath.lineTo(x, y);
       }
     }
-    
+
     fillPath.lineTo(size.width, size.height);
     fillPath.close();
     canvas.drawPath(fillPath, fillPaint);
     canvas.drawPath(path, paint);
 
     // Draw dots
-    final dotPaint = Paint()..color = const Color(0xFF1E2D64)..style = PaintingStyle.fill;
+    final dotPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
     for (int i = 0; i < dataPoints.length; i++) {
       final x = i * stepX;
       final y = size.height - (dataPoints[i] / effectiveMax * size.height);
       canvas.drawCircle(Offset(x, y), 3, dotPaint);
     }
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

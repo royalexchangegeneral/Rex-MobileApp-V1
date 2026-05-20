@@ -6,12 +6,14 @@ import 'reports_screen.dart';
 import 'agent_profile_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../utils/app_theme.dart';
 
 class AddCorporateClientScreen extends StatefulWidget {
   const AddCorporateClientScreen({super.key});
 
   @override
-  State<AddCorporateClientScreen> createState() => _AddCorporateClientScreenState();
+  State<AddCorporateClientScreen> createState() =>
+      _AddCorporateClientScreenState();
 }
 
 class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
@@ -22,9 +24,45 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _yearOfIncorporationController = TextEditingController();
-  
+
   bool _isVerifyingCac = false;
-  bool _cacVerified = false;
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get _fieldColor =>
+      _isDark ? const Color(0xFF111827) : Colors.grey[100]!;
+
+  Color get _borderColor =>
+      _isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+
+  Color get _secondaryTextColor =>
+      _isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
+  Color get _agentAccent =>
+      _isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+
+  InputDecoration _inputDecoration(String hint, {Widget? suffixIcon}) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(color: _secondaryTextColor, fontSize: 14),
+      filled: true,
+      fillColor: _fieldColor,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _borderColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _borderColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _agentAccent),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      suffixIcon: suffixIcon,
+    );
+  }
 
   @override
   void dispose() {
@@ -40,7 +78,7 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
 
   Future<void> _verifyCac() async {
     final cac = _cacController.text.trim();
-    
+
     // Validate CAC is not empty
     if (cac.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -54,7 +92,8 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
     });
 
     try {
-      final response = await http.post(
+      final response = await http
+          .post(
         Uri.parse('https://eportaltest.rexinsure.com/api/verify/cac'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
@@ -63,7 +102,8 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
           'business_number': cac,
           'business_country': 'NG',
         }),
-      ).timeout(
+      )
+          .timeout(
         const Duration(seconds: 15),
         onTimeout: () {
           throw Exception('Request timeout');
@@ -76,43 +116,48 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = json.decode(response.body);
-        
+
         // Check if verification was successful
-        if (responseData['status'] == 'success' && 
-            responseData['data'] != null && 
+        if (responseData['status'] == 'success' &&
+            responseData['data'] != null &&
             responseData['data']['data'] != null &&
             responseData['data']['data']['business_info'] != null) {
-          
           final businessInfo = responseData['data']['data']['business_info'];
-          
+
           // Populate fields with response data
           setState(() {
-            _businessNameController.text = businessInfo['company_name']?.toString() ?? '';
-            _businessAddressController.text = businessInfo['address']?.toString() ?? '';
-            _emailController.text = businessInfo['email_address']?.toString() ?? '';
-            
+            _businessNameController.text =
+                businessInfo['company_name']?.toString() ?? '';
+            _businessAddressController.text =
+                businessInfo['address']?.toString() ?? '';
+            _emailController.text =
+                businessInfo['email_address']?.toString() ?? '';
+
             // Format date of registration from ISO format to DD/MM/YYYY
-            String dateOfReg = businessInfo['date_of_registration']?.toString() ?? '';
+            String dateOfReg =
+                businessInfo['date_of_registration']?.toString() ?? '';
             if (dateOfReg.isNotEmpty) {
               try {
                 DateTime parsedDate = DateTime.parse(dateOfReg);
-                _yearOfIncorporationController.text = '${parsedDate.day.toString().padLeft(2, '0')}/${parsedDate.month.toString().padLeft(2, '0')}/${parsedDate.year}';
+                _yearOfIncorporationController.text =
+                    '${parsedDate.day.toString().padLeft(2, '0')}/${parsedDate.month.toString().padLeft(2, '0')}/${parsedDate.year}';
               } catch (e) {
                 // If parsing fails, leave empty
               }
             }
-            
+
             // Try to get phone number from persons array if available
-            if (businessInfo['persons'] != null && businessInfo['persons'] is List && (businessInfo['persons'] as List).isNotEmpty) {
+            if (businessInfo['persons'] != null &&
+                businessInfo['persons'] is List &&
+                (businessInfo['persons'] as List).isNotEmpty) {
               final firstPerson = businessInfo['persons'][0];
-              if (firstPerson['phoneNumber'] != null && firstPerson['phoneNumber'].toString().isNotEmpty) {
+              if (firstPerson['phoneNumber'] != null &&
+                  firstPerson['phoneNumber'].toString().isNotEmpty) {
                 _phoneController.text = firstPerson['phoneNumber'].toString();
               }
             }
-            
-            _cacVerified = true;
           });
-          
+
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -135,7 +180,8 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Verification failed: ${response.statusCode}. Please enter details manually'),
+              content: Text(
+                  'Verification failed: ${response.statusCode}. Please enter details manually'),
             ),
           );
         }
@@ -147,7 +193,8 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}. Please enter details manually'),
+            content:
+                Text('Error: ${e.toString()}. Please enter details manually'),
           ),
         );
       }
@@ -157,10 +204,12 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -188,7 +237,7 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                       'Step 1 of 2',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: _secondaryTextColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -196,7 +245,7 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                       'Client information',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: _secondaryTextColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -209,7 +258,7 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                       child: Container(
                         height: 4,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E2D64),
+                          color: _agentAccent,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -219,7 +268,7 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                       child: Container(
                         height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: _borderColor,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -229,7 +278,7 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
               ],
             ),
           ),
-          
+
           // Scrollable Content
           Expanded(
             child: SingleChildScrollView(
@@ -247,25 +296,17 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _cacController,
-                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                    decoration: InputDecoration(
-                      hintText: 'enter CAC',
-                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface),
+                    decoration: _inputDecoration('enter CAC'),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Verify Button
                   SizedBox(
                     width: double.infinity,
@@ -273,13 +314,16 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                     child: ElevatedButton(
                       onPressed: _isVerifyingCac ? null : _verifyCac,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E2D64),
+                        backgroundColor: _agentAccent,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: 0,
-                        disabledBackgroundColor: Colors.grey[400],
+                        disabledBackgroundColor:
+                            AppTheme.disabledButtonColor(context),
+                        disabledForegroundColor:
+                            AppTheme.disabledButtonTextColor(context),
                       ),
                       child: _isVerifyingCac
                           ? const SizedBox(
@@ -290,7 +334,7 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : Text(
+                          : const Text(
                               'Verify',
                               style: TextStyle(
                                 fontSize: 14,
@@ -299,13 +343,13 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                             ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // OR divider
                   Row(
                     children: [
-                      Expanded(child: Divider(color: Colors.grey[300])),
+                      Expanded(child: Divider(color: _borderColor)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
@@ -313,16 +357,16 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey[700],
+                            color: _secondaryTextColor,
                           ),
                         ),
                       ),
-                      Expanded(child: Divider(color: Colors.grey[300])),
+                      Expanded(child: Divider(color: _borderColor)),
                     ],
                   ),
-                  
-                  SizedBox(height: 24),
-                  
+
+                  const SizedBox(height: 24),
+
                   // Business Name
                   Text(
                     'Business Name',
@@ -332,25 +376,17 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _businessNameController,
-                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                    decoration: InputDecoration(
-                      hintText: 'John',
-                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface),
+                    decoration: _inputDecoration('Business name'),
                   ),
-                  
-                  SizedBox(height: 16),
-                  
+
+                  const SizedBox(height: 16),
+
                   // Business Address
                   Text(
                     'Business Address',
@@ -360,25 +396,17 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _businessAddressController,
-                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                    decoration: InputDecoration(
-                      hintText: 'enter your address',
-                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface),
+                    decoration: _inputDecoration('enter your address'),
                   ),
-                  
-                  SizedBox(height: 16),
-                  
+
+                  const SizedBox(height: 16),
+
                   // Business Sector (optional)
                   Text(
                     'Business Sector (optional)',
@@ -388,25 +416,17 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _businessSectorController,
-                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                    decoration: InputDecoration(
-                      hintText: 'enter your occupation',
-                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface),
+                    decoration: _inputDecoration('enter your occupation'),
                   ),
-                  
-                  SizedBox(height: 16),
-                  
+
+                  const SizedBox(height: 16),
+
                   // Phone Number
                   Text(
                     'Phone Number',
@@ -416,26 +436,18 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
-                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                    decoration: InputDecoration(
-                      hintText: '+234902389421',
-                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface),
+                    decoration: _inputDecoration('+234902389421'),
                   ),
-                  
-                  SizedBox(height: 16),
-                  
+
+                  const SizedBox(height: 16),
+
                   // Email Address
                   Text(
                     'Email Address',
@@ -445,26 +457,18 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                    decoration: InputDecoration(
-                      hintText: 'example@gmail.com',
-                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface),
+                    decoration: _inputDecoration('example@gmail.com'),
                   ),
-                  
-                  SizedBox(height: 16),
-                  
+
+                  const SizedBox(height: 16),
+
                   // Year of Incorporation
                   Text(
                     'Year of Incorporation',
@@ -485,32 +489,28 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                       );
                       if (picked != null) {
                         setState(() {
-                          _yearOfIncorporationController.text = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+                          _yearOfIncorporationController.text =
+                              '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
                         });
                       }
                     },
                     child: AbsorbPointer(
                       child: TextField(
                         controller: _yearOfIncorporationController,
-                        style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                        decoration: InputDecoration(
-                          hintText: 'dd/mm/yy',
-                          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                          filled: true,
-                          fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                          suffixIcon: Icon(Icons.calendar_today_outlined, color: Colors.grey[600], size: 20),
+                        style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(context).colorScheme.onSurface),
+                        decoration: _inputDecoration(
+                          'dd/mm/yy',
+                          suffixIcon: Icon(Icons.calendar_today_outlined,
+                              color: _secondaryTextColor, size: 20),
                         ),
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Next Button
                   SizedBox(
                     width: double.infinity,
@@ -520,35 +520,43 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                         // Validate all required fields (Business Sector is optional)
                         if (_businessNameController.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter business name')),
+                            const SnackBar(
+                                content: Text('Please enter business name')),
                           );
                           return;
                         }
                         if (_businessAddressController.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter business address')),
+                            const SnackBar(
+                                content: Text('Please enter business address')),
                           );
                           return;
                         }
                         if (_phoneController.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter phone number')),
+                            const SnackBar(
+                                content: Text('Please enter phone number')),
                           );
                           return;
                         }
                         if (_emailController.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter email address')),
+                            const SnackBar(
+                                content: Text('Please enter email address')),
                           );
                           return;
                         }
-                        if (_yearOfIncorporationController.text.trim().isEmpty) {
+                        if (_yearOfIncorporationController.text
+                            .trim()
+                            .isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please select year of incorporation')),
+                            const SnackBar(
+                                content: Text(
+                                    'Please select year of incorporation')),
                           );
                           return;
                         }
-                        
+
                         // Collect all client data
                         final clientData = {
                           'cac': _cacController.text,
@@ -557,9 +565,10 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                           'businessSector': _businessSectorController.text,
                           'phone': _phoneController.text,
                           'email': _emailController.text,
-                          'yearOfIncorporation': _yearOfIncorporationController.text,
+                          'yearOfIncorporation':
+                              _yearOfIncorporationController.text,
                         };
-                        
+
                         // Navigate to summary screen
                         Navigator.push(
                           context,
@@ -572,7 +581,7 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E2D64),
+                        backgroundColor: _agentAccent,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -588,9 +597,9 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Buy policy for customer Button
                   SizedBox(
                     width: double.infinity,
@@ -600,8 +609,8 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                         // Navigate to buy policy screen
                       },
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1E2D64),
-                        side: const BorderSide(color: Color(0xFF1E2D64), width: 1.5),
+                        foregroundColor: _agentAccent,
+                        side: BorderSide(color: _agentAccent, width: 1.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -615,7 +624,7 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 80), // Extra space for bottom nav
                 ],
               ),
@@ -625,8 +634,9 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF1E2D64),
-        unselectedItemColor: Colors.grey,
+        backgroundColor: AppTheme.bottomNavBackgroundColor(context),
+        selectedItemColor: AppTheme.bottomNavSelectedColor(context),
+        unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
         currentIndex: 2,
         selectedFontSize: 11,
         unselectedFontSize: 11,
@@ -634,13 +644,15 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
           if (index == 0) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const AgentDashboardScreen()),
               (route) => false,
             );
           } else if (index == 2) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ClientsListScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const ClientsListScreen()),
             );
           } else if (index == 3) {
             Navigator.push(
@@ -650,7 +662,8 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
           } else if (index == 4) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const AgentProfileScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const AgentProfileScreen()),
             );
           }
         },

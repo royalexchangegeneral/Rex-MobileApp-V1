@@ -33,6 +33,10 @@ class _FaqScreenState extends State<FaqScreen> {
   final _searchController = TextEditingController();
   int _expandedIndex = 0;
 
+  Color get _actionColor => Theme.of(context).brightness == Brightness.dark
+      ? AppTheme.accentOrange
+      : AppTheme.primaryNavy;
+
   @override
   void initState() {
     super.initState();
@@ -166,7 +170,9 @@ class _FaqScreenState extends State<FaqScreen> {
   Widget build(BuildContext context) {
     final faqs = _filteredFaqs;
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back,
@@ -184,7 +190,7 @@ class _FaqScreenState extends State<FaqScreen> {
         children: [
           // Search bar
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextField(
               controller: _searchController,
               onChanged: (_) => setState(() {}),
@@ -192,8 +198,11 @@ class _FaqScreenState extends State<FaqScreen> {
                   fontSize: 13, color: Theme.of(context).colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: 'Search help',
-                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-                suffixIcon: Icon(Icons.search, color: Colors.grey[400]),
+                hintStyle: TextStyle(
+                    color: ThemeHelper.getSecondaryTextColor(context),
+                    fontSize: 13),
+                suffixIcon: Icon(Icons.search,
+                    color: ThemeHelper.getSecondaryTextColor(context)),
                 filled: true,
                 fillColor: ThemeHelper.getCardColor(context),
                 border: OutlineInputBorder(
@@ -206,7 +215,7 @@ class _FaqScreenState extends State<FaqScreen> {
                         BorderSide(color: ThemeHelper.getBorderColor(context))),
                 focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppTheme.primaryNavy)),
+                    borderSide: BorderSide(color: _actionColor)),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
@@ -233,12 +242,12 @@ class _FaqScreenState extends State<FaqScreen> {
                           horizontal: 18, vertical: 7),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppTheme.primaryNavy
+                            ? _actionColor
                             : ThemeHelper.getCardColor(context),
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
                             color: isSelected
-                                ? AppTheme.primaryNavy
+                                ? _actionColor
                                 : ThemeHelper.getBorderColor(context)),
                       ),
                       child: Text(
@@ -271,7 +280,7 @@ class _FaqScreenState extends State<FaqScreen> {
                       onTap: () => setState(
                           () => _expandedIndex = isExpanded ? -1 : index),
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Row(
                           children: [
                             Expanded(
@@ -289,7 +298,8 @@ class _FaqScreenState extends State<FaqScreen> {
                                 isExpanded
                                     ? Icons.keyboard_arrow_up
                                     : Icons.keyboard_arrow_down,
-                                color: Colors.grey[600]),
+                                color:
+                                    ThemeHelper.getSecondaryTextColor(context)),
                           ],
                         ),
                       ),
@@ -309,7 +319,8 @@ class _FaqScreenState extends State<FaqScreen> {
                           ),
                         ),
                       ),
-                    Divider(color: Colors.grey[200], height: 1),
+                    Divider(
+                        color: ThemeHelper.getBorderColor(context), height: 1),
                   ],
                 );
               },
@@ -340,6 +351,7 @@ class _FaqScreenState extends State<FaqScreen> {
       bottomNavigationBar: widget.isAgentFlow
           ? buildAgentBottomNav(context, currentIndex: 0)
           : BottomAppBar(
+              color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),
               notchMargin: 4,
               child: SizedBox(
@@ -387,11 +399,16 @@ class _FaqScreenState extends State<FaqScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon,
-              color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
+              color: isSelected
+                  ? AppTheme.bottomNavSelectedColor(context)
+                  : AppTheme.bottomNavUnselectedColor(context),
+              size: 20),
           Text(label,
               style: TextStyle(
                   fontSize: 10,
-                  color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+                  color: isSelected
+                      ? AppTheme.bottomNavSelectedColor(context)
+                      : AppTheme.bottomNavUnselectedColor(context))),
         ],
       ),
     );

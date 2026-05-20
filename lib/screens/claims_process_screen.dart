@@ -15,10 +15,15 @@ class ClaimsProcessScreen extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Claims Process', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+        title: Text('Claims Process',
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -37,11 +42,17 @@ class ClaimsProcessScreen extends StatelessWidget {
               ),
               child: const Column(
                 children: [
-                  Icon(Icons.assignment_outlined, color: Colors.white, size: 36),
+                  Icon(Icons.assignment_outlined,
+                      color: Colors.white, size: 36),
                   SizedBox(height: 10),
-                  Text('How to Make a Claim', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text('How to Make a Claim',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white)),
                   SizedBox(height: 4),
-                  Text('in 4 Easy Steps', style: TextStyle(fontSize: 14, color: Colors.white70)),
+                  Text('in 4 Easy Steps',
+                      style: TextStyle(fontSize: 14, color: Colors.white70)),
                 ],
               ),
             ),
@@ -51,7 +62,8 @@ class ClaimsProcessScreen extends StatelessWidget {
             _buildStep(
               stepNumber: '1',
               title: 'Report the Incident',
-              description: 'Notify us as soon as possible after the event (accident, loss or damage).',
+              description:
+                  'Notify us as soon as possible after the event (accident, loss or damage).',
               icon: Icons.report_outlined,
               color: const Color(0xFF4A90D9),
               isLast: false,
@@ -60,7 +72,8 @@ class ClaimsProcessScreen extends StatelessWidget {
             _buildStep(
               stepNumber: '2',
               title: 'Submit Your Claim',
-              description: 'Fill out the claim form and attach any required documents or evidence.',
+              description:
+                  'Fill out the claim form and attach any required documents or evidence.',
               icon: Icons.upload_file_outlined,
               color: AppTheme.accentOrange,
               isLast: false,
@@ -69,7 +82,8 @@ class ClaimsProcessScreen extends StatelessWidget {
             _buildStep(
               stepNumber: '3',
               title: 'Claim Assessment',
-              description: 'Our team will review your submission and verify the details.',
+              description:
+                  'Our team will review your submission and verify the details.',
               icon: Icons.search_outlined,
               color: const Color(0xFFE91E63),
               isLast: false,
@@ -78,7 +92,8 @@ class ClaimsProcessScreen extends StatelessWidget {
             _buildStep(
               stepNumber: '4',
               title: 'Receive Your Payout',
-              description: 'Once approved, the payment is processed and sent directly to you.',
+              description:
+                  'Once approved, the payment is processed and sent directly to you.',
               icon: Icons.payments_outlined,
               color: Colors.green,
               isLast: true,
@@ -95,21 +110,33 @@ class ClaimsProcessScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  const Text('Ready to file a claim?', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                  const Text('Ready to file a claim?',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryNavy)),
                   const SizedBox(height: 6),
-                  Text('Our team is here to guide you every step of the way.', style: TextStyle(fontSize: 12, color: Colors.grey[600]), textAlign: TextAlign.center),
+                  Text('Our team is here to guide you every step of the way.',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      textAlign: TextAlign.center),
                   const SizedBox(height: 14),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewClaimsScreen())),
+                      onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const NewClaimsScreen())),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
+                        backgroundColor: AppTheme.primaryNavy,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: const Text('Start a Claim', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      child: const Text('Start a Claim',
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -125,7 +152,8 @@ class ClaimsProcessScreen extends StatelessWidget {
           width: 52,
           height: 52,
           child: FloatingActionButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
             backgroundColor: AppTheme.accentOrange,
             shape: const CircleBorder(),
             elevation: 1,
@@ -135,6 +163,7 @@ class ClaimsProcessScreen extends StatelessWidget {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
+        color: AppTheme.bottomNavBackgroundColor(context),
         shape: const CircularNotchedRectangle(),
         notchMargin: 4,
         child: SizedBox(
@@ -142,16 +171,28 @@ class ClaimsProcessScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(Icons.home_outlined, 'Home', false, onTap: () {
-                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
+              _buildNavItem(context, Icons.home_outlined, 'Home', false,
+                  onTap: () {
+                Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const CustomerDashboardScreen()),
+                    (route) => false);
               }),
-              _buildNavItem(Icons.description_outlined, 'Policies', false),
+              _buildNavItem(
+                  context, Icons.description_outlined, 'Policies', false),
               const SizedBox(width: 48),
-              _buildNavItem(Icons.assignment_outlined, 'Claims', false, onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
+              _buildNavItem(context, Icons.assignment_outlined, 'Claims', false,
+                  onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
               }),
-              _buildNavItem(Icons.person_outline, 'Profile', false, onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
+              _buildNavItem(context, Icons.person_outline, 'Profile', false,
+                  onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const CustomerProfileScreen()));
               }),
             ],
           ),
@@ -179,7 +220,12 @@ class ClaimsProcessScreen extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                child: Center(child: Text(stepNumber, style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold))),
+                child: Center(
+                    child: Text(stepNumber,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold))),
               ),
               if (!isLast)
                 Expanded(
@@ -214,9 +260,17 @@ class ClaimsProcessScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
+                          Text(title,
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87)),
                           const SizedBox(height: 4),
-                          Text(description, style: TextStyle(fontSize: 11, color: Colors.grey[600], height: 1.4)),
+                          Text(description,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey[600],
+                                  height: 1.4)),
                         ],
                       ),
                     ),
@@ -230,14 +284,25 @@ class ClaimsProcessScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool isSelected, {VoidCallback? onTap}) {
+  Widget _buildNavItem(
+      BuildContext context, IconData icon, String label, bool isSelected,
+      {VoidCallback? onTap}) {
     return InkWell(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
-          Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+          Icon(icon,
+              color: isSelected
+                  ? AppTheme.bottomNavSelectedColor(context)
+                  : AppTheme.bottomNavUnselectedColor(context),
+              size: 20),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 10,
+                  color: isSelected
+                      ? AppTheme.bottomNavSelectedColor(context)
+                      : AppTheme.bottomNavUnselectedColor(context))),
         ],
       ),
     );

@@ -345,7 +345,7 @@ class PolicyDetailsScreen extends StatelessWidget {
                         label: const Text('Call Now',
                             style: TextStyle(fontSize: 11)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
+                          backgroundColor: AppTheme.primaryNavy,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
@@ -371,7 +371,7 @@ class PolicyDetailsScreen extends StatelessWidget {
                             policyNumber: policyNumber,
                             isAgentFlow: isAgentFlow))),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
+                  backgroundColor: AppTheme.primaryNavy,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -436,6 +436,7 @@ class PolicyDetailsScreen extends StatelessWidget {
       bottomNavigationBar: isAgentFlow
           ? buildAgentBottomNav(context, currentIndex: 1)
           : BottomAppBar(
+              color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),
               notchMargin: 4,
               child: SizedBox(
@@ -443,7 +444,7 @@ class PolicyDetailsScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildNavItem(Icons.home_outlined, 'Home', false,
+                    _buildNavItem(context, Icons.home_outlined, 'Home', false,
                         onTap: () {
                       Navigator.pushAndRemoveUntil(
                           context,
@@ -451,16 +452,19 @@ class PolicyDetailsScreen extends StatelessWidget {
                               builder: (_) => const CustomerDashboardScreen()),
                           (route) => false);
                     }),
-                    _buildNavItem(Icons.description_outlined, 'Policies', true),
+                    _buildNavItem(
+                        context, Icons.description_outlined, 'Policies', true),
                     const SizedBox(width: 48),
-                    _buildNavItem(Icons.assignment_outlined, 'Claims', false,
+                    _buildNavItem(
+                        context, Icons.assignment_outlined, 'Claims', false,
                         onTap: () {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (_) => const MyClaimsScreen()));
                     }),
-                    _buildNavItem(Icons.person_outline, 'Profile', false,
+                    _buildNavItem(
+                        context, Icons.person_outline, 'Profile', false,
                         onTap: () {
                       Navigator.push(
                           context,
@@ -685,7 +689,8 @@ class PolicyDetailsScreen extends StatelessWidget {
                     fontSize: 12, fontWeight: pw.FontWeight.bold))),
       ]));
 
-  Widget _buildNavItem(IconData icon, String label, bool isSelected,
+  Widget _buildNavItem(
+      BuildContext context, IconData icon, String label, bool isSelected,
       {VoidCallback? onTap}) {
     return InkWell(
       onTap: onTap,
@@ -693,11 +698,16 @@ class PolicyDetailsScreen extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon,
-              color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 18),
+              color: isSelected
+                  ? AppTheme.bottomNavSelectedColor(context)
+                  : AppTheme.bottomNavUnselectedColor(context),
+              size: 18),
           Text(label,
               style: TextStyle(
                   fontSize: 9,
-                  color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+                  color: isSelected
+                      ? AppTheme.bottomNavSelectedColor(context)
+                      : AppTheme.bottomNavUnselectedColor(context))),
         ],
       ),
     );

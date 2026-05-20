@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -31,7 +30,8 @@ class AuthProvider with ChangeNotifier {
   String? get profilePhoto => _profilePhoto;
   Map<String, dynamic>? get userData => _userData;
   int get failedLoginAttempts => _failedLoginAttempts;
-  int get remainingAttempts => (_maxAttempts - _failedLoginAttempts).clamp(0, _maxAttempts);
+  int get remainingAttempts =>
+      (_maxAttempts - _failedLoginAttempts).clamp(0, _maxAttempts);
 
   bool isAgent() => _userType == 'agent';
   bool isCustomer() => _userType == 'customer';
@@ -65,12 +65,12 @@ class AuthProvider with ChangeNotifier {
     _userType = prefs.getString('userType');
     _userCode = prefs.getString('userCode');
     _profilePhoto = prefs.getString('profilePhoto');
-    
+
     final userDataString = prefs.getString('userData');
     if (userDataString != null) {
       _userData = json.decode(userDataString);
     }
-    
+
     notifyListeners();
   }
 
@@ -97,12 +97,14 @@ class AuthProvider with ChangeNotifier {
         print('URL: https://eportaltest.rexinsure.com/api/userlogin');
         print('=========================');
       }
-      
-      final response = await http.post(
-        Uri.parse('https://eportaltest.rexinsure.com/api/userlogin'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(requestBody),
-      ).timeout(const Duration(seconds: 15));
+
+      final response = await http
+          .post(
+            Uri.parse('https://eportaltest.rexinsure.com/api/userlogin'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(requestBody),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (kDebugMode) {
         print('=== LOGIN API RESPONSE ===');
@@ -112,29 +114,34 @@ class AuthProvider with ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
-        
+
         final statusCode = data['Statuscode']?.toString() ?? '';
         final status = data['Status']?.toString() ?? '';
-        
-        if ((statusCode == '201' || statusCode == '200') && status == 'Active') {
+
+        if ((statusCode == '201' || statusCode == '200') &&
+            status == 'Active') {
           final userData = data['Data'];
           final userTypeCode = userData['UserType']?.toString() ?? '';
-          
+
           // Determine user type: 009 = customer, 007/008/010 = agent
           final userType = userTypeCode == '009' ? 'customer' : 'agent';
-          
+
           // Save to SharedPreferences
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('isAuthenticated', true);
           await prefs.setString('userId', data['Userid']?.toString() ?? '');
-          await prefs.setString('userName', userData['FirstName']?.toString() ?? '');
-          await prefs.setString('userEmail', userData['Email']?.toString() ?? '');
+          await prefs.setString(
+              'userName', userData['FirstName']?.toString() ?? '');
+          await prefs.setString(
+              'userEmail', userData['Email']?.toString() ?? '');
           await prefs.setString('loginEmail', email);
           await prefs.setString('userType', userType);
-          await prefs.setString('userCode', userData['Usercode']?.toString() ?? '');
-          await prefs.setString('profilePhoto', userData['ProfilePhoto']?.toString() ?? '');
+          await prefs.setString(
+              'userCode', userData['Usercode']?.toString() ?? '');
+          await prefs.setString(
+              'profilePhoto', userData['ProfilePhoto']?.toString() ?? '');
           await prefs.setString('userData', json.encode(userData));
-          
+
           // Update state
           _isAuthenticated = true;
           _userId = data['Userid']?.toString();
@@ -149,7 +156,7 @@ class AuthProvider with ChangeNotifier {
           // Reset brute force counters on success
           _failedLoginAttempts = 0;
           _lockoutUntil = null;
-          
+
           notifyListeners();
           return LoginResult(success: true);
         } else {
@@ -165,12 +172,15 @@ class AuthProvider with ChangeNotifier {
         _recordFailedAttempt();
         return LoginResult(
           success: false,
-          message: 'Server error (${response.statusCode}). $remainingAttempts attempts remaining.',
+          message:
+              'Server error (${response.statusCode}). $remainingAttempts attempts remaining.',
         );
       }
     } catch (e) {
       debugPrint('Login error: $e');
-      return LoginResult(success: false, message: 'Connection error. Please check your internet.');
+      return LoginResult(
+          success: false,
+          message: 'Connection error. Please check your internet.');
     }
   }
 
@@ -182,24 +192,44 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Mock signup
-  Future<bool> signup(String name, String email, String password) async {
+  // Mock signup used while live registration APIs are disabled.
+  Future<bool> signup(
+    String name,
+    String email,
+    String password, {
+    Map<String, dynamic>? userData,
+  }) async {
     await Future.delayed(const Duration(seconds: 1));
-    
+
     if (name.isNotEmpty && email.isNotEmpty && password.length >= 6) {
       final prefs = await SharedPreferences.getInstance();
+      final userId = 'mock_${DateTime.now().millisecondsSinceEpoch}';
+      final data = <String, dynamic>{
+        'FirstName': name.split(' ').first,
+        'Surname': name.split(' ').skip(1).join(' '),
+        'Email': email,
+        'UserType': '009',
+        'Usercode': userId,
+        ...?userData,
+      };
       await prefs.setBool('isAuthenticated', true);
-      await prefs.setString('userId', 'user_${DateTime.now().millisecondsSinceEpoch}');
+      await prefs.setString('userId', userId);
       await prefs.setString('userName', name);
       await prefs.setString('userEmail', email);
       await prefs.setString('loginEmail', email);
-      
+      await prefs.setString('userType', 'customer');
+      await prefs.setString('userCode', userId);
+      await prefs.setString('userData', json.encode(data));
+
       _isAuthenticated = true;
-      _userId = prefs.getString('userId');
+      _userId = userId;
       _userName = name;
       _userEmail = email;
       _loginEmail = email;
-      
+      _userType = 'customer';
+      _userCode = userId;
+      _userData = data;
+
       notifyListeners();
       return true;
     }

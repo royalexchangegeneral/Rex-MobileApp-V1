@@ -13,8 +13,29 @@ import 'my_claims_screen.dart';
 class NewPolicyScreen extends StatelessWidget {
   final bool isAgent;
   final Map<String, dynamic>? clientData;
-  
+
   const NewPolicyScreen({super.key, this.isAgent = false, this.clientData});
+
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  Color _cardColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF111827) : const Color(0xFFFAFAFA);
+
+  Color _borderColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF334155) : Colors.grey[200]!;
+
+  Color _secondaryTextColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
+  Color _mutedIconColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF94A3B8) : Colors.grey[400]!;
+
+  Color _selectedNavColor(BuildContext context) =>
+      AppTheme.bottomNavSelectedColor(context);
+
+  Color _unselectedNavColor(BuildContext context) =>
+      AppTheme.bottomNavUnselectedColor(context);
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +45,15 @@ class NewPolicyScreen extends StatelessWidget {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('New Policy', style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text('New Policy',
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+                fontSize: 18)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -47,48 +73,88 @@ class NewPolicyScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F8FF),
+                color: _isDark(context)
+                    ? const Color(0xFF111827)
+                    : const Color(0xFFF3F8FF),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _borderColor(context)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.help_outline, color: AppTheme.primaryNavy, size: 20),
-                      SizedBox(width: 8),
-                      Text('Need Help?', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                      Icon(Icons.help_outline,
+                          color: _selectedNavColor(context), size: 20),
+                      const SizedBox(width: 8),
+                      Text('Need Help?',
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: _selectedNavColor(context))),
                     ],
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     'Not sure what to buy?, do you need assistance choosing, customizing, or purchasing a new insurance policy.',
-                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface, height: 1.4),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: _secondaryTextColor(context),
+                        height: 1.4),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   GestureDetector(
                     onTap: () async {
                       final uri = Uri(scheme: 'tel', path: '+2347080606100');
                       try {
-                        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        final launched = await launchUrl(uri,
+                            mode: LaunchMode.externalApplication);
                         if (!launched && context.mounted) {
-                          showDialog(context: context, builder: (ctx) => AlertDialog(
-                            title: const Text('Contact Support', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                            content: const Text('+234 708 0606 100', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
-                          ));
+                          showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                    title: const Text('Contact Support',
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold)),
+                                    content: const Text('+234 708 0606 100',
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600)),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () => Navigator.pop(ctx),
+                                          child: const Text('OK'))
+                                    ],
+                                  ));
                         }
                       } catch (_) {
                         if (context.mounted) {
-                          showDialog(context: context, builder: (ctx) => AlertDialog(
-                            title: const Text('Contact Support', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                            content: const Text('+234 708 0606 100', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
-                          ));
+                          showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                    title: const Text('Contact Support',
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold)),
+                                    content: const Text('+234 708 0606 100',
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600)),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () => Navigator.pop(ctx),
+                                          child: const Text('OK'))
+                                    ],
+                                  ));
                         }
                       }
                     },
-                    child: Text('Click here for advice.', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                    child: Text('Click here for advice.',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: _selectedNavColor(context))),
                   ),
                 ],
               ),
@@ -97,26 +163,31 @@ class NewPolicyScreen extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: isAgent ? null : Transform.translate(
-        offset: const Offset(0, 15),
-        child: SizedBox(
-          width: 52,
-          height: 52,
-          child: FloatingActionButton(
-            onPressed: null,
-            backgroundColor: Colors.grey[400],
-            shape: const CircleBorder(),
-            elevation: 1,
-            child: const Icon(Icons.add, color: Colors.white, size: 30),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: isAgent ? null : FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: isAgent
+          ? null
+          : Transform.translate(
+              offset: const Offset(0, 15),
+              child: SizedBox(
+                width: 52,
+                height: 52,
+                child: FloatingActionButton(
+                  onPressed: null,
+                  backgroundColor: AppTheme.disabledButtonColor(context),
+                  shape: const CircleBorder(),
+                  elevation: 1,
+                  child: Icon(Icons.add,
+                      color: AppTheme.disabledButtonTextColor(context),
+                      size: 30),
+                ),
+              ),
+            ),
+      floatingActionButtonLocation:
+          isAgent ? null : FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: isAgent
           ? BottomNavigationBar(
               type: BottomNavigationBarType.fixed,
-              selectedItemColor: const Color(0xFF1E2D64),
-              unselectedItemColor: Colors.grey,
+              selectedItemColor: _selectedNavColor(context),
+              unselectedItemColor: _unselectedNavColor(context),
               currentIndex: 1,
               selectedFontSize: 11,
               unselectedFontSize: 11,
@@ -144,6 +215,7 @@ class NewPolicyScreen extends StatelessWidget {
               ],
             )
           : BottomAppBar(
+              color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),
               notchMargin: 4,
               child: SizedBox(
@@ -151,16 +223,32 @@ class NewPolicyScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildNavItem(Icons.home_outlined, 'Home', false, onTap: () {
-                      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
+                    _buildNavItem(Icons.home_outlined, 'Home', false, context,
+                        onTap: () {
+                      Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const CustomerDashboardScreen()),
+                          (route) => false);
                     }),
-                    _buildNavItem(Icons.description_outlined, 'Policies', true),
+                    _buildNavItem(
+                        Icons.description_outlined, 'Policies', true, context),
                     const SizedBox(width: 48),
-                    _buildNavItem(Icons.assignment_outlined, 'Claims', false, onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
+                    _buildNavItem(
+                        Icons.assignment_outlined, 'Claims', false, context,
+                        onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const MyClaimsScreen()));
                     }),
-                    _buildNavItem(Icons.person_outline, 'Profile', false, onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
+                    _buildNavItem(
+                        Icons.person_outline, 'Profile', false, context,
+                        onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const CustomerProfileScreen()));
                     }),
                   ],
                 ),
@@ -169,83 +257,18 @@ class NewPolicyScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPolicyCard(
-    BuildContext context, {
-    required IconData icon,
-    required Color iconBgColor,
-    required Color iconColor,
-    required String title,
-    required String description,
-    IconData? trailingIcon,
-    Color? trailingBgColor,
-    bool showArrow = false,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        clipBehavior: Clip.hardEdge,
-        decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : const Color(0xFFFAFAFA),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[200]!),
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: iconBgColor, shape: BoxShape.circle),
-                    child: Icon(icon, color: iconColor, size: 22),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
-                        const SizedBox(height: 4),
-                        Text(description, style: TextStyle(fontSize: 11, color: Colors.grey[600], height: 1.3)),
-                      ],
-                    ),
-                  ),
-                  if (showArrow)
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.grey[300]!)),
-                      child: Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey[400]),
-                    ),
-                  if (trailingIcon != null) const SizedBox(width: 48),
-                ],
-              ),
-            ),
-            if (trailingIcon != null)
-              Positioned(
-                top: -20,
-                right: -20,
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(color: trailingBgColor ?? iconBgColor, shape: BoxShape.circle),
-                  child: Icon(trailingIcon, color: iconColor.withOpacity(0.3), size: 40),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, bool isSelected, {VoidCallback? onTap}) {
+  Widget _buildNavItem(
+      IconData icon, String label, bool isSelected, BuildContext context,
+      {VoidCallback? onTap}) {
+    final color =
+        isSelected ? _selectedNavColor(context) : _unselectedNavColor(context);
     return InkWell(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
-          Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+          Icon(icon, color: color, size: 20),
+          Text(label, style: TextStyle(fontSize: 10, color: color)),
         ],
       ),
     );
@@ -253,13 +276,17 @@ class NewPolicyScreen extends StatelessWidget {
 
   Widget _buildMotorInsuranceCard(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerMotorInsuranceScreen(isAgent: isAgent, clientData: clientData))),
+      onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => CustomerMotorInsuranceScreen(
+                  isAgent: isAgent, clientData: clientData))),
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
-          color: const Color(0xFFFAFAFA),
+          color: _cardColor(context),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
+          border: Border.all(color: _borderColor(context)),
         ),
         child: Stack(
           children: [
@@ -268,18 +295,33 @@ class NewPolicyScreen extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: Color(0xFFE8F4FD), shape: BoxShape.circle),
-                    child: SvgPicture.asset('assets/icons/car-front.svg', width: 22, height: 22, colorFilter: const ColorFilter.mode(Color(0xFF4A90D9), BlendMode.srcIn)),
+                    padding: const EdgeInsets.all(10),
+                    decoration: const BoxDecoration(
+                        color: Color(0xFFE8F4FD), shape: BoxShape.circle),
+                    child: SvgPicture.asset('assets/icons/car-front.svg',
+                        width: 22,
+                        height: 22,
+                        colorFilter: const ColorFilter.mode(
+                            Color(0xFF4A90D9), BlendMode.srcIn)),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Motor Insurance', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                        Text('Motor Insurance',
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color:
+                                    Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 4),
-                        Text('This policy covers the third party against Bodily injury and death resulting from a car accident caused by the insured.', style: TextStyle(fontSize: 11, color: Colors.grey[600], height: 1.3)),
+                        Text(
+                            'This policy covers the third party against Bodily injury and death resulting from a car accident caused by the insured.',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: _secondaryTextColor(context),
+                                height: 1.3)),
                       ],
                     ),
                   ),
@@ -292,8 +334,14 @@ class NewPolicyScreen extends StatelessWidget {
               right: -20,
               child: Container(
                 padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(color: Color(0xFFE8F4FD), shape: BoxShape.circle),
-                child: SvgPicture.asset('assets/icons/car-front.svg', width: 40, height: 40, colorFilter: ColorFilter.mode(const Color(0xFF4A90D9).withOpacity(0.3), BlendMode.srcIn)),
+                decoration: const BoxDecoration(
+                    color: Color(0xFFE8F4FD), shape: BoxShape.circle),
+                child: SvgPicture.asset('assets/icons/car-front.svg',
+                    width: 40,
+                    height: 40,
+                    colorFilter: ColorFilter.mode(
+                        const Color(0xFF4A90D9).withValues(alpha: 0.3),
+                        BlendMode.srcIn)),
               ),
             ),
           ],
@@ -304,13 +352,16 @@ class NewPolicyScreen extends StatelessWidget {
 
   Widget _buildProtectionPlansCard(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProtectionPlansScreen(isAgent: isAgent))),
+      onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => ProtectionPlansScreen(isAgent: isAgent))),
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
-          color: const Color(0xFFFAFAFA),
+          color: _cardColor(context),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
+          border: Border.all(color: _borderColor(context)),
         ),
         child: Stack(
           children: [
@@ -319,18 +370,33 @@ class NewPolicyScreen extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: Color(0xFFFCE4EC), shape: BoxShape.circle),
-                    child: SvgPicture.asset('assets/icons/Capa_1.svg', width: 22, height: 22, colorFilter: const ColorFilter.mode(Color(0xFFE91E63), BlendMode.srcIn)),
+                    padding: const EdgeInsets.all(10),
+                    decoration: const BoxDecoration(
+                        color: Color(0xFFFCE4EC), shape: BoxShape.circle),
+                    child: SvgPicture.asset('assets/icons/Capa_1.svg',
+                        width: 22,
+                        height: 22,
+                        colorFilter: const ColorFilter.mode(
+                            Color(0xFFE91E63), BlendMode.srcIn)),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Protection Plans', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                        Text('Protection Plans',
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color:
+                                    Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 4),
-                        Text('This product caters to both Single Transit and Open Cover Insurance.', style: TextStyle(fontSize: 11, color: Colors.grey[600], height: 1.3)),
+                        Text(
+                            'This product caters to both Single Transit and Open Cover Insurance.',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: _secondaryTextColor(context),
+                                height: 1.3)),
                       ],
                     ),
                   ),
@@ -343,8 +409,14 @@ class NewPolicyScreen extends StatelessWidget {
               right: -20,
               child: Container(
                 padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(color: Color(0xFFFCE4EC), shape: BoxShape.circle),
-                child: SvgPicture.asset('assets/icons/Capa_1.svg', width: 40, height: 40, colorFilter: ColorFilter.mode(const Color(0xFFE91E63).withOpacity(0.3), BlendMode.srcIn)),
+                decoration: const BoxDecoration(
+                    color: Color(0xFFFCE4EC), shape: BoxShape.circle),
+                child: SvgPicture.asset('assets/icons/Capa_1.svg',
+                    width: 40,
+                    height: 40,
+                    colorFilter: ColorFilter.mode(
+                        const Color(0xFFE91E63).withValues(alpha: 0.3),
+                        BlendMode.srcIn)),
               ),
             ),
           ],
@@ -355,13 +427,14 @@ class NewPolicyScreen extends StatelessWidget {
 
   Widget _buildRoyalCareCard(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RoyalCareScreen(isAgent: isAgent))),
+      onTap: () => Navigator.push(context,
+          MaterialPageRoute(builder: (_) => RoyalCareScreen(isAgent: isAgent))),
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
-          color: const Color(0xFFFAFAFA),
+          color: _cardColor(context),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
+          border: Border.all(color: _borderColor(context)),
         ),
         child: Stack(
           children: [
@@ -370,18 +443,32 @@ class NewPolicyScreen extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: Color(0xFFFCE4EC), shape: BoxShape.circle),
-                    child: SvgPicture.asset('assets/icons/svg3474.svg', width: 22, height: 22, colorFilter: const ColorFilter.mode(Color(0xFFE91E63), BlendMode.srcIn)),
+                    padding: const EdgeInsets.all(10),
+                    decoration: const BoxDecoration(
+                        color: Color(0xFFFCE4EC), shape: BoxShape.circle),
+                    child: SvgPicture.asset('assets/icons/svg3474.svg',
+                        width: 22,
+                        height: 22,
+                        colorFilter: const ColorFilter.mode(
+                            Color(0xFFE91E63), BlendMode.srcIn)),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Royal Care', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                        Text('Royal Care',
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color:
+                                    Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 4),
-                        Text('Protect your equipment', style: TextStyle(fontSize: 11, color: Colors.grey[600], height: 1.3)),
+                        Text('Protect your equipment',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: _secondaryTextColor(context),
+                                height: 1.3)),
                       ],
                     ),
                   ),
@@ -394,8 +481,14 @@ class NewPolicyScreen extends StatelessWidget {
               right: -20,
               child: Container(
                 padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(color: Color(0xFFFCE4EC), shape: BoxShape.circle),
-                child: SvgPicture.asset('assets/icons/svg3474.svg', width: 40, height: 40, colorFilter: ColorFilter.mode(const Color(0xFFE91E63).withOpacity(0.3), BlendMode.srcIn)),
+                decoration: const BoxDecoration(
+                    color: Color(0xFFFCE4EC), shape: BoxShape.circle),
+                child: SvgPicture.asset('assets/icons/svg3474.svg',
+                    width: 40,
+                    height: 40,
+                    colorFilter: ColorFilter.mode(
+                        const Color(0xFFE91E63).withValues(alpha: 0.3),
+                        BlendMode.srcIn)),
               ),
             ),
           ],
@@ -406,36 +499,55 @@ class NewPolicyScreen extends StatelessWidget {
 
   Widget _buildUnderwrittenCard(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => UnderwrittenProductsScreen(isAgent: isAgent))),
+      onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => UnderwrittenProductsScreen(isAgent: isAgent))),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFFFAFAFA),
+          color: _cardColor(context),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
+          border: Border.all(color: _borderColor(context)),
         ),
         child: Row(
           children: [
             Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(color: Color(0xFFE8F4FD), shape: BoxShape.circle),
-              child: SvgPicture.asset('assets/icons/Capa_1 (1).svg', width: 22, height: 22, colorFilter: const ColorFilter.mode(Color(0xFF4A90D9), BlendMode.srcIn)),
+              padding: const EdgeInsets.all(10),
+              decoration: const BoxDecoration(
+                  color: Color(0xFFE8F4FD), shape: BoxShape.circle),
+              child: SvgPicture.asset('assets/icons/Capa_1 (1).svg',
+                  width: 22,
+                  height: 22,
+                  colorFilter: const ColorFilter.mode(
+                      Color(0xFF4A90D9), BlendMode.srcIn)),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Underwritten Products', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                  Text('Underwritten Products',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 4),
-                  Text('Lorem ipsum dolor sit amet consectetur.', style: TextStyle(fontSize: 11, color: Colors.grey[600], height: 1.3)),
+                  Text('Lorem ipsum dolor sit amet consectetur.',
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: _secondaryTextColor(context),
+                          height: 1.3)),
                 ],
               ),
             ),
             Container(
               padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.grey[300]!)),
-              child: Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey[400]),
+              decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: _borderColor(context))),
+              child: Icon(Icons.arrow_forward_ios,
+                  size: 12, color: _mutedIconColor(context)),
             ),
           ],
         ),

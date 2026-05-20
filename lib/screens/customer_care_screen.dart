@@ -27,6 +27,10 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
   bool _loading = false;
   List<Map<String, dynamic>> _tickets = [];
 
+  Color get _actionColor => Theme.of(context).brightness == Brightness.dark
+      ? AppTheme.accentOrange
+      : AppTheme.primaryNavy;
+
   final List<Map<String, dynamic>> _categories = [
     {
       'icon': Icons.headset_mic_outlined,
@@ -99,7 +103,9 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           leading: IconButton(
               icon: Icon(Icons.arrow_back,
@@ -113,7 +119,7 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
           centerTitle: true),
       body: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             // Search
@@ -124,8 +130,13 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
                     color: Theme.of(context).colorScheme.onSurface),
                 decoration: InputDecoration(
                     hintText: 'Search help',
-                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-                    suffixIcon: Icon(Icons.search, color: Colors.grey[400]),
+                    hintStyle: TextStyle(
+                        color: ThemeHelper.getSecondaryTextColor(context),
+                        fontSize: 13),
+                    suffixIcon: Icon(Icons.search,
+                        color: ThemeHelper.getSecondaryTextColor(context)),
+                    filled: true,
+                    fillColor: ThemeHelper.getCardColor(context),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide(
@@ -142,24 +153,24 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
                                     : Colors.grey[300]!)),
                     focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: AppTheme.primaryNavy)),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 16, vertical: 12))),
-            SizedBox(height: 24),
+                        borderSide: BorderSide(color: _actionColor)),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12))),
+            const SizedBox(height: 24),
             Text('Select Issue Category',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.onSurface)),
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
             ...List.generate(_categories.length, (i) {
               final c = _categories[i];
               return Padding(
-                  padding: EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: 10),
                   child: _buildCategoryItem(
                       c['icon'], c['title'], c['sub'], c['bg'], c['ic']));
             }),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Text('Recent Tickets',
                   style: TextStyle(
@@ -205,7 +216,7 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
                       style:
                           TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
+                      backgroundColor: _actionColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -234,6 +245,7 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
       bottomNavigationBar: widget.isAgentFlow
           ? buildAgentBottomNav(context, currentIndex: 0)
           : BottomAppBar(
+              color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),
               notchMargin: 4,
               child: SizedBox(
@@ -300,16 +312,17 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
           }
         },
         child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             decoration: BoxDecoration(
                 color: ThemeHelper.getCardColor(context),
-                borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ThemeHelper.getBorderColor(context))),
             child: Row(children: [
               Container(
-                  padding: EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
                   child: Icon(icon, color: ic, size: 22)),
-              SizedBox(width: 14),
+              const SizedBox(width: 14),
               Expanded(
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,7 +337,8 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
                             fontSize: 11,
                             color: ThemeHelper.getSecondaryTextColor(context))),
                   ])),
-              Icon(Icons.chevron_right, color: Colors.grey[400], size: 22),
+              Icon(Icons.chevron_right,
+                  color: ThemeHelper.getSecondaryTextColor(context), size: 22),
             ])));
   }
 
@@ -367,10 +381,11 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
     }
 
     return Container(
-        padding: EdgeInsets.all(14),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
             color: ThemeHelper.getCardColor(context),
-            borderRadius: BorderRadius.circular(12)),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: ThemeHelper.getBorderColor(context))),
         child: Row(children: [
           Expanded(
               child: Column(
@@ -380,7 +395,7 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
                     style: TextStyle(
                         fontSize: 11,
                         color: ThemeHelper.getSecondaryTextColor(context))),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(t['category'] ?? 'Unknown',
                     style: TextStyle(
                         fontSize: 13,
@@ -408,9 +423,16 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
   Widget _nav(IconData i, String l, bool s, VoidCallback? o) => InkWell(
       onTap: o,
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(i, color: s ? AppTheme.primaryNavy : Colors.grey, size: 20),
+        Icon(i,
+            color: s
+                ? AppTheme.bottomNavSelectedColor(context)
+                : AppTheme.bottomNavUnselectedColor(context),
+            size: 20),
         Text(l,
             style: TextStyle(
-                fontSize: 10, color: s ? AppTheme.primaryNavy : Colors.grey))
+                fontSize: 10,
+                color: s
+                    ? AppTheme.bottomNavSelectedColor(context)
+                    : AppTheme.bottomNavUnselectedColor(context)))
       ]));
 }

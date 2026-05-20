@@ -11,22 +11,44 @@ import 'royal_family_care_screen.dart';
 
 class RoyalCareScreen extends StatelessWidget {
   final bool isAgent;
-  
+
   const RoyalCareScreen({super.key, this.isAgent = false});
+
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  Color _cardColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF111827) : const Color(0xFFFAFAFA);
+
+  Color _borderColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF334155) : Colors.grey.shade200;
+
+  Color _secondaryTextColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Royal Care', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text('Royal Care',
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+                fontSize: 18)),
         centerTitle: true,
         actions: [
-          IconButton(icon: Icon(Icons.tune, color: Theme.of(context).colorScheme.onSurface), onPressed: () {}),
+          IconButton(
+              icon: Icon(Icons.tune,
+                  color: Theme.of(context).colorScheme.onSurface),
+              onPressed: () {}),
         ],
       ),
       body: SingleChildScrollView(
@@ -34,58 +56,76 @@ class RoyalCareScreen extends StatelessWidget {
         child: Column(
           children: [
             _buildRoyalCareCard(
+              context,
               title: 'Royal Personal Care',
               subtitle: 'Protect your equipment',
               iconBgColor: const Color(0xFFE8F4FD),
               svgIcon: 'assets/icons/svg3474.svg',
               trailingSvgIcon: 'assets/icons/svg3474.svg',
-              cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalPersonalCareScreen(isFromNewPolicy: true))),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const RoyalPersonalCareScreen(
+                          isFromNewPolicy: true))),
             ),
             const SizedBox(height: 12),
             _buildRoyalCareCard(
+              context,
               title: 'Royal Group Care',
               subtitle: 'Protect your Assets',
               iconBgColor: const Color(0xFFFCE4EC),
               svgIcon: 'assets/icons/Capa_1 2.svg',
               trailingSvgIcon: 'assets/icons/Capa_1 2.svg',
-              cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalGroupCareScreen(isFromNewPolicy: true))),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) =>
+                          const RoyalGroupCareScreen(isFromNewPolicy: true))),
             ),
             const SizedBox(height: 12),
             _buildRoyalCareCard(
+              context,
               title: 'Royal Family Care',
               subtitle: 'Protect your tools',
               iconBgColor: const Color(0xFFFFF5E6),
               svgIcon: 'assets/icons/Layer_1.svg',
               trailingSvgIcon: 'assets/icons/Layer_1.svg',
-              cardBgColor: const Color(0xFFFAFAFA),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RoyalFamilyCareScreen(isFromNewPolicy: true))),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) =>
+                          const RoyalFamilyCareScreen(isFromNewPolicy: true))),
             ),
             const SizedBox(height: 20),
           ],
         ),
       ),
-      floatingActionButton: isAgent ? null : Transform.translate(
-        offset: const Offset(0, 15),
-        child: SizedBox(
-          width: 52,
-          height: 52,
-          child: FloatingActionButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NewPolicyScreen(isAgent: isAgent))),
-            backgroundColor: AppTheme.accentOrange,
-            shape: const CircleBorder(),
-            elevation: 1,
-            child: const Icon(Icons.add, color: Colors.white, size: 30),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: isAgent ? null : FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: isAgent
+          ? null
+          : Transform.translate(
+              offset: const Offset(0, 15),
+              child: SizedBox(
+                width: 52,
+                height: 52,
+                child: FloatingActionButton(
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => NewPolicyScreen(isAgent: isAgent))),
+                  backgroundColor: AppTheme.accentOrange,
+                  shape: const CircleBorder(),
+                  elevation: 1,
+                  child: const Icon(Icons.add, color: Colors.white, size: 30),
+                ),
+              ),
+            ),
+      floatingActionButtonLocation:
+          isAgent ? null : FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: isAgent
           ? BottomNavigationBar(
               type: BottomNavigationBarType.fixed,
-              selectedItemColor: const Color(0xFF1E2D64),
-              unselectedItemColor: Colors.grey,
+              selectedItemColor: AppTheme.bottomNavSelectedColor(context),
+              unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
               currentIndex: 1,
               selectedFontSize: 11,
               unselectedFontSize: 11,
@@ -113,38 +153,55 @@ class RoyalCareScreen extends StatelessWidget {
               ],
             )
           : BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 4,
-        child: SizedBox(
-          height: 44,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(context, Icons.home_outlined, 'Home', false, onTap: () {
-                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
-              }),
-              _buildNavItem(context, Icons.description_outlined, 'Policies', true),
-              const SizedBox(width: 48),
-              _buildNavItem(context, Icons.assignment_outlined, 'Claims', false, onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
-              }),
-              _buildNavItem(context, Icons.person_outline, 'Profile', false, onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
-              }),
-            ],
-          ),
-        ),
-      ),
+              color: AppTheme.bottomNavBackgroundColor(context),
+              shape: const CircularNotchedRectangle(),
+              notchMargin: 4,
+              child: SizedBox(
+                height: 44,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(context, Icons.home_outlined, 'Home', false,
+                        onTap: () {
+                      Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const CustomerDashboardScreen()),
+                          (route) => false);
+                    }),
+                    _buildNavItem(
+                        context, Icons.description_outlined, 'Policies', true),
+                    const SizedBox(width: 48),
+                    _buildNavItem(
+                        context, Icons.assignment_outlined, 'Claims', false,
+                        onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const MyClaimsScreen()));
+                    }),
+                    _buildNavItem(
+                        context, Icons.person_outline, 'Profile', false,
+                        onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const CustomerProfileScreen()));
+                    }),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
-  Widget _buildRoyalCareCard({
+  Widget _buildRoyalCareCard(
+    BuildContext context, {
     required String title,
     required String subtitle,
     required Color iconBgColor,
     required String svgIcon,
     required String trailingSvgIcon,
-    required Color cardBgColor,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -152,9 +209,9 @@ class RoyalCareScreen extends StatelessWidget {
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
-          color: cardBgColor,
+          color: _cardColor(context),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: _borderColor(context)),
         ),
         child: Stack(
           children: [
@@ -170,14 +227,24 @@ class RoyalCareScreen extends StatelessWidget {
                     ),
                     child: SvgPicture.asset(svgIcon, width: 22, height: 22),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
+                        Text(title,
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color:
+                                    Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 2),
-                        Text(subtitle, style: TextStyle(fontSize: 10, color: Colors.grey[600]), maxLines: 2, overflow: TextOverflow.ellipsis),
+                        Text(subtitle,
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: _secondaryTextColor(context)),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   ),
@@ -203,14 +270,25 @@ class RoyalCareScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(BuildContext context, IconData icon, String label, bool isSelected, {VoidCallback? onTap}) {
+  Widget _buildNavItem(
+      BuildContext context, IconData icon, String label, bool isSelected,
+      {VoidCallback? onTap}) {
     return InkWell(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
-          Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+          Icon(icon,
+              color: isSelected
+                  ? AppTheme.bottomNavSelectedColor(context)
+                  : AppTheme.bottomNavUnselectedColor(context),
+              size: 20),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 10,
+                  color: isSelected
+                      ? AppTheme.bottomNavSelectedColor(context)
+                      : AppTheme.bottomNavUnselectedColor(context))),
         ],
       ),
     );

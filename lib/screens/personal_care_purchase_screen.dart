@@ -7,19 +7,26 @@ import '../utils/app_theme.dart';
 import '../utils/occupations.dart';
 import '../widgets/paystack_webview.dart';
 import '../widgets/searchable_dropdown.dart';
-import 'customer_dashboard_screen.dart';
+import 'policy_purchase_success_screen.dart';
 
 class PersonalCarePurchaseScreen extends StatefulWidget {
   final String optionTitle;
   final String price;
   final String productName;
-  const PersonalCarePurchaseScreen({super.key, required this.optionTitle, required this.price, this.productName = 'Royal Personal Care'});
+  const PersonalCarePurchaseScreen(
+      {super.key,
+      required this.optionTitle,
+      required this.price,
+      this.productName = 'Royal Personal Care'});
   @override
-  State<PersonalCarePurchaseScreen> createState() => _PersonalCarePurchaseScreenState();
+  State<PersonalCarePurchaseScreen> createState() =>
+      _PersonalCarePurchaseScreenState();
 }
 
-class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen> {
-  int _currentStep = 0; // 0=NIN verify, 1=socioeconomic, 2=next of kin, 3=summary
+class _PersonalCarePurchaseScreenState
+    extends State<PersonalCarePurchaseScreen> {
+  int _currentStep =
+      0; // 0=NIN verify, 1=socioeconomic, 2=next of kin, 3=summary
 
   // Step 0: NIN
   final _ninController = TextEditingController();
@@ -46,11 +53,43 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
   String? _selectedManualState;
 
   final List<String> _nigerianStates = const [
-    'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue',
-    'Borno', 'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu',
-    'Federal Capital Territory', 'Gombe', 'Imo', 'Jigawa', 'Kaduna', 'Kano',
-    'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos', 'Nasarawa', 'Niger', 'Ogun',
-    'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara',
+    'Abia',
+    'Adamawa',
+    'Akwa Ibom',
+    'Anambra',
+    'Bauchi',
+    'Bayelsa',
+    'Benue',
+    'Borno',
+    'Cross River',
+    'Delta',
+    'Ebonyi',
+    'Edo',
+    'Ekiti',
+    'Enugu',
+    'Federal Capital Territory',
+    'Gombe',
+    'Imo',
+    'Jigawa',
+    'Kaduna',
+    'Kano',
+    'Katsina',
+    'Kebbi',
+    'Kogi',
+    'Kwara',
+    'Lagos',
+    'Nasarawa',
+    'Niger',
+    'Ogun',
+    'Ondo',
+    'Osun',
+    'Oyo',
+    'Plateau',
+    'Rivers',
+    'Sokoto',
+    'Taraba',
+    'Yobe',
+    'Zamfara',
   ];
 
   // Step 1: Socioeconomic
@@ -63,12 +102,31 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
   final _annualIncomeController = TextEditingController();
 
   final List<String> _businessSectors = const [
-    'Agriculture', 'Banking & Finance', 'Construction', 'Education', 'Energy',
-    'Healthcare', 'ICT', 'Manufacturing', 'Mining', 'Oil & Gas',
-    'Real Estate', 'Retail', 'Telecommunications', 'Transportation', 'Others',
+    'Agriculture',
+    'Banking & Finance',
+    'Construction',
+    'Education',
+    'Energy',
+    'Healthcare',
+    'ICT',
+    'Manufacturing',
+    'Mining',
+    'Oil & Gas',
+    'Real Estate',
+    'Retail',
+    'Telecommunications',
+    'Transportation',
+    'Others',
   ];
   final List<String> _qualifications = const [
-    'SSCE/WAEC', 'OND/NCE', 'HND', 'BSc/BA', 'MSc/MA/MBA', 'PhD', 'Professional Cert', 'Others',
+    'SSCE/WAEC',
+    'OND/NCE',
+    'HND',
+    'BSc/BA',
+    'MSc/MA/MBA',
+    'PhD',
+    'Professional Cert',
+    'Others',
   ];
 
   // Step 2: Next of Kin
@@ -79,7 +137,12 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
   bool _consentChecked = false;
 
   final List<String> _relationships = const [
-    'Spouse', 'Parent', 'Child', 'Sibling', 'Friend', 'Others',
+    'Spouse',
+    'Parent',
+    'Child',
+    'Sibling',
+    'Friend',
+    'Others',
   ];
 
   @override
@@ -108,21 +171,24 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
   void _verifyNin() async {
     final nin = _ninController.text.trim();
     if (nin.length != 11 || !RegExp(r'^\d{11}$').hasMatch(nin)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('NIN must be exactly 11 digits (numbers only)')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('NIN must be exactly 11 digits (numbers only)')));
       return;
     }
     setState(() => _isVerifying = true);
 
     try {
-      final response = await http.post(
-        Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'Intcode': 'TESTCODE',
-          'Password': 'royal1234',
-          'number': nin,
-        }),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .post(
+            Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              'Intcode': 'TESTCODE',
+              'Password': 'royal1234',
+              'number': nin,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
 
       print('=== NIN VERIFY RESPONSE: ${response.statusCode} ===');
       print('Body: ${response.body}');
@@ -136,7 +202,9 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
             responseData['data'] != null &&
             responseData['data']['data'] != null &&
             responseData['data']['data']['kyc'] != null &&
-            responseData['data']['data']['kyc']['firstname'] != null && (responseData['data']['data']['kyc']['firstname']?.toString() ?? '').isNotEmpty) {
+            responseData['data']['data']['kyc']['firstname'] != null &&
+            (responseData['data']['data']['kyc']['firstname']?.toString() ?? '')
+                .isNotEmpty) {
           final kyc = responseData['data']['data']['kyc'];
           setState(() {
             _firstName = kyc['firstname']?.toString() ?? '';
@@ -159,31 +227,42 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
             // Try to match NIN state to dropdown value
             final ninState = _state.trim();
             _selectedManualState = _nigerianStates.cast<String?>().firstWhere(
-              (s) => s!.toLowerCase() == ninState.toLowerCase(),
-              orElse: () => null,
-            );
+                  (s) => s!.toLowerCase() == ninState.toLowerCase(),
+                  orElse: () => null,
+                );
           });
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('NIN verified successfully'), backgroundColor: Colors.green));
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('NIN verified successfully'),
+                backgroundColor: Colors.green));
           }
         } else {
           setState(() => _ninFailed = true);
           if (mounted) {
             final kyc = responseData['data']?['data']?['kyc'];
-            final msg = kyc != null ? (kyc['status']?.toString() ?? 'Verification failed. Enter details manually.') : 'NIN not found. Enter details manually.';
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+            final msg = kyc != null
+                ? (kyc['status']?.toString() ??
+                    'Verification failed. Enter details manually.')
+                : 'NIN not found. Enter details manually.';
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(msg)));
           }
         }
       } else {
         setState(() => _ninFailed = true);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Verification failed. Enter details manually.')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Verification failed. Enter details manually.')));
         }
       }
     } catch (e) {
-      setState(() { _isVerifying = false; _ninFailed = true; });
+      setState(() {
+        _isVerifying = false;
+        _ninFailed = true;
+      });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e. Enter details manually.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e. Enter details manually.')));
       }
     }
   }
@@ -212,7 +291,8 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
   Future<void> _initiatePayment() async {
     final email = _email.isNotEmpty ? _email : 'customer@rexinsure.com';
     final premiumAmount = _getBaseAmount();
-    final productCode = widget.productName.toLowerCase().contains('driver') ? 'DP' : 'PC';
+    final productCode =
+        widget.productName.toLowerCase().contains('driver') ? 'DP' : 'PC';
     setState(() => _isPayingNow = true);
     try {
       final result = await PaymentService.initiatePurchase(
@@ -244,41 +324,43 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
       setState(() => _isPayingNow = false);
       if (!mounted) return;
       if (result.success && result.authorizationUrl != null) {
-        final res = await Navigator.push<PaymentVerifyResult>(context, MaterialPageRoute(builder: (_) => PaystackWebView(url: result.authorizationUrl!)));
+        final res = await Navigator.push<PaymentVerifyResult>(
+            context,
+            MaterialPageRoute(
+                builder: (_) =>
+                    PaystackWebView(url: result.authorizationUrl!)));
         if (res != null && res.success && mounted) {
-          showDialog(context: context, barrierDismissible: false, builder: (_) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            content: Column(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.check_circle, color: Colors.green, size: 60),
-              const SizedBox(height: 16),
-              const Text('Purchase Successful', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Text('${widget.productName} ${widget.optionTitle}', style: TextStyle(fontSize: 13, color: Colors.grey[600])),
-              if (res.reference != null && res.reference!.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text('Ref: ${res.reference}', style: TextStyle(fontSize: 11, color: Colors.grey[500])),
-              ],
-              if (res.message != null) ...[
-                const SizedBox(height: 8),
-                Text(res.message!, style: TextStyle(fontSize: 12, color: Colors.green[700])),
-              ],
-              const SizedBox(height: 20),
-              SizedBox(width: double.infinity, child: ElevatedButton(
-                onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/user-portal', (r) => false),
-                style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                child: const Text('Home', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              )),
-            ]),
-          ));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PolicyPurchaseSuccessScreen(
+                reference: res.reference,
+                message: res.message,
+                accountData: {
+                  'firstName': _firstName,
+                  'lastName': _lastName,
+                  'email': email,
+                  'phone': _phone,
+                  'occupation': _occupationController.text.trim(),
+                },
+              ),
+            ),
+          );
         } else if (res != null && !res.success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res.message ?? 'Payment verification failed'), backgroundColor: Colors.red));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(res.message ?? 'Payment verification failed'),
+              backgroundColor: Colors.red));
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.message ?? 'Payment failed'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(result.message ?? 'Payment failed'),
+            backgroundColor: Colors.red));
       }
     } catch (e) {
       setState(() => _isPayingNow = false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
     }
   }
 
@@ -287,11 +369,25 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () {
-          if (_currentStep > 0) { setState(() => _currentStep--); } else { Navigator.pop(context); }
-        }),
-        title: Text(_currentStep == 3 ? '${widget.productName} summary' : widget.productName,
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)), centerTitle: true,
+        leading: IconButton(
+            icon: Icon(Icons.arrow_back,
+                color: Theme.of(context).colorScheme.onSurface),
+            onPressed: () {
+              if (_currentStep > 0) {
+                setState(() => _currentStep--);
+              } else {
+                Navigator.pop(context);
+              }
+            }),
+        title: Text(
+            _currentStep == 3
+                ? '${widget.productName} summary'
+                : widget.productName,
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+                fontSize: 16)),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -310,24 +406,47 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
   Widget _buildStepIndicator() {
     const totalSteps = 4;
     final currentStepNum = _currentStep + 1;
-    final stepLabel = _currentStep == 0 ? 'Mode of Identification'
-        : _currentStep == 1 ? 'Socioeconomic Information'
-        : _currentStep == 2 ? 'Next of Kin / Beneficiary Info'
-        : 'Summary';
+    final stepLabel = _currentStep == 0
+        ? 'Mode of Identification'
+        : _currentStep == 1
+            ? 'Socioeconomic Information'
+            : _currentStep == 2
+                ? 'Next of Kin / Beneficiary Info'
+                : 'Summary';
     final filledCount = currentStepNum;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
       child: Column(children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('Step $currentStepNum of $totalSteps', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
-          Flexible(child: Text(stepLabel, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface), textAlign: TextAlign.right)),
+          Text('Step $currentStepNum of $totalSteps',
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primaryNavy)),
+          Flexible(
+              child: Text(stepLabel,
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface),
+                  textAlign: TextAlign.right)),
         ]),
         const SizedBox(height: 8),
-        Row(children: List.generate(totalSteps, (i) => Expanded(child: Container(
-          height: 3, margin: EdgeInsets.only(right: i < totalSteps - 1 ? 4 : 0),
-          decoration: BoxDecoration(color: i < filledCount ? AppTheme.primaryNavy : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
-        )))),
+        Row(
+            children: List.generate(
+                totalSteps,
+                (i) => Expanded(
+                        child: Container(
+                      height: 3,
+                      margin:
+                          EdgeInsets.only(right: i < totalSteps - 1 ? 4 : 0),
+                      decoration: BoxDecoration(
+                          color: i < filledCount
+                              ? AppTheme.primaryNavy
+                              : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2)),
+                    )))),
       ]),
     );
   }
@@ -337,7 +456,11 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Enter mode of Identification', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
+        Text('Enter mode of Identification',
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.onSurface)),
         SizedBox(height: 10),
         TextField(
           controller: _ninController,
@@ -345,54 +468,118 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
           maxLength: 11,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           onChanged: (_) => setState(() {}),
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
           decoration: InputDecoration(
-            hintText: 'Enter your NIN (11 digits)', hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-            filled: true, fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white, counterText: '',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            hintText: 'Enter your NIN (11 digits)',
+            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+            filled: true,
+            fillColor: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1E1E1E)
+                : Colors.white,
+            counterText: '',
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[700]!
+                        : Colors.grey[300]!)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[700]!
+                        : Colors.grey[300]!)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide:
+                    const BorderSide(color: AppTheme.primaryNavy, width: 2)),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
         if (!_ninFailed && !_ninVerified) ...[
           const SizedBox(height: 40),
-          SizedBox(width: double.infinity, child: ElevatedButton(
-            onPressed: _isVerifying || _ninController.text.trim().length != 11 ? null : _verifyNin,
-            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
-            child: _isVerifying
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Verify', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          )),
+          SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed:
+                    _isVerifying || _ninController.text.trim().length != 11
+                        ? null
+                        : _verifyNin,
+                style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? AppTheme.accentOrange
+                            : AppTheme.primaryNavy,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    disabledBackgroundColor:
+                        AppTheme.disabledButtonColor(context),
+                    disabledForegroundColor:
+                        AppTheme.disabledButtonTextColor(context)),
+                child: _isVerifying
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Text('Verify',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600)),
+              )),
         ],
         if (_ninVerified) ...[
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.green[50], borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.green[200]!)),
+            decoration: BoxDecoration(
+                color: Colors.green[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green[200]!)),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Icon(Icons.check_circle, size: 16, color: Colors.green[700]),
               const SizedBox(width: 8),
-              Expanded(child: Text('NIN Verified — review and adjust details below', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.green[700]))),
+              Expanded(
+                  child: Text('NIN Verified — review and adjust details below',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.green[700]))),
             ]),
           ),
           const SizedBox(height: 16),
-          _label('First Name *'), const SizedBox(height: 6),
-          _textField('first name', _manualFirstNameController, autofillHints: [AutofillHints.givenName]),
+          _label('First Name *'),
+          const SizedBox(height: 6),
+          _textField('first name', _manualFirstNameController,
+              autofillHints: [AutofillHints.givenName]),
           const SizedBox(height: 12),
-          _label('Last Name *'), const SizedBox(height: 6),
-          _textField('last name', _manualLastNameController, autofillHints: [AutofillHints.familyName]),
+          _label('Last Name *'),
+          const SizedBox(height: 6),
+          _textField('last name', _manualLastNameController,
+              autofillHints: [AutofillHints.familyName]),
           const SizedBox(height: 12),
-          _label('Email *'), const SizedBox(height: 6),
-          _textField('email', _manualEmailController, keyboardType: TextInputType.emailAddress, autofillHints: [AutofillHints.email]),
+          _label('Email *'),
+          const SizedBox(height: 6),
+          _textField('email', _manualEmailController,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: [AutofillHints.email]),
           const SizedBox(height: 12),
-          _label('Phone Number *'), const SizedBox(height: 6),
-          _textField('phone number', _manualPhoneController, keyboardType: TextInputType.phone, autofillHints: [AutofillHints.telephoneNumber]),
+          _label('Phone Number *'),
+          const SizedBox(height: 6),
+          _textField('phone number', _manualPhoneController,
+              keyboardType: TextInputType.phone,
+              autofillHints: [AutofillHints.telephoneNumber]),
           const SizedBox(height: 12),
-          _label('Address'), const SizedBox(height: 6),
-          _textField('address', _manualAddressController, maxLines: 2, autofillHints: [AutofillHints.streetAddressLine1]),
+          _label('Address'),
+          const SizedBox(height: 6),
+          _textField('address', _manualAddressController,
+              maxLines: 2, autofillHints: [AutofillHints.streetAddressLine1]),
           const SizedBox(height: 12),
-          _label('State'), const SizedBox(height: 6),
+          _label('State'),
+          const SizedBox(height: 6),
           SearchableDropdown(
             hint: 'select state',
             value: _selectedManualState,
@@ -400,57 +587,93 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
             onChanged: (v) => setState(() => _selectedManualState = v),
           ),
           const SizedBox(height: 24),
-          SizedBox(width: double.infinity, child: ElevatedButton(
-            onPressed: _manualFirstNameController.text.trim().isNotEmpty &&
-                _manualLastNameController.text.trim().isNotEmpty &&
-                _manualEmailController.text.trim().isNotEmpty &&
-                RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(_manualEmailController.text.trim()) &&
-                _manualPhoneController.text.trim().isNotEmpty
-                ? () {
-                    setState(() {
-                      _firstName = _manualFirstNameController.text.trim();
-                      _lastName = _manualLastNameController.text.trim();
-                      _email = _manualEmailController.text.trim();
-                      _emailController.text = _email;
-                      _phone = _manualPhoneController.text.trim();
-                      _address = _manualAddressController.text.trim();
-                      _state = _selectedManualState ?? '';
-                      _currentStep = 1;
-                    });
-                  }
-                : null,
-            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
-            child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          )),
+          SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _manualFirstNameController.text.trim().isNotEmpty &&
+                        _manualLastNameController.text.trim().isNotEmpty &&
+                        _manualEmailController.text.trim().isNotEmpty &&
+                        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+                            .hasMatch(_manualEmailController.text.trim()) &&
+                        _manualPhoneController.text.trim().isNotEmpty
+                    ? () {
+                        setState(() {
+                          _firstName = _manualFirstNameController.text.trim();
+                          _lastName = _manualLastNameController.text.trim();
+                          _email = _manualEmailController.text.trim();
+                          _emailController.text = _email;
+                          _phone = _manualPhoneController.text.trim();
+                          _address = _manualAddressController.text.trim();
+                          _state = _selectedManualState ?? '';
+                          _currentStep = 1;
+                        });
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? AppTheme.accentOrange
+                            : AppTheme.primaryNavy,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    disabledBackgroundColor:
+                        AppTheme.disabledButtonColor(context),
+                    disabledForegroundColor:
+                        AppTheme.disabledButtonTextColor(context)),
+                child: const Text('Continue',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              )),
         ],
         if (_ninFailed) ...[
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.orange[50], borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(
+                color: Colors.orange[50],
+                borderRadius: BorderRadius.circular(8)),
             child: Row(children: [
               Icon(Icons.info_outline, size: 16, color: Colors.orange[700]),
               const SizedBox(width: 8),
-              Expanded(child: Text('NIN verification failed. Please enter your details manually.', style: TextStyle(fontSize: 12, color: Colors.orange[700]))),
+              Expanded(
+                  child: Text(
+                      'NIN verification failed. Please enter your details manually.',
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.orange[700]))),
             ]),
           ),
           const SizedBox(height: 16),
-          _label('First Name *'), const SizedBox(height: 6),
-          _textField('enter first name', _manualFirstNameController, autofillHints: [AutofillHints.givenName]),
+          _label('First Name *'),
+          const SizedBox(height: 6),
+          _textField('enter first name', _manualFirstNameController,
+              autofillHints: [AutofillHints.givenName]),
           const SizedBox(height: 12),
-          _label('Last Name *'), const SizedBox(height: 6),
-          _textField('enter last name', _manualLastNameController, autofillHints: [AutofillHints.familyName]),
+          _label('Last Name *'),
+          const SizedBox(height: 6),
+          _textField('enter last name', _manualLastNameController,
+              autofillHints: [AutofillHints.familyName]),
           const SizedBox(height: 12),
-          _label('Email *'), const SizedBox(height: 6),
-          _textField('enter email', _manualEmailController, keyboardType: TextInputType.emailAddress, autofillHints: [AutofillHints.email]),
+          _label('Email *'),
+          const SizedBox(height: 6),
+          _textField('enter email', _manualEmailController,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: [AutofillHints.email]),
           const SizedBox(height: 12),
-          _label('Phone Number *'), const SizedBox(height: 6),
-          _textField('enter phone number', _manualPhoneController, keyboardType: TextInputType.phone, autofillHints: [AutofillHints.telephoneNumber]),
+          _label('Phone Number *'),
+          const SizedBox(height: 6),
+          _textField('enter phone number', _manualPhoneController,
+              keyboardType: TextInputType.phone,
+              autofillHints: [AutofillHints.telephoneNumber]),
           const SizedBox(height: 12),
-          _label('Address'), const SizedBox(height: 6),
-          _textField('enter address', _manualAddressController, maxLines: 2, autofillHints: [AutofillHints.streetAddressLine1]),
+          _label('Address'),
+          const SizedBox(height: 6),
+          _textField('enter address', _manualAddressController,
+              maxLines: 2, autofillHints: [AutofillHints.streetAddressLine1]),
           const SizedBox(height: 12),
-          _label('State'), const SizedBox(height: 6),
+          _label('State'),
+          const SizedBox(height: 6),
           SearchableDropdown(
             hint: 'select state',
             value: _selectedManualState,
@@ -458,35 +681,66 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
             onChanged: (v) => setState(() => _selectedManualState = v),
           ),
           const SizedBox(height: 24),
-          SizedBox(width: double.infinity, child: ElevatedButton(
-            onPressed: _manualFirstNameController.text.trim().isNotEmpty &&
-                _manualLastNameController.text.trim().isNotEmpty &&
-                _manualEmailController.text.trim().isNotEmpty &&
-                RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(_manualEmailController.text.trim()) &&
-                _manualPhoneController.text.trim().isNotEmpty
-                ? () {
-                    setState(() {
-                      _firstName = _manualFirstNameController.text.trim();
-                      _lastName = _manualLastNameController.text.trim();
-                      _email = _manualEmailController.text.trim();
-                      _emailController.text = _email;
-                      _phone = _manualPhoneController.text.trim();
-                      _address = _manualAddressController.text.trim();
-                      _state = _selectedManualState ?? '';
-                      _currentStep = 1;
-                    });
-                  }
-                : null,
-            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
-            child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          )),
+          SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _manualFirstNameController.text.trim().isNotEmpty &&
+                        _manualLastNameController.text.trim().isNotEmpty &&
+                        _manualEmailController.text.trim().isNotEmpty &&
+                        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+                            .hasMatch(_manualEmailController.text.trim()) &&
+                        _manualPhoneController.text.trim().isNotEmpty
+                    ? () {
+                        setState(() {
+                          _firstName = _manualFirstNameController.text.trim();
+                          _lastName = _manualLastNameController.text.trim();
+                          _email = _manualEmailController.text.trim();
+                          _emailController.text = _email;
+                          _phone = _manualPhoneController.text.trim();
+                          _address = _manualAddressController.text.trim();
+                          _state = _selectedManualState ?? '';
+                          _currentStep = 1;
+                        });
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? AppTheme.accentOrange
+                            : AppTheme.primaryNavy,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    disabledBackgroundColor:
+                        AppTheme.disabledButtonColor(context),
+                    disabledForegroundColor:
+                        AppTheme.disabledButtonTextColor(context)),
+                child: const Text('Continue',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              )),
         ],
         const SizedBox(height: 12),
-        SizedBox(width: double.infinity, child: OutlinedButton(
-          onPressed: () => Navigator.pop(context),
-          style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-          child: const Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        )),
+        SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                  foregroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : AppTheme.primaryNavy,
+                  side: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : AppTheme.primaryNavy),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8))),
+              child: const Text('Back',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            )),
       ]),
     );
   }
@@ -500,7 +754,9 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
         if (needsEmail) ...[
           _label('Email Address *'),
           const SizedBox(height: 6),
-          _textField('enter your email address', _emailController, keyboardType: TextInputType.emailAddress, autofillHints: [AutofillHints.email]),
+          _textField('enter your email address', _emailController,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: [AutofillHints.email]),
           const SizedBox(height: 16),
         ],
         _label('Occupation'),
@@ -517,7 +773,11 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
         const SizedBox(height: 16),
         _label('Business Sector'),
         const SizedBox(height: 6),
-        _dropdown('select your business sector', _selectedBusinessSector, _businessSectors, (v) => setState(() => _selectedBusinessSector = v)),
+        _dropdown(
+            'select your business sector',
+            _selectedBusinessSector,
+            _businessSectors,
+            (v) => setState(() => _selectedBusinessSector = v)),
         const SizedBox(height: 16),
         _label('Tax Identification No.'),
         const SizedBox(height: 6),
@@ -525,28 +785,60 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
         const SizedBox(height: 16),
         _label('Highest Academic Qualification *'),
         const SizedBox(height: 6),
-        _dropdown('select', _selectedQualification, _qualifications, (v) => setState(() => _selectedQualification = v)),
+        _dropdown('select', _selectedQualification, _qualifications,
+            (v) => setState(() => _selectedQualification = v)),
         const SizedBox(height: 16),
         _label('Average Annual Income'),
         const SizedBox(height: 6),
-        _textField('e.g 23,000,000.00', _annualIncomeController, keyboardType: TextInputType.number),
+        _textField('e.g 23,000,000.00', _annualIncomeController,
+            keyboardType: TextInputType.number),
         const SizedBox(height: 40),
-        SizedBox(width: double.infinity, child: ElevatedButton(
-          onPressed: _selectedQualification != null &&
-              _emailController.text.trim().isNotEmpty
-              ? () {
-                  _email = _emailController.text.trim();
-                  setState(() => _currentStep = 2);
-                } : null,
-          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
-          child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        )),
+        SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _selectedQualification != null &&
+                      _emailController.text.trim().isNotEmpty
+                  ? () {
+                      _email = _emailController.text.trim();
+                      setState(() => _currentStep = 2);
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? AppTheme.accentOrange
+                          : AppTheme.primaryNavy,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  disabledBackgroundColor:
+                      AppTheme.disabledButtonColor(context),
+                  disabledForegroundColor:
+                      AppTheme.disabledButtonTextColor(context)),
+              child: const Text('Continue',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            )),
         const SizedBox(height: 12),
-        SizedBox(width: double.infinity, child: OutlinedButton(
-          onPressed: () => setState(() => _currentStep = 0),
-          style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-          child: const Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        )),
+        SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => setState(() => _currentStep = 0),
+              style: OutlinedButton.styleFrom(
+                  foregroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : AppTheme.primaryNavy,
+                  side: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : AppTheme.primaryNavy),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8))),
+              child: const Text('Back',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            )),
       ]),
     );
   }
@@ -566,37 +858,78 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
         const SizedBox(height: 16),
         _label('Phone Number *'),
         const SizedBox(height: 6),
-        _textField('enter phone number', _nokPhoneController, keyboardType: TextInputType.phone),
+        _textField('enter phone number', _nokPhoneController,
+            keyboardType: TextInputType.phone),
         const SizedBox(height: 16),
         _label('Relationship *'),
         const SizedBox(height: 6),
-        _dropdown('select the type of relationship', _selectedRelationship, _relationships, (v) => setState(() => _selectedRelationship = v)),
+        _dropdown('select the type of relationship', _selectedRelationship,
+            _relationships, (v) => setState(() => _selectedRelationship = v)),
         const SizedBox(height: 20),
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(width: 24, height: 24, child: Checkbox(
-            value: _consentChecked,
-            onChanged: (v) => setState(() => _consentChecked = v ?? false),
-            activeColor: AppTheme.primaryNavy,
-          )),
+          SizedBox(
+              width: 24,
+              height: 24,
+              child: Checkbox(
+                value: _consentChecked,
+                onChanged: (v) => setState(() => _consentChecked = v ?? false),
+                activeColor: AppTheme.primaryNavy,
+              )),
           const SizedBox(width: 8),
-          Expanded(child: Text(
-            'I hereby consent to the collection, processing, use and the transfer of personal data to third parties (within or outside Nigeria), for the performance of this contract and any other data processing activities which may arise therefrom between myself and Rex Insurance Company Ltd (Rex Insurance). I affirm that I am aware and take cognizance of my rights under the relevant Data Protection Laws in Nigeria and other terms detailed in the Data Protection and Privacy Policy of Rex Insurance available on our policy.\nI authorize and consent that any person who may be in possession of, or hereafter acquire, any information pertaining to my records may disclose such information to Rex Insurance.',
-            style: TextStyle(fontSize: 10, color: Colors.grey[700], height: 1.4),
+          Expanded(
+              child: Text(
+            'I hereby consent to the collection, processing, use and the transfer of personal data to third parties (within or outside Nigeria), for the performance of this contract and any other data processing activities which may arise therefrom between myself and Rex Insurance Limited (Rex Insurance). I affirm that I am aware and take cognizance of my rights under the relevant Data Protection Laws in Nigeria and other terms detailed in the Data Protection and Privacy Policy of Rex Insurance available on our policy.\nI authorize and consent that any person who may be in possession of, or hereafter acquire, any information pertaining to my records may disclose such information to Rex Insurance.',
+            style:
+                TextStyle(fontSize: 10, color: Colors.grey[700], height: 1.4),
           )),
         ]),
         const SizedBox(height: 30),
-        SizedBox(width: double.infinity, child: ElevatedButton(
-          onPressed: _nokNameController.text.trim().isNotEmpty && _nokAddressController.text.trim().isNotEmpty && _nokPhoneController.text.trim().isNotEmpty && _selectedRelationship != null && _consentChecked
-              ? () => setState(() => _currentStep = 3) : null,
-          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
-          child: const Text('Submit', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        )),
+        SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _nokNameController.text.trim().isNotEmpty &&
+                      _nokAddressController.text.trim().isNotEmpty &&
+                      _nokPhoneController.text.trim().isNotEmpty &&
+                      _selectedRelationship != null &&
+                      _consentChecked
+                  ? () => setState(() => _currentStep = 3)
+                  : null,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? AppTheme.accentOrange
+                          : AppTheme.primaryNavy,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  disabledBackgroundColor:
+                      AppTheme.disabledButtonColor(context),
+                  disabledForegroundColor:
+                      AppTheme.disabledButtonTextColor(context)),
+              child: const Text('Submit',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            )),
         const SizedBox(height: 12),
-        SizedBox(width: double.infinity, child: OutlinedButton(
-          onPressed: () => setState(() => _currentStep = 1),
-          style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-          child: const Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        )),
+        SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => setState(() => _currentStep = 1),
+              style: OutlinedButton.styleFrom(
+                  foregroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : AppTheme.primaryNavy,
+                  side: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : AppTheme.primaryNavy),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8))),
+              child: const Text('Back',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            )),
       ]),
     );
   }
@@ -607,7 +940,8 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
       padding: const EdgeInsets.all(24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _summarySection('Payment Information', [
-          _summaryRow('Product', '${widget.productName} ${widget.optionTitle}', singleLine: true),
+          _summaryRow('Product', '${widget.productName} ${widget.optionTitle}',
+              singleLine: true),
           _summaryRow('Price', widget.price),
           _summaryRow('Paystack Charges', _formatNaira(_getPaystackCharge())),
           _summaryRow('Total', _formatNaira(_getTotalAmount())),
@@ -629,7 +963,8 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
           _summaryRow('Occupation', _occupationController.text),
           _summaryRow('Business Sector', _selectedBusinessSector ?? ''),
           _summaryRow('Tax Identification No', _tinController.text),
-          _summaryRow('Highest Academic Qualification', _selectedQualification ?? ''),
+          _summaryRow(
+              'Highest Academic Qualification', _selectedQualification ?? ''),
           _summaryRow('Average Annual Income', _annualIncomeController.text),
         ]),
         const SizedBox(height: 20),
@@ -640,25 +975,52 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
           _summaryRow('Relationship', _selectedRelationship ?? ''),
         ]),
         const SizedBox(height: 30),
-        SizedBox(width: double.infinity, child: ElevatedButton(
-          onPressed: _isPayingNow ? null : _initiatePayment,
-          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-          child: _isPayingNow
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Text('Pay Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        )),
+        SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isPayingNow ? null : _initiatePayment,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? AppTheme.accentOrange
+                          : AppTheme.primaryNavy,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8))),
+              child: _isPayingNow
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Text('Pay Now',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            )),
         const SizedBox(height: 20),
       ]),
     );
   }
 
   Widget _summarySection(String title, List<Widget> rows) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF111827) : Colors.grey[50]!;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[200]!;
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
+      decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+        Text(title,
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 12),
         ...rows,
       ]),
@@ -666,12 +1028,26 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
   }
 
   Widget _summaryRow(String label, String value, {bool singleLine = false}) {
+    final labelColor = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFCBD5E1)
+        : Colors.grey[600]!;
+
     return Padding(
       padding: EdgeInsets.only(bottom: 10),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(flex: 2, child: Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600]))),
+        Expanded(
+            flex: 2,
+            child:
+                Text(label, style: TextStyle(fontSize: 12, color: labelColor))),
         SizedBox(width: 8),
-        Expanded(flex: 3, child: Text(value.isNotEmpty ? value : '-', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface), textAlign: TextAlign.right)),
+        Expanded(
+            flex: 3,
+            child: Text(value.isNotEmpty ? value : '-',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurface),
+                textAlign: TextAlign.right)),
       ]),
     );
   }
@@ -679,58 +1055,111 @@ class _PersonalCarePurchaseScreenState extends State<PersonalCarePurchaseScreen>
   Widget _label(String text) {
     if (text.endsWith('*')) {
       final clean = text.substring(0, text.length - 1).trimRight();
-      return RichText(text: TextSpan(style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface), children: [
-        TextSpan(text: clean),
-        const TextSpan(text: ' *', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
-      ]));
+      return RichText(
+          text: TextSpan(
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).colorScheme.onSurface),
+              children: [
+            TextSpan(text: clean),
+            const TextSpan(
+                text: ' *',
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+          ]));
     }
-    return Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface));
+    return Text(text,
+        style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).colorScheme.onSurface));
   }
 
-  Widget _textField(String hint, TextEditingController controller, {TextInputType? keyboardType, int maxLines = 1, List<String>? autofillHints}) {
+  Widget _textField(String hint, TextEditingController controller,
+      {TextInputType? keyboardType,
+      int maxLines = 1,
+      List<String>? autofillHints}) {
     String? errorText;
-    if (keyboardType == TextInputType.emailAddress && controller.text.trim().isNotEmpty) {
-      final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-      if (!emailRegex.hasMatch(controller.text.trim())) errorText = 'Enter a valid email address';
+    if (keyboardType == TextInputType.emailAddress &&
+        controller.text.trim().isNotEmpty) {
+      final emailRegex =
+          RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+      if (!emailRegex.hasMatch(controller.text.trim()))
+        errorText = 'Enter a valid email address';
     }
-    if (keyboardType == TextInputType.phone && controller.text.trim().isNotEmpty) {
+    if (keyboardType == TextInputType.phone &&
+        controller.text.trim().isNotEmpty) {
       final cleaned = controller.text.replaceAll(RegExp(r'[^0-9+]'), '');
-      if (cleaned.length < 10 || cleaned.length > 15) errorText = 'Enter a valid phone number';
+      if (cleaned.length < 10 || cleaned.length > 15)
+        errorText = 'Enter a valid phone number';
     }
     return TextField(
-      controller: controller, keyboardType: keyboardType, maxLines: maxLines,
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
       onChanged: (_) => setState(() {}),
       autofillHints: autofillHints,
-      style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
+      style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
       decoration: InputDecoration(
-        hintText: hint, hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
         errorText: errorText,
         errorStyle: TextStyle(fontSize: 11),
-        filled: true, fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 2)),
-        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.red, width: 1.5)),
-        focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.red, width: 2)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        filled: true,
+        fillColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1E1E1E)
+            : Colors.white,
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[700]!
+                    : Colors.grey[300]!)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[700]!
+                    : Colors.grey[300]!)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide:
+                const BorderSide(color: AppTheme.primaryNavy, width: 2)),
+        errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Colors.red, width: 1.5)),
+        focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Colors.red, width: 2)),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),
     );
   }
 
-  Widget _dropdown(String hint, String? value, List<String> items, ValueChanged<String?> onChanged) {
+  Widget _dropdown(String hint, String? value, List<String> items,
+      ValueChanged<String?> onChanged) {
     return Container(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey[300]!)),
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey[300]!)),
       child: DropdownButtonFormField<String>(
         value: value,
-        hint: Text(hint, style: TextStyle(color: Colors.grey[400], fontSize: 13)),
-        style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
-        decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
+        hint:
+            Text(hint, style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+        style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
+        decoration: const InputDecoration(
+            border: InputBorder.none,
+            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
         icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
-        items: items.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+        items: items
+            .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+            .toList(),
         onChanged: onChanged,
       ),
     );
   }
 }
-
-

@@ -98,7 +98,7 @@ class _CustomerRenewalScreenState extends State<CustomerRenewalScreen> {
                               policyNumber: value)));
                 },
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
+                    backgroundColor: AppTheme.primaryNavy,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -128,6 +128,7 @@ class _CustomerRenewalScreenState extends State<CustomerRenewalScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
+        color: AppTheme.bottomNavBackgroundColor(context),
         shape: const CircularNotchedRectangle(),
         notchMargin: 4,
         child: SizedBox(

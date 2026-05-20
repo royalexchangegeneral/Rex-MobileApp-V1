@@ -384,7 +384,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                     ElevatedButton(
                         onPressed: () => _callAgent(),
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
+                            backgroundColor: AppTheme.primaryNavy,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8))),
@@ -414,6 +414,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
+        color: AppTheme.bottomNavBackgroundColor(context),
         shape: const CircularNotchedRectangle(),
         notchMargin: 4,
         child: SizedBox(
@@ -626,11 +627,16 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       },
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Icon(icon,
-            color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
+            color: isSelected
+                ? AppTheme.bottomNavSelectedColor(context)
+                : AppTheme.bottomNavUnselectedColor(context),
+            size: 20),
         Text(label,
             style: TextStyle(
                 fontSize: 10,
-                color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+                color: isSelected
+                    ? AppTheme.bottomNavSelectedColor(context)
+                    : AppTheme.bottomNavUnselectedColor(context))),
       ]),
     );
   }

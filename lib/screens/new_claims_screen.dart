@@ -146,7 +146,8 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
 
       for (final photo in _photos) {
         final length = await photo.length();
-        print('=== UPLOADING PHOTO: ${photo.path} (${(length / (1024 * 1024)).toStringAsFixed(2)} MB)');
+        print(
+            '=== UPLOADING PHOTO: ${photo.path} (${(length / (1024 * 1024)).toStringAsFixed(2)} MB)');
         request.files
             .add(await http.MultipartFile.fromPath('Files[]', photo.path));
       }
@@ -156,7 +157,8 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
       print('Files: ${request.files.length}');
 
       final streamed = await request.send().timeout(_claimUploadTimeout);
-      final response = await http.Response.fromStream(streamed).timeout(_claimUploadTimeout);
+      final response =
+          await http.Response.fromStream(streamed).timeout(_claimUploadTimeout);
 
       final errorMessage =
           'Failed to submit claim: ${response.statusCode} ${response.reasonPhrase ?? ''}'
@@ -195,8 +197,8 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
         final message = e is SocketException
             ? 'Network error. Please check your connection.'
             : 'Error: $e';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(message), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message), backgroundColor: Colors.red));
       }
     }
     if (mounted) setState(() => _submitting = false);
@@ -386,6 +388,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
       bottomNavigationBar: widget.isAgentFlow
           ? buildAgentBottomNav(context, currentIndex: 1)
           : BottomAppBar(
+              color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),
               notchMargin: 4,
               child: SizedBox(
@@ -1094,11 +1097,16 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
       onTap: onTap,
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Icon(icon,
-            color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
+            color: isSelected
+                ? AppTheme.bottomNavSelectedColor(context)
+                : AppTheme.bottomNavUnselectedColor(context),
+            size: 20),
         Text(label,
             style: TextStyle(
                 fontSize: 10,
-                color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+                color: isSelected
+                    ? AppTheme.bottomNavSelectedColor(context)
+                    : AppTheme.bottomNavUnselectedColor(context))),
       ]),
     );
   }

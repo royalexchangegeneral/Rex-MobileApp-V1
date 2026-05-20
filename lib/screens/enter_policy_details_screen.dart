@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -208,6 +209,9 @@ class _EnterPolicyDetailsScreenState extends State<EnterPolicyDetailsScreen> {
             final loginData = json.decode(loginR.body);
             final authenticated = await _authenticateUser(email, password);
             if (authenticated) {
+              // Notify the platform to save credentials to Keychain / password manager
+              TextInput.finishAutofillContext();
+
               // Clear signup data
               for (final key in [
                 'signup_first_name',
@@ -461,12 +465,18 @@ class _EnterPolicyDetailsScreenState extends State<EnterPolicyDetailsScreen> {
                                   ? _handleContinue
                                   : null,
                           style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
+                              backgroundColor: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? AppTheme.accentOrange
+                                  : AppTheme.primaryNavy,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),
                               elevation: 0,
-                              disabledBackgroundColor: Colors.grey[300]),
+                              disabledBackgroundColor:
+                                  AppTheme.disabledButtonColor(context),
+                              disabledForegroundColor:
+                                  AppTheme.disabledButtonTextColor(context)),
                           child: _isCreating
                               ? const SizedBox(
                                   width: 24,

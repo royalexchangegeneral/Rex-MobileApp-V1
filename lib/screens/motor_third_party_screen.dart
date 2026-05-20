@@ -121,14 +121,13 @@ class MotorThirdPartyScreen extends StatelessWidget {
               ),
             ],
           ),
-
-
         ],
       ),
     );
   }
 
-  Widget _buildInsuranceCard(String imagePath, int index, BuildContext context) {
+  Widget _buildInsuranceCard(
+      String imagePath, int index, BuildContext context) {
     // Only show overlay on first card (index 0)
     if (index == 0) {
       return Container(
@@ -210,7 +209,8 @@ class MotorThirdPartyScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const PrivateCarPurchaseScreen(isLoggedIn: true),
+                        builder: (context) =>
+                            const PrivateCarPurchaseScreen(isLoggedIn: true),
                       ),
                     );
                   },

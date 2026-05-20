@@ -49,13 +49,17 @@ class MotorInsuranceScreen extends StatelessWidget {
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            Image.asset('assets/images/t0.png', fit: BoxFit.cover),
+                            Image.asset('assets/images/t0.png',
+                                fit: BoxFit.cover),
                             Container(
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
-                                  colors: [Colors.black.withOpacity(0.2), Colors.black.withOpacity(0.5)],
+                                  colors: [
+                                    Colors.black.withOpacity(0.2),
+                                    Colors.black.withOpacity(0.5)
+                                  ],
                                 ),
                               ),
                             ),
@@ -68,11 +72,21 @@ class MotorInsuranceScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Motor Insurance', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                            Text('Motor Insurance',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface)),
                             SizedBox(height: 8),
                             Text(
                               'This policy covers the third party against bodily injury and death resulting from a car accident caused by the insured the legal liability of the insured where damage was caused to another person\'s property',
-                              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface, height: 1.4),
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                  height: 1.4),
                             ),
                           ],
                         ),
@@ -87,7 +101,8 @@ class MotorInsuranceScreen extends StatelessWidget {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => Padding(
                       padding: const EdgeInsets.only(bottom: 16),
-                      child: _buildInsuranceCard(_thirdPartyCardImages[index], index, context),
+                      child: _buildInsuranceCard(
+                          _thirdPartyCardImages[index], index, context),
                     ),
                     childCount: _thirdPartyCardImages.length,
                   ),
@@ -100,7 +115,8 @@ class MotorInsuranceScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInsuranceCard(String imagePath, int index, BuildContext context) {
+  Widget _buildInsuranceCard(
+      String imagePath, int index, BuildContext context) {
     final cardData = _getCardData(index);
     return Container(
       height: cardData['height'] as double,
@@ -114,7 +130,10 @@ class MotorInsuranceScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.black.withOpacity(0.4), Colors.black.withOpacity(0.85)],
+            colors: [
+              Colors.black.withOpacity(0.4),
+              Colors.black.withOpacity(0.85)
+            ],
           ),
         ),
         padding: const EdgeInsets.all(16),
@@ -123,12 +142,26 @@ class MotorInsuranceScreen extends StatelessWidget {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
-              children: [Text(cardData['price'] as String, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white))],
+              children: [
+                Text(cardData['price'] as String,
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white))
+              ],
             ),
             const SizedBox(height: 6),
-            Text(cardData['title'] as String, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text(cardData['title'] as String,
+                style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white)),
             const SizedBox(height: 4),
-            Text(cardData['description'] as String, style: const TextStyle(fontSize: 12, color: Colors.white, height: 1.3), maxLines: 3, overflow: TextOverflow.ellipsis),
+            Text(cardData['description'] as String,
+                style: const TextStyle(
+                    fontSize: 12, color: Colors.white, height: 1.3),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis),
             const Spacer(),
             Align(
               alignment: Alignment.centerRight,
@@ -137,10 +170,14 @@ class MotorInsuranceScreen extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.accentOrange,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
-                child: const Text('Buy Now', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                child: const Text('Buy Now',
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -151,28 +188,89 @@ class MotorInsuranceScreen extends StatelessWidget {
 
   Map<String, dynamic> _getCardData(int index) {
     final data = [
-      {'title': 'Private Car', 'price': 'N15,000.00', 'description': '• For third party damage up to N3,000,000.00\n• Accidental bodily injury or death to the third party arising from the use of the vehicle.', 'height': 220.0},
-      {'title': 'Commercial Vehicle', 'price': 'N20,000.00', 'description': '• Third Party property damage\n• Accidental bodily injury or death to the third party arising from the use of the vehicle.', 'height': 220.0},
-      {'title': 'Private Bus', 'price': 'N20,000.00', 'description': 'For third party damage up to N3,000,000.00', 'height': 220.0},
-      {'title': 'Commercial Bus', 'price': 'Premium – N20,000 yearly', 'description': 'For third party damage up to N3,000,000.00', 'height': 220.0},
-      {'title': 'Motorcycle', 'price': 'Premium – N3000 Yearly', 'description': 'For sum insured/benefit up to N1,000,000.00', 'height': 220.0},
-      {'title': 'Tricycle (Keke)', 'price': 'Premium – N5000 Yearly', 'description': 'For sum insured/benefit up to N1,000,000.00', 'height': 220.0},
-      {'title': 'Motor Comprehensive (Private & Commercial)', 'price': '', 'description': 'It also covers the liability of the insured to third parties in respect of:\n- Third Party property damage\n- Accidental bodily injury or death to the third party arising from the use of the vehicle.', 'height': 280.0},
-      {'title': 'Royal Auto Bronze', 'price': 'Premium – 3% + N15,000/m', 'description': 'Coverage up to N3,000,000', 'height': 220.0},
-      {'title': 'Royal Auto Silver', 'price': 'Premium – 3% + N15,000/m', 'description': 'Coverage up to N3,000,000', 'height': 220.0},
+      {
+        'title': 'Private Car',
+        'price': 'N15,000.00',
+        'description':
+            '• For third party damage up to N3,000,000.00\n• Accidental bodily injury or death to the third party arising from the use of the vehicle.',
+        'height': 220.0
+      },
+      {
+        'title': 'Commercial Vehicle',
+        'price': 'N20,000.00',
+        'description':
+            '• Third Party property damage\n• Accidental bodily injury or death to the third party arising from the use of the vehicle.',
+        'height': 220.0
+      },
+      {
+        'title': 'Private Bus',
+        'price': 'N20,000.00',
+        'description': 'For third party damage up to N3,000,000.00',
+        'height': 220.0
+      },
+      {
+        'title': 'Commercial Bus',
+        'price': 'Premium – N20,000 yearly',
+        'description': 'For third party damage up to N3,000,000.00',
+        'height': 220.0
+      },
+      {
+        'title': 'Motorcycle',
+        'price': 'Premium – N3000 Yearly',
+        'description': 'For sum insured/benefit up to N1,000,000.00',
+        'height': 220.0
+      },
+      {
+        'title': 'Tricycle (Keke)',
+        'price': 'Premium – N5000 Yearly',
+        'description': 'For sum insured/benefit up to N1,000,000.00',
+        'height': 220.0
+      },
+      {
+        'title': 'Motor Comprehensive (Private & Commercial)',
+        'price': '',
+        'description':
+            'It also covers the liability of the insured to third parties in respect of:\n- Third Party property damage\n- Accidental bodily injury or death to the third party arising from the use of the vehicle.',
+        'height': 280.0
+      },
+      {
+        'title': 'Royal Auto Bronze',
+        'price': 'Premium – 3% + N15,000/m',
+        'description': 'Coverage up to N3,000,000',
+        'height': 220.0
+      },
+      {
+        'title': 'Royal Auto Silver',
+        'price': 'Premium – 3% + N15,000/m',
+        'description': 'Coverage up to N3,000,000',
+        'height': 220.0
+      },
     ];
     return data[index];
   }
 
   void _navigateToScreen(BuildContext context, int index) {
     if (index == 6) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const ComprehensivePersonalInfoScreen()));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => const ComprehensivePersonalInfoScreen()));
     } else if (index == 7 || index == 8) {
       final cardData = _getCardData(index);
-      Navigator.push(context, MaterialPageRoute(builder: (_) => RoyalAutoPurchaseScreen(productName: cardData['title'] as String, price: cardData['price'] as String)));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => RoyalAutoPurchaseScreen(
+                  productName: cardData['title'] as String,
+                  price: cardData['price'] as String)));
     } else {
       final cardData = _getCardData(index);
-      Navigator.push(context, MaterialPageRoute(builder: (_) => PrivateCarPurchaseScreen(vehicleType: cardData['title'] as String, price: cardData['price'] as String)));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => PrivateCarPurchaseScreen(
+                  vehicleType: cardData['title'] as String,
+                  price: cardData['price'] as String)));
     }
   }
 }

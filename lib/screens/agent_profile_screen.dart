@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/session_cache_cleaner.dart';
 import '../providers/agent_policy_provider.dart';
+import '../utils/app_theme.dart';
 import 'login_screen.dart';
 import 'notification_settings_screen.dart';
 import 'security_settings_screen.dart';
@@ -16,12 +17,16 @@ class AgentProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+
     final authProvider = Provider.of<AuthProvider>(context);
     final userName = authProvider.userName ?? 'Agent Name';
     final userEmail = authProvider.userEmail ?? 'agent@example.com';
     final userCode = authProvider.userCode ?? 'AG0000';
     final userData = authProvider.userData ?? {};
-    
+
     // Extract data from userData
     final custType = userData['CustType'] ?? 'Senior Insurance Agent';
     final address = userData['Address'] ?? 'Downtown Branch, Lagos';
@@ -33,7 +38,8 @@ class AgentProfileScreen extends StatelessWidget {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -41,7 +47,7 @@ class AgentProfileScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -69,7 +75,8 @@ class AgentProfileScreen extends StatelessWidget {
                       children: [
                         CircleAvatar(
                           radius: 50,
-                          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                          backgroundColor:
+                              Theme.of(context).scaffoldBackgroundColor,
                           child: Icon(
                             Icons.person,
                             size: 50,
@@ -79,7 +86,7 @@ class AgentProfileScreen extends StatelessWidget {
                         const SizedBox(height: 16),
                         Text(
                           userName,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -110,13 +117,15 @@ class AgentProfileScreen extends StatelessWidget {
                     left: 16,
                     right: 16,
                     child: Container(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
+                        color: cardColor,
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: borderColor),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
+                            color: Colors.black
+                                .withValues(alpha: isDark ? 0.25 : 0.1),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -125,19 +134,25 @@ class AgentProfileScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          Consumer<AgentPolicyProvider>(builder: (_, ap, __) => _buildStatItem('₦${ap.commission}', 'Commission')),
+                          Consumer<AgentPolicyProvider>(
+                              builder: (_, ap, __) => _buildStatItem(
+                                  context, '₦${ap.commission}', 'Commission')),
                           Container(
                             width: 1,
                             height: 40,
-                            color: Colors.grey[300],
+                            color: borderColor,
                           ),
-                          Consumer<AgentPolicyProvider>(builder: (_, ap, __) => _buildStatItem('${ap.totalClients}', 'Active Clients')),
+                          Consumer<AgentPolicyProvider>(
+                              builder: (_, ap, __) => _buildStatItem(context,
+                                  '${ap.totalClients}', 'Active Clients')),
                           Container(
                             width: 1,
                             height: 40,
-                            color: Colors.grey[300],
+                            color: borderColor,
                           ),
-                          Consumer<AgentPolicyProvider>(builder: (_, ap, __) => _buildStatItem('${ap.activePolicies}', 'Active Policies')),
+                          Consumer<AgentPolicyProvider>(
+                              builder: (_, ap, __) => _buildStatItem(context,
+                                  '${ap.activePolicies}', 'Active Policies')),
                         ],
                       ),
                     ),
@@ -154,34 +169,38 @@ class AgentProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Personal Information',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 16),
                   _buildInfoItem(
+                    context,
                     icon: Icons.email_outlined,
                     iconColor: Colors.blue,
-                    iconBgColor: Colors.blue.withOpacity(0.1),
+                    iconBgColor: Colors.blue.withValues(alpha: 0.1),
                     label: 'Email',
                     value: userEmail,
                   ),
                   const SizedBox(height: 12),
                   _buildInfoItem(
+                    context,
                     icon: Icons.phone_outlined,
                     iconColor: Colors.green,
-                    iconBgColor: Colors.green.withOpacity(0.1),
+                    iconBgColor: Colors.green.withValues(alpha: 0.1),
                     label: 'Phone',
                     value: phone,
                   ),
                   const SizedBox(height: 12),
                   _buildInfoItem(
+                    context,
                     icon: Icons.location_on_outlined,
                     iconColor: Colors.purple,
-                    iconBgColor: Colors.purple.withOpacity(0.1),
+                    iconBgColor: Colors.purple.withValues(alpha: 0.1),
                     label: 'Office Location',
                     value: address,
                   ),
@@ -197,27 +216,30 @@ class AgentProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Performance This Month',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 16),
                   _buildPerformanceItem(
+                    context,
                     icon: Icons.flag_outlined,
                     iconColor: Colors.blue,
-                    iconBgColor: Colors.blue.withOpacity(0.1),
+                    iconBgColor: Colors.blue.withValues(alpha: 0.1),
                     label: 'Sales Target',
                     value: '\$45,000 / \$50,000',
                     progress: 0.9,
                   ),
                   const SizedBox(height: 16),
                   _buildPerformanceItem(
+                    context,
                     icon: Icons.attach_money,
                     iconColor: Colors.amber,
-                    iconBgColor: Colors.amber.withOpacity(0.1),
+                    iconBgColor: Colors.amber.withValues(alpha: 0.1),
                     label: 'Commission Earned',
                     value: '\$12,450',
                     percentage: '20%',
@@ -235,11 +257,12 @@ class AgentProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Settings',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -251,7 +274,8 @@ class AgentProfileScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const NotificationSettingsScreen(),
+                          builder: (context) =>
+                              const NotificationSettingsScreen(),
                         ),
                       );
                     },
@@ -275,7 +299,11 @@ class AgentProfileScreen extends StatelessWidget {
                     context,
                     icon: Icons.help_outline,
                     title: 'Help and support',
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen(isAgentFlow: true))),
+                    onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                const HelpSupportScreen(isAgentFlow: true))),
                   ),
                   const SizedBox(height: 12),
                   _buildSettingsItem(
@@ -289,7 +317,8 @@ class AgentProfileScreen extends StatelessWidget {
                       if (context.mounted) {
                         Navigator.pushAndRemoveUntil(
                           context,
-                          MaterialPageRoute(builder: (context) => const LoginScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => const LoginScreen()),
                           (route) => false,
                         );
                       }
@@ -305,8 +334,9 @@ class AgentProfileScreen extends StatelessWidget {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF1E2D64),
-        unselectedItemColor: Colors.grey,
+        backgroundColor: AppTheme.bottomNavBackgroundColor(context),
+        selectedItemColor: AppTheme.bottomNavSelectedColor(context),
+        unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
         currentIndex: 4,
         selectedFontSize: 11,
         unselectedFontSize: 11,
@@ -314,13 +344,15 @@ class AgentProfileScreen extends StatelessWidget {
           if (index == 0) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const AgentDashboardScreen()),
               (route) => false,
             );
           } else if (index == 2) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ClientsListScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const ClientsListScreen()),
             );
           } else if (index == 3) {
             Navigator.push(
@@ -355,14 +387,19 @@ class AgentProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(String value, String label) {
+  Widget _buildStatItem(BuildContext context, String value, String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryTextColor =
+        isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
     return Column(
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 4),
@@ -370,20 +407,25 @@ class AgentProfileScreen extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 10,
-            color: Colors.grey[600],
+            color: secondaryTextColor,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildInfoItem({
+  Widget _buildInfoItem(
+    BuildContext context, {
     required IconData icon,
     required Color iconColor,
     required Color iconBgColor,
     required String label,
     required String value,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryTextColor =
+        isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
     return Row(
       children: [
         Container(
@@ -403,15 +445,16 @@ class AgentProfileScreen extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: secondaryTextColor,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ],
@@ -421,7 +464,8 @@ class AgentProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPerformanceItem({
+  Widget _buildPerformanceItem(
+    BuildContext context, {
     required IconData icon,
     required Color iconColor,
     required Color iconBgColor,
@@ -431,6 +475,11 @@ class AgentProfileScreen extends StatelessWidget {
     String? percentage,
     bool showUpArrow = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryTextColor =
+        isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -453,7 +502,7 @@ class AgentProfileScreen extends StatelessWidget {
                     label,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: secondaryTextColor,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -461,9 +510,10 @@ class AgentProfileScreen extends StatelessWidget {
                     children: [
                       Text(
                         value,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       if (percentage != null) ...[
@@ -496,7 +546,7 @@ class AgentProfileScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: Colors.grey[300],
+              backgroundColor: borderColor,
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
               minHeight: 8,
             ),
@@ -517,21 +567,27 @@ class AgentProfileScreen extends StatelessWidget {
     bool toggleValue = false,
     ValueChanged<bool>? onToggleChanged,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final agentAccent = isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+    final arrowColor = isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
     return InkWell(
       onTap: hasToggle ? null : onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           children: [
             Icon(
               icon,
-              color: isLogout ? Colors.red : const Color(0xFF1E2D64),
+              color: isLogout ? Colors.red : agentAccent,
               size: 22,
             ),
             const SizedBox(width: 16),
@@ -541,7 +597,9 @@ class AgentProfileScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: isLogout ? Colors.red : null,
+                  color: isLogout
+                      ? Colors.red
+                      : Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -550,13 +608,13 @@ class AgentProfileScreen extends StatelessWidget {
                 value: toggleValue,
                 onChanged: onToggleChanged,
                 activeThumbColor: Colors.white,
-                activeTrackColor: const Color(0xFF1E2D64),
+                activeTrackColor: agentAccent,
               ),
             if (showArrow && !hasToggle)
               Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: Colors.grey[600],
+                color: arrowColor,
               ),
           ],
         ),

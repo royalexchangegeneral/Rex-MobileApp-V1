@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import '../services/biometric_service.dart';
 import '../providers/notifications_provider.dart';
 import '../utils/app_theme.dart';
+import '../utils/theme_helper.dart';
 import 'agent_dashboard_screen.dart';
 import 'clients_list_screen.dart';
 import 'reports_screen.dart';
@@ -25,6 +26,10 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
   bool _biometricLogin = false;
   bool _biometricAvailable = false;
 
+  Color get _actionColor => Theme.of(context).brightness == Brightness.dark
+      ? AppTheme.accentOrange
+      : AppTheme.primaryNavy;
+
   @override
   void initState() {
     super.initState();
@@ -34,7 +39,12 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
   Future<void> _loadBiometricState() async {
     final available = await BiometricService.isAvailable();
     final enabled = await BiometricService.isEnabled();
-    if (mounted) setState(() { _biometricAvailable = available; _biometricLogin = enabled; });
+    if (mounted) {
+      setState(() {
+        _biometricAvailable = available;
+        _biometricLogin = enabled;
+      });
+    }
   }
 
   Future<void> _toggleBiometric(bool value) async {
@@ -43,7 +53,10 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
       final hasCreds = await BiometricService.hasStoredCredentials();
       if (!hasCreds) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please login with your password first to enable biometric login'), backgroundColor: Colors.orange));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text(
+                  'Please login with your password first to enable biometric login'),
+              backgroundColor: Colors.orange));
         }
         return;
       }
@@ -70,7 +83,8 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -78,23 +92,24 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
         actions: const [],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Security Status
             Container(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+                color: ThemeHelper.getCardColor(context),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ThemeHelper.getBorderColor(context)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,15 +117,17 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Security Status',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.green.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
@@ -131,16 +148,16 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                     'Your account is protected with two-factor authentication and regular security checks',
                     style: TextStyle(
                       fontSize: 10,
-                      color: Colors.grey[600],
+                      color: ThemeHelper.getSecondaryTextColor(context),
                       height: 1.4,
                     ),
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Two-Factor Authentication
             _buildSecurityItem(
               icon: Icons.key,
@@ -156,9 +173,9 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                 });
               },
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Password
             _buildSecurityItem(
               icon: Icons.lock_outline,
@@ -169,67 +186,99 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
               actionText: 'Change',
               onActionTap: () {},
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Biometric Login
             _buildSecurityItem(
               icon: Icons.fingerprint,
               iconColor: const Color(0xFF1E2D64),
               iconBgColor: const Color(0xFF1E2D64).withValues(alpha: 0.1),
               title: 'Biometric Login',
-              subtitle: _biometricLogin ? 'Enabled - Fingerprint / Face ID' : 'Use fingerprint and Face ID to login',
+              subtitle: _biometricLogin
+                  ? 'Enabled - Fingerprint / Face ID'
+                  : 'Use fingerprint and Face ID to login',
               hasToggle: true,
               toggleValue: _biometricLogin,
-              onToggleChanged: _biometricAvailable ? (value) => _toggleBiometric(value) : null,
+              onToggleChanged: _biometricAvailable
+                  ? (value) => _toggleBiometric(value)
+                  : null,
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Recent Activity
-            const Text(
+            Text(
               'Recent Activity',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Activity Items from API
             Consumer<NotificationsProvider>(builder: (_, notifProvider, __) {
-              if (notifProvider.loading) return const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator()));
-              if (notifProvider.notifications.isEmpty) return Padding(padding: const EdgeInsets.all(12), child: Center(child: Text('No recent activity', style: TextStyle(color: Colors.grey[500], fontSize: 12))));
+              if (notifProvider.loading) {
+                return const Center(
+                    child: Padding(
+                        padding: EdgeInsets.all(12),
+                        child: CircularProgressIndicator()));
+              }
+              if (notifProvider.notifications.isEmpty) {
+                return Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Center(
+                        child: Text('No recent activity',
+                            style: TextStyle(
+                                color:
+                                    ThemeHelper.getSecondaryTextColor(context),
+                                fontSize: 12))));
+              }
               final items = notifProvider.notifications.take(3).toList();
-              return Column(children: items.map((n) {
+              return Column(
+                  children: items.map((n) {
                 final title = n['title']?.toString() ?? '';
-                final desc = n['description']?.toString() ?? n['message']?.toString() ?? '';
+                final desc = n['description']?.toString() ??
+                    n['message']?.toString() ??
+                    '';
                 final time = n['created_at']?.toString() ?? '';
                 final isRead = notifProvider.readIds.contains(n['id']);
-                return Padding(padding: const EdgeInsets.only(bottom: 12), child: _buildActivityItem(
-                  icon: isRead ? Icons.shield_outlined : Icons.notifications_outlined,
-                  iconColor: isRead ? Colors.green : Colors.blue,
-                  iconBgColor: isRead ? Colors.green.withValues(alpha: 0.1) : Colors.blue.withValues(alpha: 0.1),
-                  title: title,
-                  subtitle: desc,
-                  time: time,
-                ));
+                return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildActivityItem(
+                      icon: isRead
+                          ? Icons.shield_outlined
+                          : Icons.notifications_outlined,
+                      iconColor: isRead ? Colors.green : Colors.blue,
+                      iconBgColor: isRead
+                          ? Colors.green.withValues(alpha: 0.1)
+                          : Colors.blue.withValues(alpha: 0.1),
+                      title: title,
+                      subtitle: desc,
+                      time: time,
+                    ));
               }).toList());
             }),
-            
+
             const SizedBox(height: 100),
           ],
         ),
       ),
-      floatingActionButton: Provider.of<AuthProvider>(context, listen: false).isCustomer()
+      floatingActionButton: Provider.of<AuthProvider>(context, listen: false)
+              .isCustomer()
           ? Transform.translate(
               offset: const Offset(0, 15),
               child: SizedBox(
                 width: 52,
                 height: 52,
                 child: FloatingActionButton(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const NewPolicyScreen())),
                   backgroundColor: AppTheme.accentOrange,
                   shape: const CircleBorder(),
                   elevation: 1,
@@ -245,37 +294,50 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
 
   Widget _buildBottomNav(BuildContext context) {
     final isAgent = Provider.of<AuthProvider>(context, listen: false).isAgent();
-    
+
     if (isAgent) {
       return BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF1E2D64),
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: AppTheme.bottomNavSelectedColor(context),
+        unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
         currentIndex: 4,
         selectedFontSize: 11,
         unselectedFontSize: 11,
         onTap: (index) {
           if (index == 0) {
-            Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const AgentDashboardScreen()), (route) => false);
+            Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const AgentDashboardScreen()),
+                (route) => false);
           } else if (index == 2) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientsListScreen()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ClientsListScreen()));
           } else if (index == 3) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ReportsScreen()));
           } else if (index == 4) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const AgentProfileScreen()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const AgentProfileScreen()));
           }
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined, size: 22), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.description_outlined, size: 22), label: 'Policy'),
-          BottomNavigationBarItem(icon: Icon(Icons.people_outline, size: 22), label: 'Clients'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined, size: 22), label: 'Reports'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline, size: 22), label: 'Profile'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined, size: 22), label: 'Home'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.description_outlined, size: 22),
+              label: 'Policy'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.people_outline, size: 22), label: 'Clients'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart_outlined, size: 22), label: 'Reports'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline, size: 22), label: 'Profile'),
         ],
       );
     }
 
     return BottomAppBar(
+      color: AppTheme.bottomNavBackgroundColor(context),
       shape: const CircularNotchedRectangle(),
       notchMargin: 4,
       child: SizedBox(
@@ -284,15 +346,25 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildCustomerNavItem(Icons.home_outlined, 'Home', false, () {
-              Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
+              Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const CustomerDashboardScreen()),
+                  (route) => false);
             }),
-            _buildCustomerNavItem(Icons.description_outlined, 'Policies', false, () {}),
+            _buildCustomerNavItem(
+                Icons.description_outlined, 'Policies', false, () {}),
             const SizedBox(width: 48),
-            _buildCustomerNavItem(Icons.assignment_outlined, 'Claims', false, () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
+            _buildCustomerNavItem(Icons.assignment_outlined, 'Claims', false,
+                () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
             }),
             _buildCustomerNavItem(Icons.person_outline, 'Profile', true, () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const CustomerProfileScreen()));
             }),
           ],
         ),
@@ -300,14 +372,24 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     );
   }
 
-  Widget _buildCustomerNavItem(IconData icon, String label, bool isSelected, VoidCallback onTap) {
+  Widget _buildCustomerNavItem(
+      IconData icon, String label, bool isSelected, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
-          Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+          Icon(icon,
+              color: isSelected
+                  ? AppTheme.bottomNavSelectedColor(context)
+                  : AppTheme.bottomNavUnselectedColor(context),
+              size: 20),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 10,
+                  color: isSelected
+                      ? AppTheme.bottomNavSelectedColor(context)
+                      : AppTheme.bottomNavUnselectedColor(context))),
         ],
       ),
     );
@@ -326,10 +408,11 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     VoidCallback? onActionTap,
   }) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+        color: ThemeHelper.getCardColor(context),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ThemeHelper.getBorderColor(context)),
       ),
       child: Row(
         children: [
@@ -348,9 +431,10 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -358,7 +442,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                   subtitle,
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.grey[600],
+                    color: ThemeHelper.getSecondaryTextColor(context),
                   ),
                 ),
               ],
@@ -369,7 +453,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
               value: toggleValue,
               onChanged: onToggleChanged,
               activeThumbColor: Colors.white,
-              activeTrackColor: const Color(0xFF1E2D64),
+              activeTrackColor: _actionColor,
             ),
           if (actionText != null)
             TextButton(
@@ -397,10 +481,11 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     required String time,
   }) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+        color: ThemeHelper.getCardColor(context),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ThemeHelper.getBorderColor(context)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -420,9 +505,10 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -430,7 +516,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                   subtitle,
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.grey[600],
+                    color: ThemeHelper.getSecondaryTextColor(context),
                     height: 1.4,
                   ),
                 ),
@@ -441,7 +527,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
             time,
             style: TextStyle(
               fontSize: 9,
-              color: Colors.grey[500],
+              color: ThemeHelper.getSecondaryTextColor(context),
             ),
           ),
         ],

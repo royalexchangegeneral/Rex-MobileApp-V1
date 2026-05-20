@@ -14,7 +14,8 @@ class UserPortalScreen extends StatelessWidget {
     final textColor = theme.colorScheme.onSurface;
     final subtitleColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
     final borderColor = isDark ? Colors.grey[700]! : Colors.grey[300]!;
-    final shadowColor = isDark ? Colors.transparent : Colors.black.withValues(alpha: 0.05);
+    final shadowColor =
+        isDark ? Colors.transparent : Colors.black.withValues(alpha: 0.05);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -24,7 +25,7 @@ class UserPortalScreen extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 60),
-              
+
               // Welcome Title
               Text(
                 'Welcome to REX Insurance',
@@ -35,9 +36,9 @@ class UserPortalScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 6),
-              
+
               // Subtitle
               Text(
                 'Select your platform to continue',
@@ -47,9 +48,9 @@ class UserPortalScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Customer Portal Card
               Container(
                 padding: const EdgeInsets.all(20),
@@ -113,9 +114,9 @@ class UserPortalScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Explore Products Card
               Container(
                 padding: const EdgeInsets.all(20),
@@ -179,9 +180,9 @@ class UserPortalScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Agent Portal Link
               Container(
                 padding: const EdgeInsets.all(16),
@@ -203,14 +204,20 @@ class UserPortalScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     TextButton(
                       onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen(isAgentLogin: true)));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    const LoginScreen(isAgentLogin: true)));
                       },
                       child: Text(
                         'Agent Portal Login',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? AppTheme.accentOrange : AppTheme.primaryBlue,
+                          color: isDark
+                              ? AppTheme.accentOrange
+                              : AppTheme.primaryBlue,
                           decoration: TextDecoration.underline,
                         ),
                       ),
@@ -218,7 +225,7 @@ class UserPortalScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
             ],
           ),

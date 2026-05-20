@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../providers/agent_policy_provider.dart';
 import '../providers/auth_provider.dart';
+import '../utils/app_theme.dart';
 import 'agent_dashboard_screen.dart';
 import 'clients_list_screen.dart';
 import 'reports_screen.dart';
@@ -12,7 +13,7 @@ import 'agent_profile_screen.dart';
 class ClientSummaryScreen extends StatefulWidget {
   final String clientType;
   final Map<String, String> clientData;
-  
+
   const ClientSummaryScreen({
     super.key,
     required this.clientType,
@@ -25,6 +26,19 @@ class ClientSummaryScreen extends StatefulWidget {
 
 class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
   bool _isCreating = false;
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get _cardColor => _isDark ? const Color(0xFF111827) : Colors.grey[100]!;
+
+  Color get _borderColor =>
+      _isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+
+  Color get _secondaryTextColor =>
+      _isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
+  Color get _agentAccent =>
+      _isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
 
   String _convertDateFormat(String dateStr) {
     // Convert DD/MM/YYYY to YYYY-MM-DD
@@ -51,48 +65,60 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
       // Convert DOB from DD/MM/YYYY to YYYY-MM-DD
       final dobFormatted = _convertDateFormat(widget.clientData['dob'] ?? '');
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final agentCode = auth.userCode?.toString() ?? auth.userData?['Usercode']?.toString() ?? '';
-      
+      final agentCode = auth.userCode?.toString() ??
+          auth.userData?['Usercode']?.toString() ??
+          '';
+
       final requestBody = {
-        'cust_first_name': widget.clientType == 'corporate' 
-            ? (widget.clientData['businessName'] ?? '') 
+        'cust_first_name': widget.clientType == 'corporate'
+            ? (widget.clientData['businessName'] ?? '')
             : (widget.clientData['firstName'] ?? ''),
-        'cust_middle_name': '.', 
-        'cust_last_name': widget.clientType == 'corporate' ? '.' : (widget.clientData['lastName'] ?? ''),
-        'cust_type': widget.clientType == 'individual' ? 'Individual' : 'Corporate',
+        'cust_middle_name': '.',
+        'cust_last_name': widget.clientType == 'corporate'
+            ? '.'
+            : (widget.clientData['lastName'] ?? ''),
+        'cust_type':
+            widget.clientType == 'individual' ? 'Individual' : 'Corporate',
         'cust_occupation': 'Business',
         'cust_phone_no': widget.clientData['phone'] ?? '',
         'cust_email': widget.clientData['email'] ?? '',
-        'cust_address': widget.clientType == 'corporate' ? (widget.clientData['businessAddress'] ?? '.') : (widget.clientData['address'] ?? '.'),
-        'cust_town': '.', 
+        'cust_address': widget.clientType == 'corporate'
+            ? (widget.clientData['businessAddress'] ?? '.')
+            : (widget.clientData['address'] ?? '.'),
+        'cust_town': '.',
         'cust_nationality': 'Nigerian',
         'cust_state': widget.clientData['state'] ?? 'Lagos',
         'cust_lga': widget.clientData['lga'] ?? 'Ikeja',
         'cust_dob': dobFormatted.isNotEmpty ? dobFormatted : '1990-01-01',
-        'cust_national_id_name': widget.clientType == 'corporate' ? 'CAC' : 'NIN',
-        'cust_national_id_no': widget.clientType == 'corporate' ? (widget.clientData['cac'] ?? '') : (widget.clientData['nin'] ?? ''),
+        'cust_national_id_name':
+            widget.clientType == 'corporate' ? 'CAC' : 'NIN',
+        'cust_national_id_no': widget.clientType == 'corporate'
+            ? (widget.clientData['cac'] ?? '')
+            : (widget.clientData['nin'] ?? ''),
         'cust_agent': agentCode,
       };
-      
-      print('=== CREATE CUSTOMER API REQUEST ===');
-      print('URL: https://eportaltest.rexinsure.com/api/createcustomer');
-      print('Request Body: ${json.encode(requestBody)}');
-      
-      final response = await http.post(
+
+      debugPrint('=== CREATE CUSTOMER API REQUEST ===');
+      debugPrint('URL: https://eportaltest.rexinsure.com/api/createcustomer');
+      debugPrint('Request Body: ${json.encode(requestBody)}');
+
+      final response = await http
+          .post(
         Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(requestBody),
-      ).timeout(
+      )
+          .timeout(
         const Duration(seconds: 30),
         onTimeout: () {
           throw Exception('Request timeout');
         },
       );
 
-      print('=== CREATE CUSTOMER API RESPONSE ===');
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
-      print('===================================');
+      debugPrint('=== CREATE CUSTOMER API RESPONSE ===');
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response Body: ${response.body}');
+      debugPrint('===================================');
 
       setState(() {
         _isCreating = false;
@@ -106,34 +132,40 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          
+
           // Refresh the customer list
           if (mounted) {
-            Provider.of<AgentPolicyProvider>(context, listen: false).fetchAgentPolicies(context);
-            Provider.of<AgentPolicyProvider>(context, listen: false).fetchCustomerCount(context);
+            Provider.of<AgentPolicyProvider>(context, listen: false)
+                .fetchAgentPolicies(context);
+            Provider.of<AgentPolicyProvider>(context, listen: false)
+                .fetchCustomerCount(context);
           }
-          
+
           // Navigate to clients list screen
-          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const ClientsListScreen()), (route) => route.isFirst);
+          Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const ClientsListScreen()),
+              (route) => route.isFirst);
         } else {
           final responseData = json.decode(response.body);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(responseData['message'] ?? 'Failed to create customer'),
+              content:
+                  Text(responseData['message'] ?? 'Failed to create customer'),
               backgroundColor: Colors.red,
             ),
           );
         }
       }
     } catch (e) {
-      print('=== CREATE CUSTOMER API ERROR ===');
-      print('Error: ${e.toString()}');
-      print('=================================');
-      
+      debugPrint('=== CREATE CUSTOMER API ERROR ===');
+      debugPrint('Error: ${e.toString()}');
+      debugPrint('=================================');
+
       setState(() {
         _isCreating = false;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -148,10 +180,12 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -178,7 +212,7 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
                       'Step 2 of 2',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: _secondaryTextColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -186,7 +220,7 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
                       'Summary',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: _secondaryTextColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -199,7 +233,7 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
                       child: Container(
                         height: 4,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E2D64),
+                          color: _agentAccent,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -209,7 +243,7 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
                       child: Container(
                         height: 4,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E2D64),
+                          color: _agentAccent,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -219,7 +253,7 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
               ],
             ),
           ),
-          
+
           // Scrollable Content
           Expanded(
             child: SingleChildScrollView(
@@ -233,8 +267,9 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: _cardColor,
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _borderColor),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,30 +283,44 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        
+
                         // Client Information Fields - Different for individual vs corporate
                         if (widget.clientType == 'corporate') ...[
-                          _buildInfoRow('Business Name', widget.clientData['businessName'] ?? ''),
-                          _buildInfoRow('Address', widget.clientData['businessAddress'] ?? ''),
-                          _buildInfoRow('Business Sector', widget.clientData['businessSector'] ?? ''),
-                          _buildInfoRow('Phone Number', widget.clientData['phone'] ?? ''),
-                          _buildInfoRow('Email', widget.clientData['email'] ?? ''),
-                          _buildInfoRow('Year of Incorp.', widget.clientData['yearOfIncorporation'] ?? '', isLast: true),
+                          _buildInfoRow('Business Name',
+                              widget.clientData['businessName'] ?? ''),
+                          _buildInfoRow('Address',
+                              widget.clientData['businessAddress'] ?? ''),
+                          _buildInfoRow('Business Sector',
+                              widget.clientData['businessSector'] ?? ''),
+                          _buildInfoRow(
+                              'Phone Number', widget.clientData['phone'] ?? ''),
+                          _buildInfoRow(
+                              'Email', widget.clientData['email'] ?? ''),
+                          _buildInfoRow('Year of Incorp.',
+                              widget.clientData['yearOfIncorporation'] ?? '',
+                              isLast: true),
                         ] else ...[
-                          _buildInfoRow('First Name', widget.clientData['firstName'] ?? ''),
-                          _buildInfoRow('Last Name', widget.clientData['lastName'] ?? ''),
-                          _buildInfoRow('Email', widget.clientData['email'] ?? ''),
-                          _buildInfoRow('Phone Number', widget.clientData['phone'] ?? ''),
-                          _buildInfoRow('State', widget.clientData['state'] ?? ''),
+                          _buildInfoRow('First Name',
+                              widget.clientData['firstName'] ?? ''),
+                          _buildInfoRow(
+                              'Last Name', widget.clientData['lastName'] ?? ''),
+                          _buildInfoRow(
+                              'Email', widget.clientData['email'] ?? ''),
+                          _buildInfoRow(
+                              'Phone Number', widget.clientData['phone'] ?? ''),
+                          _buildInfoRow(
+                              'State', widget.clientData['state'] ?? ''),
                           _buildInfoRow('LGA', widget.clientData['lga'] ?? ''),
-                          _buildInfoRow('Address', widget.clientData['address'] ?? '', isLast: true),
+                          _buildInfoRow(
+                              'Address', widget.clientData['address'] ?? '',
+                              isLast: true),
                         ],
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Add User Button
                   SizedBox(
                     width: double.infinity,
@@ -279,13 +328,16 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
                     child: ElevatedButton(
                       onPressed: _isCreating ? null : _createCustomer,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E2D64),
+                        backgroundColor: _agentAccent,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: 0,
-                        disabledBackgroundColor: Colors.grey[400],
+                        disabledBackgroundColor:
+                            AppTheme.disabledButtonColor(context),
+                        disabledForegroundColor:
+                            AppTheme.disabledButtonTextColor(context),
                       ),
                       child: _isCreating
                           ? const SizedBox(
@@ -293,7 +345,8 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
                               width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
                           : const Text(
@@ -305,9 +358,9 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
                             ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Back Button
                   SizedBox(
                     width: double.infinity,
@@ -315,8 +368,8 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1E2D64),
-                        side: const BorderSide(color: Color(0xFF1E2D64), width: 1.5),
+                        foregroundColor: _agentAccent,
+                        side: BorderSide(color: _agentAccent, width: 1.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -330,7 +383,7 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 80), // Extra space for bottom nav
                 ],
               ),
@@ -340,8 +393,9 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF1E2D64),
-        unselectedItemColor: Colors.grey,
+        backgroundColor: AppTheme.bottomNavBackgroundColor(context),
+        selectedItemColor: AppTheme.bottomNavSelectedColor(context),
+        unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
         currentIndex: 2,
         selectedFontSize: 11,
         unselectedFontSize: 11,
@@ -349,13 +403,15 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
           if (index == 0) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const AgentDashboardScreen()),
               (route) => false,
             );
           } else if (index == 2) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ClientsListScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const ClientsListScreen()),
             );
           } else if (index == 3) {
             Navigator.push(
@@ -365,7 +421,8 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
           } else if (index == 4) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const AgentProfileScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const AgentProfileScreen()),
             );
           }
         },
@@ -406,11 +463,11 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
             label,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: _secondaryTextColor,
               fontWeight: FontWeight.w400,
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             child: Text(
               value,

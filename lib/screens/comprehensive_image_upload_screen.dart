@@ -14,12 +14,23 @@ class ComprehensiveImageUploadScreen extends StatefulWidget {
   final bool isLoggedIn;
   final bool isAgent;
 
-  const ComprehensiveImageUploadScreen({super.key, required this.vehicleType, required this.sumInsured, required this.premium, required this.regNumber, this.personalInfo = const {}, this.vehicleData = const {}, this.isLoggedIn = false, this.isAgent = false});
+  const ComprehensiveImageUploadScreen(
+      {super.key,
+      required this.vehicleType,
+      required this.sumInsured,
+      required this.premium,
+      required this.regNumber,
+      this.personalInfo = const {},
+      this.vehicleData = const {},
+      this.isLoggedIn = false,
+      this.isAgent = false});
   @override
-  State<ComprehensiveImageUploadScreen> createState() => _ComprehensiveImageUploadScreenState();
+  State<ComprehensiveImageUploadScreen> createState() =>
+      _ComprehensiveImageUploadScreenState();
 }
 
-class _ComprehensiveImageUploadScreenState extends State<ComprehensiveImageUploadScreen> {
+class _ComprehensiveImageUploadScreenState
+    extends State<ComprehensiveImageUploadScreen> {
   final ImagePicker _picker = ImagePicker();
 
   // 5 pre-loss photos mapped to API fields:
@@ -40,27 +51,41 @@ class _ComprehensiveImageUploadScreenState extends State<ComprehensiveImageUploa
         context: context,
         builder: (ctx) => SafeArea(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            ListTile(leading: const Icon(Icons.camera_alt), title: const Text('Camera'), onTap: () => Navigator.pop(ctx, ImageSource.camera)),
-            ListTile(leading: const Icon(Icons.photo_library), title: const Text('Gallery'), onTap: () => Navigator.pop(ctx, ImageSource.gallery)),
+            ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Camera'),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera)),
+            ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Gallery'),
+                onTap: () => Navigator.pop(ctx, ImageSource.gallery)),
           ]),
         ),
       );
       if (source == null) return;
-      final image = await _picker.pickImage(source: source, maxWidth: 1024, imageQuality: 80);
+      final image = await _picker.pickImage(
+          source: source, maxWidth: 1024, imageQuality: 80);
       if (image != null) {
         final file = File(image.path);
         setState(() {
           switch (field) {
-            case 'preLoss1': _preLoss1 = file;
-            case 'preLoss2': _preLoss2 = file;
-            case 'preLoss3': _preLoss3 = file;
-            case 'preLoss4': _preLoss4 = file;
-            case 'preLoss5': _preLoss5 = file;
+            case 'preLoss1':
+              _preLoss1 = file;
+            case 'preLoss2':
+              _preLoss2 = file;
+            case 'preLoss3':
+              _preLoss3 = file;
+            case 'preLoss4':
+              _preLoss4 = file;
+            case 'preLoss5':
+              _preLoss5 = file;
           }
         });
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -72,20 +97,27 @@ class _ComprehensiveImageUploadScreenState extends State<ComprehensiveImageUploa
       _preLoss5 != null;
 
   List<File> get _imageFiles => [
-    if (_preLoss1 != null) _preLoss1!,
-    if (_preLoss2 != null) _preLoss2!,
-    if (_preLoss3 != null) _preLoss3!,
-    if (_preLoss4 != null) _preLoss4!,
-    if (_preLoss5 != null) _preLoss5!,
-  ];
+        if (_preLoss1 != null) _preLoss1!,
+        if (_preLoss2 != null) _preLoss2!,
+        if (_preLoss3 != null) _preLoss3!,
+        if (_preLoss4 != null) _preLoss4!,
+        if (_preLoss5 != null) _preLoss5!,
+      ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
-        title: Text(widget.vehicleType, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w600)),
+        leading: IconButton(
+            icon: Icon(Icons.arrow_back,
+                color: Theme.of(context).colorScheme.onSurface),
+            onPressed: () => Navigator.pop(context)),
+        title: Text(widget.vehicleType,
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 18,
+                fontWeight: FontWeight.w600)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -98,12 +130,32 @@ class _ComprehensiveImageUploadScreenState extends State<ComprehensiveImageUploa
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Row(children: [
-                    Text('Step 3 of 5', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+                    Text('Step 3 of 5',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryNavy)),
                     Spacer(),
-                    Text('Image Upload', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
+                    Text('Image Upload',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryNavy)),
                   ]),
                   const SizedBox(height: 12),
-                  Row(children: List.generate(5, (i) => Expanded(child: Container(height: 4, margin: EdgeInsets.only(right: i < 4 ? 4 : 0), decoration: BoxDecoration(color: i < 3 ? AppTheme.primaryNavy : Colors.grey[300], borderRadius: BorderRadius.circular(2)))))),
+                  Row(
+                      children: List.generate(
+                          5,
+                          (i) => Expanded(
+                              child: Container(
+                                  height: 4,
+                                  margin: EdgeInsets.only(right: i < 4 ? 4 : 0),
+                                  decoration: BoxDecoration(
+                                      color: i < 3
+                                          ? AppTheme.primaryNavy
+                                          : Colors.grey[300],
+                                      borderRadius:
+                                          BorderRadius.circular(2)))))),
                 ],
               ),
             ),
@@ -114,57 +166,124 @@ class _ComprehensiveImageUploadScreenState extends State<ComprehensiveImageUploa
                 children: [
                   Container(
                     padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(color: const Color(0xFFF3F8FF), borderRadius: BorderRadius.circular(8)),
+                    decoration: BoxDecoration(
+                        color: const Color(0xFFF3F8FF),
+                        borderRadius: BorderRadius.circular(8)),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(children: [Icon(Icons.lightbulb_outline, color: AppTheme.primaryNavy, size: 16), SizedBox(width: 6), Text('Upload Tips:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface))]),
+                        Row(children: [
+                          Icon(Icons.lightbulb_outline,
+                              color: AppTheme.primaryNavy, size: 16),
+                          SizedBox(width: 6),
+                          Text('Upload Tips:',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface))
+                        ]),
                         const SizedBox(height: 10),
-                        _buildTip('Take pictures in daylight for better clarity'),
+                        _buildTip(
+                            'Take pictures in daylight for better clarity'),
                         const SizedBox(height: 4),
                         _buildTip('Avoid glare or shadows covering details'),
                         SizedBox(height: 4),
-                        _buildTip('Make sure vehicle is clean and plates readable'),
+                        _buildTip(
+                            'Make sure vehicle is clean and plates readable'),
                         SizedBox(height: 4),
                         _buildTip('Max file size: 2.5MB per image (JPEG/PNG)'),
                       ],
                     ),
                   ),
                   SizedBox(height: 24),
-                  Text('Pre-loss Photos (5 required)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                  Text('Pre-loss Photos (5 required)',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 12),
-                  _uploadRow('Front View *', _preLoss1, () => _pickFor('preLoss1')),
+                  _uploadRow(
+                      'Front View *', _preLoss1, () => _pickFor('preLoss1')),
                   const SizedBox(height: 10),
-                  _uploadRow('Right Side View *', _preLoss2, () => _pickFor('preLoss2')),
+                  _uploadRow('Right Side View *', _preLoss2,
+                      () => _pickFor('preLoss2')),
                   const SizedBox(height: 10),
-                  _uploadRow('Left Side View *', _preLoss3, () => _pickFor('preLoss3')),
+                  _uploadRow('Left Side View *', _preLoss3,
+                      () => _pickFor('preLoss3')),
                   const SizedBox(height: 10),
-                  _uploadRow('Back View *', _preLoss4, () => _pickFor('preLoss4')),
+                  _uploadRow(
+                      'Back View *', _preLoss4, () => _pickFor('preLoss4')),
                   const SizedBox(height: 10),
-                  _uploadRow('Dashboard View *', _preLoss5, () => _pickFor('preLoss5')),
+                  _uploadRow('Dashboard View *', _preLoss5,
+                      () => _pickFor('preLoss5')),
                 ],
               ),
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(24, 24, 24, 32 + MediaQuery.of(context).padding.bottom),
+              padding: EdgeInsets.fromLTRB(
+                  24, 24, 24, 32 + MediaQuery.of(context).padding.bottom),
               child: Column(children: [
-                SizedBox(width: double.infinity, child: ElevatedButton(
-                  onPressed: _allRequiredUploaded ? () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => ComprehensiveNinScreen(
-                      vehicleType: widget.vehicleType, sumInsured: widget.sumInsured, premium: widget.premium,
-                      regNumber: widget.regNumber, personalInfo: widget.personalInfo, vehicleData: widget.vehicleData,
-                      imageFiles: _imageFiles, isLoggedIn: widget.isLoggedIn, isAgent: widget.isAgent,
-                    )));
-                  } : null,
-                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), disabledBackgroundColor: Colors.grey[300]),
-                  child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                )),
+                SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _allRequiredUploaded
+                          ? () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => ComprehensiveNinScreen(
+                                            vehicleType: widget.vehicleType,
+                                            sumInsured: widget.sumInsured,
+                                            premium: widget.premium,
+                                            regNumber: widget.regNumber,
+                                            personalInfo: widget.personalInfo,
+                                            vehicleData: widget.vehicleData,
+                                            imageFiles: _imageFiles,
+                                            isLoggedIn: widget.isLoggedIn,
+                                            isAgent: widget.isAgent,
+                                          )));
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? AppTheme.accentOrange
+                                  : AppTheme.primaryNavy,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          disabledBackgroundColor:
+                              AppTheme.disabledButtonColor(context),
+                          disabledForegroundColor:
+                              AppTheme.disabledButtonTextColor(context)),
+                      child: const Text('Continue',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600)),
+                    )),
                 const SizedBox(height: 12),
-                SizedBox(width: double.infinity, child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy, side: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryNavy), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                  child: const Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                )),
+                SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : AppTheme.primaryNavy,
+                          side: BorderSide(
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white
+                                  : AppTheme.primaryNavy),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8))),
+                      child: const Text('Back',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600)),
+                    )),
               ]),
             ),
           ],
@@ -175,19 +294,42 @@ class _ComprehensiveImageUploadScreenState extends State<ComprehensiveImageUploa
 
   Widget _uploadRow(String label, File? file, VoidCallback onTap) {
     return Row(children: [
-      Expanded(child: Container(
+      Expanded(
+          child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: file != null ? Colors.green : Colors.grey[300]!), color: file != null ? Colors.green[50] : Colors.white),
-        child: Text(file != null ? '✓ $label' : label, style: TextStyle(fontSize: 12, color: file != null ? Colors.green[800] : Colors.grey[400])),
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+                color: file != null ? Colors.green : Colors.grey[300]!),
+            color: file != null ? Colors.green[50] : Colors.white),
+        child: Text(file != null ? '✓ $label' : label,
+            style: TextStyle(
+                fontSize: 12,
+                color: file != null ? Colors.green[800] : Colors.grey[400])),
       )),
       SizedBox(width: 8),
-      GestureDetector(onTap: onTap, child: Container(
-        padding: EdgeInsets.all(14),
-        decoration: BoxDecoration(color: AppTheme.primaryNavy, borderRadius: BorderRadius.circular(8)),
-        child: Icon(Icons.upload_file, color: Colors.white, size: 20),
-      )),
+      GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: EdgeInsets.all(14),
+            decoration: BoxDecoration(
+                color: AppTheme.primaryNavy,
+                borderRadius: BorderRadius.circular(8)),
+            child: Icon(Icons.upload_file, color: Colors.white, size: 20),
+          )),
     ]);
   }
 
-  Widget _buildTip(String text) => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('• ', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface)), Expanded(child: Text(text, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface, height: 1.4)))]);
+  Widget _buildTip(String text) =>
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('• ',
+            style: TextStyle(
+                fontSize: 12, color: Theme.of(context).colorScheme.onSurface)),
+        Expanded(
+            child: Text(text,
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    height: 1.4)))
+      ]);
 }

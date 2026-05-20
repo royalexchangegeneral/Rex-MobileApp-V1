@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../utils/app_theme.dart';
-import '../utils/theme_helper.dart';
 import '../providers/policy_provider.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
@@ -22,6 +21,20 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
   final _searchController = TextEditingController();
 
   final List<Map<String, String>> _certificates = [];
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get _surfaceCardColor =>
+      _isDark ? const Color(0xFF111827) : Colors.white;
+
+  Color get _borderColor =>
+      _isDark ? const Color(0xFF334155) : Colors.grey[200]!;
+
+  Color get _secondaryTextColor =>
+      _isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
+  Color get _brandActionColor =>
+      _isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
 
   @override
   void initState() {
@@ -68,16 +81,15 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
     if (t.contains('royal auto') ||
         t.contains('bronze') ||
         t.contains('silver') ||
-        t.contains('comprehensive')) return 'royalautocert';
+        t.contains('comprehensive')) {
+      return 'royalautocert';
+    }
     return 'tpcert';
   }
 
   String _getCertUrl(Map<String, String> cert) {
     final certPath = _getCertPath(cert['type'] ?? '');
-    final url =
-        'https://eportaltest.rexinsure.com/$certPath?policy=${cert['policyNo'] ?? ''}';
-    print('=== CERT URL: $url ===');
-    return url;
+    return 'https://eportaltest.rexinsure.com/$certPath?policy=${cert['policyNo'] ?? ''}';
   }
 
   List<Map<String, String>> get _filteredCertificates {
@@ -101,7 +113,9 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
   Widget build(BuildContext context) {
     final certs = _filteredCertificates;
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back,
@@ -121,7 +135,7 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
         }
         return SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -134,28 +148,24 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
                     color: Theme.of(context).colorScheme.onSurface),
                 decoration: InputDecoration(
                   hintText: 'Search certificate',
-                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-                  suffixIcon: Icon(Icons.search, color: Colors.grey[400]),
+                  hintStyle: TextStyle(
+                      color:
+                          _isDark ? const Color(0xFF94A3B8) : Colors.grey[400],
+                      fontSize: 13),
+                  suffixIcon: Icon(Icons.search,
+                      color:
+                          _isDark ? const Color(0xFF94A3B8) : Colors.grey[400]),
                   filled: true,
-                  fillColor: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF1E1E1E)
-                      : Colors.white,
+                  fillColor: _surfaceCardColor,
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.grey[700]!
-                              : Colors.grey[300]!)),
+                      borderSide: BorderSide(color: _borderColor)),
                   enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.grey[700]!
-                              : Colors.grey[300]!)),
+                      borderSide: BorderSide(color: _borderColor)),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          const BorderSide(color: AppTheme.primaryNavy)),
+                      borderSide: BorderSide(color: _brandActionColor)),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
@@ -168,10 +178,13 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
                 Center(
                     child: Column(children: [
                   Icon(Icons.description_outlined,
-                      size: 60, color: Colors.grey[300]),
+                      size: 60,
+                      color:
+                          _isDark ? const Color(0xFF475569) : Colors.grey[300]),
                   const SizedBox(height: 12),
                   Text('No certificates found',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[500])),
+                      style:
+                          TextStyle(fontSize: 14, color: _secondaryTextColor)),
                 ])),
               ] else ...[
                 ...List.generate(certs.length, (index) {
@@ -190,8 +203,11 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F8FF),
+                  color: _isDark
+                      ? const Color(0xFF111827)
+                      : const Color(0xFFF3F8FF),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _borderColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,8 +215,8 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
                     Row(
                       children: [
                         Icon(Icons.support_agent,
-                            color: AppTheme.primaryNavy, size: 20),
-                        SizedBox(width: 8),
+                            color: _brandActionColor, size: 20),
+                        const SizedBox(width: 8),
                         Text('Need Help?',
                             style: TextStyle(
                                 fontSize: 14,
@@ -214,17 +230,17 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
                       'Contact support if you need assistance accessing or downloading your certificates.',
                       style: TextStyle(
                           fontSize: 12,
-                          color: ThemeHelper.getSecondaryTextColor(context),
+                          color: _secondaryTextColor,
                           height: 1.4),
                     ),
                     const SizedBox(height: 8),
                     GestureDetector(
                       onTap: () => _callSupport(),
-                      child: const Text('Contact Support',
+                      child: Text('Contact Support',
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryNavy)),
+                              color: _brandActionColor)),
                     ),
                   ],
                 ),
@@ -251,6 +267,7 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
+        color: AppTheme.bottomNavBackgroundColor(context),
         shape: const CircularNotchedRectangle(),
         notchMargin: 4,
         child: SizedBox(
@@ -289,9 +306,9 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: ThemeHelper.getCardColor(context),
+        color: _surfaceCardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: _borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,20 +319,20 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryNavy.withValues(alpha: 0.1),
+                  color: _brandActionColor.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.description_outlined,
-                    color: AppTheme.primaryNavy, size: 18),
+                child: Icon(Icons.description_outlined,
+                    color: _brandActionColor, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   '${cert['id']} – ${cert['type']}',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryNavy),
+                      color: _brandActionColor),
                 ),
               ),
             ],
@@ -355,7 +372,7 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
                     style:
                         TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
+                  backgroundColor: _brandActionColor,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20)),
@@ -379,8 +396,8 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
                     style:
                         TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primaryNavy,
-                  side: const BorderSide(color: AppTheme.primaryNavy),
+                  foregroundColor: _brandActionColor,
+                  side: BorderSide(color: _brandActionColor),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20)),
                   padding:
@@ -392,12 +409,12 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
               Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppTheme.primaryNavy),
+                  border: Border.all(color: _brandActionColor),
                 ),
                 child: IconButton(
                   onPressed: () => _shareCertificate(cert),
-                  icon: const Icon(Icons.share_outlined,
-                      size: 18, color: AppTheme.primaryNavy),
+                  icon: Icon(Icons.share_outlined,
+                      size: 18, color: _brandActionColor),
                   constraints:
                       const BoxConstraints(minWidth: 38, minHeight: 38),
                   padding: EdgeInsets.zero,
@@ -418,9 +435,7 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
         SizedBox(
           width: 140,
           child: Text(label,
-              style: TextStyle(
-                  fontSize: 11,
-                  color: ThemeHelper.getSecondaryTextColor(context))),
+              style: TextStyle(fontSize: 11, color: _secondaryTextColor)),
         ),
         Expanded(
           child: Text(
@@ -492,11 +507,16 @@ Rex Insurance – Protecting What Matters Most''';
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon,
-              color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
+              color: isSelected
+                  ? AppTheme.bottomNavSelectedColor(context)
+                  : AppTheme.bottomNavUnselectedColor(context),
+              size: 20),
           Text(label,
               style: TextStyle(
                   fontSize: 10,
-                  color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+                  color: isSelected
+                      ? AppTheme.bottomNavSelectedColor(context)
+                      : AppTheme.bottomNavUnselectedColor(context))),
         ],
       ),
     );
@@ -530,7 +550,9 @@ class _CertWebViewState extends State<_CertWebView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           leading: IconButton(
               icon: Icon(Icons.arrow_back,

@@ -12,7 +12,7 @@ import 'new_policy_screen.dart';
 
 class QuoteScreen extends StatefulWidget {
   final String insuranceType;
-  
+
   const QuoteScreen({super.key, required this.insuranceType});
 
   @override
@@ -38,7 +38,14 @@ class _QuoteScreenState extends State<QuoteScreen> {
         final lastName = userData['LastName']?.toString() ?? '';
         _nameController.text = '$firstName $lastName'.trim();
         _emailController.text = userData['Email']?.toString() ?? '';
-        _phoneController.text = userData['Phone']?.toString() ?? userData['PhoneNo']?.toString() ?? userData['Phoneno']?.toString() ?? userData['MobileNo']?.toString() ?? userData['Mobile']?.toString() ?? userData['PhoneNumber']?.toString() ?? userData['Telephone']?.toString() ?? '';
+        _phoneController.text = userData['Phone']?.toString() ??
+            userData['PhoneNo']?.toString() ??
+            userData['Phoneno']?.toString() ??
+            userData['MobileNo']?.toString() ??
+            userData['Mobile']?.toString() ??
+            userData['PhoneNumber']?.toString() ??
+            userData['Telephone']?.toString() ??
+            '';
       }
     });
   }
@@ -58,10 +65,15 @@ class _QuoteScreenState extends State<QuoteScreen> {
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Quote', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text('Quote',
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+                fontSize: 18)),
         centerTitle: true,
         actions: const [],
       ),
@@ -70,120 +82,213 @@ class _QuoteScreenState extends State<QuoteScreen> {
         child: Form(
           key: _formKey,
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            // Show selected product type
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryNavy.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.description_outlined, color: AppTheme.primaryNavy, size: 18),
-                  const SizedBox(width: 8),
-                  Text('Product: ${widget.insuranceType}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy)),
-                ],
-              ),
-            ),
-            SizedBox(height: 20),
-            Text('Name', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
-            SizedBox(height: 8),
-            TextFormField(
-              controller: _nameController,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
-              decoration: InputDecoration(
-                hintText: 'enter fullname',
-                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy)),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-            ),
-            SizedBox(height: 20),
-            Text('Email Address', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
-            SizedBox(height: 8),
-            TextFormField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Email is required';
-                if (!v.contains('@') || !v.contains('.')) return 'Enter a valid email';
-                return null;
-              },
-              decoration: InputDecoration(
-                hintText: 'enter your email address',
-                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy)),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-            ),
-            SizedBox(height: 20),
-            Text('Phone Number', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
-            SizedBox(height: 8),
-            TextFormField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Phone number is required' : null,
-              decoration: InputDecoration(
-                hintText: 'enter your phone number',
-                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy)),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-            ),
-            SizedBox(height: 20),
-            Text('Enter sum Insured', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
-            SizedBox(height: 8),
-            TextFormField(
-              controller: _sumInsuredController,
-              keyboardType: TextInputType.number,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Sum insured is required';
-                final num = int.tryParse(v.trim());
-                if (num == null || num <= 0) return 'Enter a valid amount';
-                return null;
-              },
-              decoration: InputDecoration(
-                hintText: 'enter value between 0 and 1000000',
-                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primaryNavy)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-            ),
-            const SizedBox(height: 40),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _submitQuote,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              // Show selected product type
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryNavy.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: _isLoading
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Get Quote', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Row(
+                  children: [
+                    Icon(Icons.description_outlined,
+                        color: AppTheme.primaryNavy, size: 18),
+                    const SizedBox(width: 8),
+                    Text('Product: ${widget.insuranceType}',
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryNavy)),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
+              SizedBox(height: 20),
+              Text('Name',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurface)),
+              SizedBox(height: 8),
+              TextFormField(
+                controller: _nameController,
+                style:
+                    TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                decoration: InputDecoration(
+                  hintText: 'enter fullname',
+                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[700]!
+                              : Colors.grey[300]!)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[700]!
+                              : Colors.grey[300]!)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide:
+                          const BorderSide(color: AppTheme.primaryNavy)),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              SizedBox(height: 20),
+              Text('Email Address',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurface)),
+              SizedBox(height: 8),
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                style:
+                    TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Email is required';
+                  if (!v.contains('@') || !v.contains('.'))
+                    return 'Enter a valid email';
+                  return null;
+                },
+                decoration: InputDecoration(
+                  hintText: 'enter your email address',
+                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[700]!
+                              : Colors.grey[300]!)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[700]!
+                              : Colors.grey[300]!)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide:
+                          const BorderSide(color: AppTheme.primaryNavy)),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              SizedBox(height: 20),
+              Text('Phone Number',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurface)),
+              SizedBox(height: 8),
+              TextFormField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                style:
+                    TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Phone number is required'
+                    : null,
+                decoration: InputDecoration(
+                  hintText: 'enter your phone number',
+                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[700]!
+                              : Colors.grey[300]!)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[700]!
+                              : Colors.grey[300]!)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide:
+                          const BorderSide(color: AppTheme.primaryNavy)),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              SizedBox(height: 20),
+              Text('Enter sum Insured',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurface)),
+              SizedBox(height: 8),
+              TextFormField(
+                controller: _sumInsuredController,
+                keyboardType: TextInputType.number,
+                style:
+                    TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty)
+                    return 'Sum insured is required';
+                  final num = int.tryParse(v.trim());
+                  if (num == null || num <= 0) return 'Enter a valid amount';
+                  return null;
+                },
+                decoration: InputDecoration(
+                  hintText: 'enter value between 0 and 1000000',
+                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[700]!
+                              : Colors.grey[300]!)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[700]!
+                              : Colors.grey[300]!)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide:
+                          const BorderSide(color: AppTheme.primaryNavy)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _submitQuote,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryNavy,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : const Text('Get Quote',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
       floatingActionButton: Transform.translate(
@@ -192,7 +297,8 @@ class _QuoteScreenState extends State<QuoteScreen> {
           width: 52,
           height: 52,
           child: FloatingActionButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
             backgroundColor: AppTheme.accentOrange,
             shape: const CircleBorder(),
             elevation: 1,
@@ -202,6 +308,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
+        color: AppTheme.bottomNavBackgroundColor(context),
         shape: const CircularNotchedRectangle(),
         notchMargin: 4,
         child: SizedBox(
@@ -210,15 +317,24 @@ class _QuoteScreenState extends State<QuoteScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(Icons.home_outlined, 'Home', false, onTap: () {
-                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (route) => false);
+                Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const CustomerDashboardScreen()),
+                    (route) => false);
               }),
               _buildNavItem(Icons.description_outlined, 'Policies', true),
               const SizedBox(width: 48),
-              _buildNavItem(Icons.assignment_outlined, 'Claims', false, onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
+              _buildNavItem(Icons.assignment_outlined, 'Claims', false,
+                  onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
               }),
               _buildNavItem(Icons.person_outline, 'Profile', false, onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const CustomerProfileScreen()));
               }),
             ],
           ),
@@ -251,11 +367,13 @@ class _QuoteScreenState extends State<QuoteScreen> {
       print('Payload: ${json.encode(requestBody)}');
       print('=========================');
 
-      final response = await http.post(
-        Uri.parse('https://eportaltest.rexinsure.com/api/quote-enquiry'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(requestBody),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .post(
+            Uri.parse('https://eportaltest.rexinsure.com/api/quote-enquiry'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(requestBody),
+          )
+          .timeout(const Duration(seconds: 15));
 
       print('=== QUOTE API RESPONSE ===');
       print('Status Code: ${response.statusCode}');
@@ -267,15 +385,20 @@ class _QuoteScreenState extends State<QuoteScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
         if (data['Status'] == 'Success') {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const QuoteSuccessScreen()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const QuoteSuccessScreen()));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['Message'] ?? 'Request failed'), backgroundColor: Colors.red),
+            SnackBar(
+                content: Text(data['Message'] ?? 'Request failed'),
+                backgroundColor: Colors.red),
           );
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Server error. Please try again.'), backgroundColor: Colors.red),
+          const SnackBar(
+              content: Text('Server error. Please try again.'),
+              backgroundColor: Colors.red),
         );
       }
     } catch (e) {
@@ -289,14 +412,24 @@ class _QuoteScreenState extends State<QuoteScreen> {
     }
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool isSelected, {VoidCallback? onTap}) {
+  Widget _buildNavItem(IconData icon, String label, bool isSelected,
+      {VoidCallback? onTap}) {
     return InkWell(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
-          Text(label, style: TextStyle(fontSize: 10, color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+          Icon(icon,
+              color: isSelected
+                  ? AppTheme.bottomNavSelectedColor(context)
+                  : AppTheme.bottomNavUnselectedColor(context),
+              size: 20),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 10,
+                  color: isSelected
+                      ? AppTheme.bottomNavSelectedColor(context)
+                      : AppTheme.bottomNavUnselectedColor(context))),
         ],
       ),
     );

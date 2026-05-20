@@ -251,7 +251,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                       }
                     }
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                   child: const Text('Continue', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 ),
               ),

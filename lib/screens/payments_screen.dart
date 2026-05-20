@@ -2,20 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
-import '../utils/theme_helper.dart';
 import '../providers/policy_provider.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
+import 'my_policies_screen.dart';
 import 'new_policy_screen.dart';
 
 class PaymentsScreen extends StatelessWidget {
   const PaymentsScreen({super.key});
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  Color _cardColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF111827) : Colors.white;
+
+  Color _borderColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF334155) : Colors.grey[200]!;
+
+  Color _secondaryTextColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFFCBD5E1) : Colors.grey[500]!;
+
+  Color _brandActionColor(BuildContext context) =>
+      _isDark(context) ? AppTheme.accentOrange : AppTheme.primaryNavy;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           leading: IconButton(
               icon: Icon(Icons.arrow_back,
@@ -28,8 +45,9 @@ class PaymentsScreen extends StatelessWidget {
                   color: Theme.of(context).colorScheme.onSurface)),
           centerTitle: true),
       body: Consumer<PolicyProvider>(builder: (context, policyProvider, _) {
-        if (policyProvider.loading)
+        if (policyProvider.loading) {
           return const Center(child: CircularProgressIndicator());
+        }
         final policies = policyProvider.policies;
         if (policies.isEmpty) {
           return Center(
@@ -39,7 +57,8 @@ class PaymentsScreen extends StatelessWidget {
                 Icon(Icons.payment, size: 60, color: Colors.grey[300]),
                 const SizedBox(height: 12),
                 Text('No payments found',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[500])),
+                    style: TextStyle(
+                        fontSize: 14, color: _secondaryTextColor(context))),
               ]));
         }
         // Sort by start date, most recent first
@@ -53,7 +72,7 @@ class PaymentsScreen extends StatelessWidget {
         });
         return SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Recent Payments',
@@ -85,6 +104,7 @@ class PaymentsScreen extends StatelessWidget {
                       const Icon(Icons.add, color: Colors.white, size: 30)))),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
+          color: AppTheme.bottomNavBackgroundColor(context),
           shape: const CircularNotchedRectangle(),
           notchMargin: 4,
           child: SizedBox(
@@ -92,21 +112,25 @@ class PaymentsScreen extends StatelessWidget {
               child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _nav(Icons.home_outlined, 'Home', false,
+                    _nav(context, Icons.home_outlined, 'Home', false,
                         onTap: () => Navigator.pushAndRemoveUntil(
                             context,
                             MaterialPageRoute(
                                 builder: (_) =>
                                     const CustomerDashboardScreen()),
                             (r) => false)),
-                    _nav(Icons.description_outlined, 'Policies', false),
+                    _nav(context, Icons.description_outlined, 'Policies', false,
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const MyPoliciesScreen()))),
                     const SizedBox(width: 48),
-                    _nav(Icons.assignment_outlined, 'Claims', false,
+                    _nav(context, Icons.assignment_outlined, 'Claims', false,
                         onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
                                 builder: (_) => const MyClaimsScreen()))),
-                    _nav(Icons.person_outline, 'Profile', false,
+                    _nav(context, Icons.person_outline, 'Profile', false,
                         onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -136,20 +160,20 @@ class PaymentsScreen extends StatelessWidget {
                                 : Icons.description_outlined;
 
     return Container(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-            color: ThemeHelper.getCardColor(context),
+            color: _cardColor(context),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!)),
+            border: Border.all(color: _borderColor(context))),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Container(
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                    color: AppTheme.primaryNavy.withValues(alpha: 0.1),
+                    color: _brandActionColor(context).withValues(alpha: 0.12),
                     shape: BoxShape.circle),
-                child: Icon(icon, color: AppTheme.primaryNavy, size: 18)),
-            SizedBox(width: 10),
+                child: Icon(icon, color: _brandActionColor(context), size: 18)),
+            const SizedBox(width: 10),
             Expanded(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,7 +185,8 @@ class PaymentsScreen extends StatelessWidget {
                           color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 2),
                   Text('Policy #${p['policyId'] ?? ''}',
-                      style: TextStyle(fontSize: 10, color: Colors.grey[500])),
+                      style: TextStyle(
+                          fontSize: 10, color: _secondaryTextColor(context))),
                 ])),
             Container(
                 padding:
@@ -176,16 +201,16 @@ class PaymentsScreen extends StatelessWidget {
                         color: Colors.white))),
           ]),
           const SizedBox(height: 14),
-          _row('Premium', '₦${p['premium'] ?? '0'}'),
+          _row(context, 'Premium', '₦${p['premium'] ?? '0'}'),
           const SizedBox(height: 8),
-          _row('Payment Method', 'Paystack'),
+          _row(context, 'Payment Method', 'Paystack'),
           const SizedBox(height: 8),
-          _row('Start Date', p['startDate']?.toString() ?? '-'),
+          _row(context, 'Start Date', p['startDate']?.toString() ?? '-'),
           const SizedBox(height: 8),
-          _row('End Date', p['endDate']?.toString() ?? '-'),
+          _row(context, 'End Date', p['endDate']?.toString() ?? '-'),
           const SizedBox(height: 8),
-          _row('Policy ID', p['policyId']?.toString() ?? '-'),
-          SizedBox(height: 4),
+          _row(context, 'Policy ID', p['policyId']?.toString() ?? '-'),
+          const SizedBox(height: 4),
           Align(
               alignment: Alignment.centerRight,
               child: GestureDetector(
@@ -196,7 +221,7 @@ class PaymentsScreen extends StatelessWidget {
                         content: Text('Policy ID copied'),
                         duration: Duration(seconds: 1)));
                   },
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.copy, size: 13, color: AppTheme.accentOrange),
                     SizedBox(width: 4),
                     Text('Copy',
@@ -208,25 +233,33 @@ class PaymentsScreen extends StatelessWidget {
         ]));
   }
 
-  Widget _row(String l, String v) =>
+  Widget _row(BuildContext context, String l, String v) =>
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(l, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+        Text(l,
+            style:
+                TextStyle(fontSize: 12, color: _secondaryTextColor(context))),
         Text(v,
             style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Colors.black87))
+                color: Theme.of(context).colorScheme.onSurface))
       ]);
 
-  Widget _nav(IconData icon, String label, bool sel, {VoidCallback? onTap}) =>
+  Widget _nav(BuildContext context, IconData icon, String label, bool sel,
+          {VoidCallback? onTap}) =>
       InkWell(
           onTap: onTap,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Icon(icon,
-                color: sel ? AppTheme.primaryNavy : Colors.grey, size: 20),
+                color: sel
+                    ? AppTheme.bottomNavSelectedColor(context)
+                    : AppTheme.bottomNavUnselectedColor(context),
+                size: 20),
             Text(label,
                 style: TextStyle(
                     fontSize: 10,
-                    color: sel ? AppTheme.primaryNavy : Colors.grey))
+                    color: sel
+                        ? AppTheme.bottomNavSelectedColor(context)
+                        : AppTheme.bottomNavUnselectedColor(context)))
           ]));
 }

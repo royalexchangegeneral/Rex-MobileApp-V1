@@ -46,9 +46,28 @@ class _ComprehensiveVehicleInfoScreenState
   String? _selectedYear;
 
   static const List<String> _vehicleColors = [
-    'Red','Silver','Pink','White','Yellow','Brown','Grey','Green','Orange',
-    'Indigo','Violet','Corporate','Custom','Gold','Commercial','Cream',
-    'Blue','Ash','Wine','Purple','Black','Other',
+    'Red',
+    'Silver',
+    'Pink',
+    'White',
+    'Yellow',
+    'Brown',
+    'Grey',
+    'Green',
+    'Orange',
+    'Indigo',
+    'Violet',
+    'Corporate',
+    'Custom',
+    'Gold',
+    'Commercial',
+    'Cream',
+    'Blue',
+    'Ash',
+    'Wine',
+    'Purple',
+    'Black',
+    'Other',
   ];
 
   static final List<String> _vehicleYears = List.generate(
@@ -130,8 +149,8 @@ class _ComprehensiveVehicleInfoScreenState
   }
 
   Future<void> _handleVerify() async {
-    if (_regNumberController.text.isEmpty ||
-        _sumInsuredController.text.isEmpty) return;
+    if (_regNumberController.text.isEmpty || _sumInsuredController.text.isEmpty)
+      return;
     setState(() {
       _isVerifying = true;
       _vehicleData = null;
@@ -144,11 +163,14 @@ class _ComprehensiveVehicleInfoScreenState
         'RegNo': _regNumberController.text.trim(),
       };
 
-      final response = await http.post(
-        Uri.parse('https://eportaltest.rexinsure.com/api/vehicleVerification'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(requestBody),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .post(
+            Uri.parse(
+                'https://eportaltest.rexinsure.com/api/vehicleVerification'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(requestBody),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (!mounted) return;
 
@@ -295,9 +317,8 @@ class _ComprehensiveVehicleInfoScreenState
                           height: 4,
                           margin: EdgeInsets.only(right: i < 4 ? 4 : 0),
                           decoration: BoxDecoration(
-                            color: i < 2
-                                ? AppTheme.primaryNavy
-                                : Colors.grey[300],
+                            color:
+                                i < 2 ? AppTheme.primaryNavy : Colors.grey[300],
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -365,8 +386,7 @@ class _ComprehensiveVehicleInfoScreenState
                     ),
                     child: Text(
                       _premium > 0 ? _formatCurrency(_premium) : '',
-                      style:
-                          TextStyle(color: Colors.grey[600], fontSize: 14),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -418,8 +438,11 @@ class _ComprehensiveVehicleInfoScreenState
                       onPressed:
                           _isVerifying || _isVerified ? null : _handleVerify,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            _isVerified ? Colors.green : (Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy),
+                        backgroundColor: _isVerified
+                            ? Colors.green
+                            : (Theme.of(context).brightness == Brightness.dark
+                                ? AppTheme.accentOrange
+                                : AppTheme.primaryNavy),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -494,82 +517,96 @@ class _ComprehensiveVehicleInfoScreenState
                     ),
                     const SizedBox(height: 12),
 
-                    _buildField('VIN / Chassis Number *', 'enter VIN',
-                        _vinController),
+                    _buildField(
+                        'VIN / Chassis Number *', 'enter VIN', _vinController),
 
                     // Vehicle Make — searchable dropdown from API
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        _buildLabel('Vehicle Make *'),
-                        const SizedBox(height: 6),
-                        _loadingVehicleList
-                            ? const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 14),
-                                child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-                              )
-                            : SearchableDropdown(
-                                hint: 'select vehicle make',
-                                value: _selectedMake,
-                                items: _makeModelMap.keys.toList(),
-                                onChanged: (v) => setState(() {
-                                  _selectedMake = v;
-                                  _selectedModel = null;
-                                }),
-                              ),
-                      ]),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('Vehicle Make *'),
+                            const SizedBox(height: 6),
+                            _loadingVehicleList
+                                ? const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 14),
+                                    child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2)),
+                                  )
+                                : SearchableDropdown(
+                                    hint: 'select vehicle make',
+                                    value: _selectedMake,
+                                    items: _makeModelMap.keys.toList(),
+                                    onChanged: (v) => setState(() {
+                                      _selectedMake = v;
+                                      _selectedModel = null;
+                                    }),
+                                  ),
+                          ]),
                     ),
 
                     // Vehicle Model — filtered by selected make
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        _buildLabel('Vehicle Model *'),
-                        const SizedBox(height: 6),
-                        SearchableDropdown(
-                          hint: _selectedMake == null
-                              ? 'select make first'
-                              : 'select vehicle model',
-                          value: _selectedModel,
-                          items: _selectedMake != null
-                              ? (_makeModelMap[_selectedMake] ?? [])
-                              : [],
-                          onChanged: _selectedMake != null
-                              ? (v) => setState(() => _selectedModel = v)
-                              : (_) {},
-                        ),
-                      ]),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('Vehicle Model *'),
+                            const SizedBox(height: 6),
+                            SearchableDropdown(
+                              hint: _selectedMake == null
+                                  ? 'select make first'
+                                  : 'select vehicle model',
+                              value: _selectedModel,
+                              items: _selectedMake != null
+                                  ? (_makeModelMap[_selectedMake] ?? [])
+                                  : [],
+                              onChanged: _selectedMake != null
+                                  ? (v) => setState(() => _selectedModel = v)
+                                  : (_) {},
+                            ),
+                          ]),
                     ),
 
                     // Vehicle Color dropdown
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        _buildLabel('Vehicle Color *'),
-                        const SizedBox(height: 6),
-                        SearchableDropdown(
-                          hint: 'select vehicle color',
-                          value: _selectedColor,
-                          items: _vehicleColors,
-                          onChanged: (v) => setState(() => _selectedColor = v),
-                        ),
-                      ]),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('Vehicle Color *'),
+                            const SizedBox(height: 6),
+                            SearchableDropdown(
+                              hint: 'select vehicle color',
+                              value: _selectedColor,
+                              items: _vehicleColors,
+                              onChanged: (v) =>
+                                  setState(() => _selectedColor = v),
+                            ),
+                          ]),
                     ),
                     _buildField('Engine Number *', 'enter engine number',
                         _engineController),
                     // Year of Manufacture dropdown
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        _buildLabel('Year of Manufacture *'),
-                        const SizedBox(height: 6),
-                        SearchableDropdown(
-                          hint: 'select year',
-                          value: _selectedYear,
-                          items: _vehicleYears,
-                          onChanged: (v) => setState(() => _selectedYear = v),
-                        ),
-                      ]),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('Year of Manufacture *'),
+                            const SizedBox(height: 6),
+                            SearchableDropdown(
+                              hint: 'select year',
+                              value: _selectedYear,
+                              items: _vehicleYears,
+                              onChanged: (v) =>
+                                  setState(() => _selectedYear = v),
+                            ),
+                          ]),
                     ),
                     const SizedBox(height: 16),
 
@@ -611,12 +648,18 @@ class _ComprehensiveVehicleInfoScreenState
                               }
                             : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
+                          backgroundColor:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? AppTheme.accentOrange
+                                  : AppTheme.primaryNavy,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
-                          disabledBackgroundColor: Colors.grey[300],
+                          disabledBackgroundColor:
+                              AppTheme.disabledButtonColor(context),
+                          disabledForegroundColor:
+                              AppTheme.disabledButtonTextColor(context),
                         ),
                         child: const Text('Continue',
                             style: TextStyle(
@@ -694,8 +737,7 @@ class _ComprehensiveVehicleInfoScreenState
                     color: isDark ? Colors.grey[700]! : Colors.grey[300]!)),
             focusedBorder: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(8)),
-                borderSide:
-                    BorderSide(color: AppTheme.primaryNavy, width: 2)),
+                borderSide: BorderSide(color: AppTheme.primaryNavy, width: 2)),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),

@@ -332,7 +332,7 @@ class PolicyRenewalScreen extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
+                    backgroundColor: AppTheme.primaryNavy,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -367,6 +367,7 @@ class PolicyRenewalScreen extends StatelessWidget {
       bottomNavigationBar: isAgentFlow
           ? buildAgentBottomNav(context, currentIndex: 1)
           : BottomAppBar(
+              color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),
               notchMargin: 4,
               child: SizedBox(

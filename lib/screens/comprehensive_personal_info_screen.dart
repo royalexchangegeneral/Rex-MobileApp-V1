@@ -213,7 +213,7 @@ class _ComprehensivePersonalInfoScreenState extends State<ComprehensivePersonalI
                     Navigator.push(context, MaterialPageRoute(builder: (_) => ComprehensiveVehicleInfoScreen(vehicleType: widget.vehicleType, personalInfo: personalInfo, isLoggedIn: widget.isLoggedIn, isAgent: widget.isAgent)));
                   }
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                 child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               )),
             ),

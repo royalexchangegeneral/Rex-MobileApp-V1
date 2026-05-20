@@ -53,11 +53,16 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
     'Email Support'
   ];
 
+  Color get _actionColor => Theme.of(context).brightness == Brightness.dark
+      ? AppTheme.accentOrange
+      : AppTheme.primaryNavy;
+
   @override
   void initState() {
     super.initState();
-    if (widget.initialCategory != null)
+    if (widget.initialCategory != null) {
       _selectedCategory = widget.initialCategory;
+    }
   }
 
   Future<void> _pickFile() async {
@@ -100,7 +105,10 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
     setState(() => _isSubmitting = true);
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final userEmail = auth.loginEmail ?? auth.userEmail ?? auth.userData?['Email']?.toString() ?? '';
+    final userEmail = auth.loginEmail ??
+        auth.userEmail ??
+        auth.userData?['Email']?.toString() ??
+        '';
 
     try {
       final request = http.MultipartRequest(
@@ -161,7 +169,9 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           leading: IconButton(
               icon: Icon(Icons.arrow_back,
@@ -175,15 +185,17 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
           centerTitle: true),
       body: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             // Request Details card
             Container(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                     color: ThemeHelper.getCardColor(context),
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                    border:
+                        Border.all(color: ThemeHelper.getBorderColor(context))),
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -192,13 +204,13 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Theme.of(context).colorScheme.onSurface)),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Text('Category',
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                               color: Theme.of(context).colorScheme.onSurface)),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       Container(
                           decoration: BoxDecoration(
                               color: ThemeHelper.getCardColor(context),
@@ -209,23 +221,25 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
                               value: _selectedCategory,
                               hint: Text('Select category',
                                   style: TextStyle(
-                                      color: Colors.grey[400], fontSize: 13)),
+                                      color: ThemeHelper.getSecondaryTextColor(
+                                          context),
+                                      fontSize: 13)),
                               style: TextStyle(
                                   color:
                                       Theme.of(context).colorScheme.onSurface,
                                   fontSize: 13),
                               decoration: InputDecoration(
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(
+                                  contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 14, vertical: 10)),
                               icon: Icon(Icons.keyboard_arrow_down,
-                                  color: Colors.grey[600]),
+                                  color: ThemeHelper.getSecondaryTextColor(
+                                      context)),
                               items: _categories
-                                  .map((c) => DropdownMenuItem(
-                                      value: c, child: Text(c)))
+                                  .map(
+                                      (c) => DropdownMenuItem(value: c, child: Text(c)))
                                   .toList(),
-                              onChanged: (v) =>
-                                  setState(() => _selectedCategory = v))),
+                              onChanged: (v) => setState(() => _selectedCategory = v))),
                       const SizedBox(height: 14),
                       Text('Policy Number (optional)',
                           style: TextStyle(
@@ -243,24 +257,26 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
                       const SizedBox(height: 6),
                       _field(_titleController,
                           'enter the title of your complaint'),
-                      SizedBox(height: 14),
+                      const SizedBox(height: 14),
                       Text('Description',
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                               color: Theme.of(context).colorScheme.onSurface)),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       _field(_descController,
                           'Provide detailed information about your request',
                           lines: 4),
                     ])),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // Attachments card
             Container(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                     color: ThemeHelper.getCardColor(context),
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                    border:
+                        Border.all(color: ThemeHelper.getBorderColor(context))),
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -269,7 +285,7 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Theme.of(context).colorScheme.onSurface)),
-                      SizedBox(height: 14),
+                      const SizedBox(height: 14),
                       InkWell(
                           onTap: _pickFile,
                           child: Container(
@@ -290,7 +306,7 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
                                         color:
                                             ThemeHelper.getSecondaryTextColor(
                                                 context)),
-                                    SizedBox(height: 4),
+                                    const SizedBox(height: 4),
                                     Text('Drag and drop files here or',
                                         style: TextStyle(
                                             fontSize: 12,
@@ -345,7 +361,7 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
                 child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submitTicket,
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.accentOrange : AppTheme.primaryNavy,
+                        backgroundColor: _actionColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -382,6 +398,7 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
       bottomNavigationBar: widget.isAgentFlow
           ? buildAgentBottomNav(context, currentIndex: 0)
           : BottomAppBar(
+              color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),
               notchMargin: 4,
               child: SizedBox(
@@ -401,7 +418,7 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
                                 (r) => false)),
                         _nav(Icons.description_outlined, 'Policies', false,
                             null),
-                        SizedBox(width: 48),
+                        const SizedBox(width: 48),
                         _nav(
                             Icons.assignment_outlined,
                             'Claims',
@@ -433,7 +450,9 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
               color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
           decoration: InputDecoration(
               hintText: h,
-              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+              hintStyle: TextStyle(
+                  color: ThemeHelper.getSecondaryTextColor(context),
+                  fontSize: 13),
               filled: true,
               fillColor: ThemeHelper.getCardColor(context),
               border: OutlineInputBorder(
@@ -446,16 +465,23 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
                       BorderSide(color: ThemeHelper.getBorderColor(context))),
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppTheme.primaryNavy)),
+                  borderSide: BorderSide(color: _actionColor)),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 12)));
 
   Widget _nav(IconData i, String l, bool s, VoidCallback? o) => InkWell(
       onTap: o,
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(i, color: s ? AppTheme.primaryNavy : Colors.grey, size: 20),
+        Icon(i,
+            color: s
+                ? AppTheme.bottomNavSelectedColor(context)
+                : AppTheme.bottomNavUnselectedColor(context),
+            size: 20),
         Text(l,
             style: TextStyle(
-                fontSize: 10, color: s ? AppTheme.primaryNavy : Colors.grey))
+                fontSize: 10,
+                color: s
+                    ? AppTheme.bottomNavSelectedColor(context)
+                    : AppTheme.bottomNavUnselectedColor(context)))
       ]));
 }

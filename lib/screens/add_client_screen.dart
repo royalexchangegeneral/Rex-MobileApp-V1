@@ -6,11 +6,12 @@ import 'reports_screen.dart';
 import 'agent_profile_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../utils/app_theme.dart';
 import '../widgets/searchable_dropdown.dart';
 
 class AddClientScreen extends StatefulWidget {
   final String clientType; // 'individual' or 'corporate'
-  
+
   const AddClientScreen({super.key, required this.clientType});
 
   @override
@@ -28,20 +29,56 @@ class _AddClientScreenState extends State<AddClientScreen> {
   final _addressController = TextEditingController();
   final _stateController = TextEditingController();
   final _lgaController = TextEditingController();
-  
+
   // Corporate client controllers
   final _cacController = TextEditingController();
   final _businessNameController = TextEditingController();
   final _businessAddressController = TextEditingController();
   final _businessSectorController = TextEditingController();
-  
+
   String? _selectedState;
   String? _selectedLga;
   List<Map<String, dynamic>> _lgaList = [];
   bool _isLoadingLgas = false;
   bool _isVerifyingNin = false;
-  bool _ninVerified = false;
-  
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get _fieldColor =>
+      _isDark ? const Color(0xFF111827) : Colors.grey[100]!;
+
+  Color get _borderColor =>
+      _isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+
+  Color get _secondaryTextColor =>
+      _isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
+  Color get _agentAccent =>
+      _isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+
+  InputDecoration _inputDecoration(String hint, {Widget? suffixIcon}) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(color: _secondaryTextColor, fontSize: 14),
+      filled: true,
+      fillColor: _fieldColor,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _borderColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _borderColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _agentAccent),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      suffixIcon: suffixIcon,
+    );
+  }
+
   final Map<String, int> _stateIdMap = {
     'Abia': 1,
     'Adamawa': 2,
@@ -81,7 +118,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
     'Yobe': 36,
     'Zamfara': 37,
   };
-  
+
   final List<String> _nigerianStates = [
     'Select State',
     'Abia',
@@ -152,9 +189,12 @@ class _AddClientScreenState extends State<AddClientScreen> {
     });
 
     try {
-      final response = await http.get(
-        Uri.parse('https://eportal.rexinsure.com/api/get-lga?state_id=$stateId'),
-      ).timeout(
+      final response = await http
+          .get(
+        Uri.parse(
+            'https://eportal.rexinsure.com/api/get-lga?state_id=$stateId'),
+      )
+          .timeout(
         const Duration(seconds: 10),
         onTimeout: () {
           throw Exception('Request timeout');
@@ -163,7 +203,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
-        
+
         // Handle different response formats
         List<Map<String, dynamic>> lgaList = [];
         if (data is List) {
@@ -173,12 +213,12 @@ class _AddClientScreenState extends State<AddClientScreen> {
         } else if (data is Map && data['lgas'] is List) {
           lgaList = List<Map<String, dynamic>>.from(data['lgas']);
         }
-        
+
         setState(() {
           _lgaList = lgaList;
           _isLoadingLgas = false;
         });
-        
+
         if (lgaList.isEmpty && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No LGAs found for this state')),
@@ -190,7 +230,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to load LGAs: ${response.statusCode}')),
+            SnackBar(
+                content: Text('Failed to load LGAs: ${response.statusCode}')),
           );
         }
       }
@@ -208,7 +249,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
 
   Future<void> _verifyNin() async {
     final nin = _ninController.text.trim();
-    
+
     // Validate NIN length
     if (nin.length != 11) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -222,7 +263,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
     });
 
     try {
-      final response = await http.post(
+      final response = await http
+          .post(
         Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
@@ -230,7 +272,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
           'Password': 'royal1234',
           'number': nin,
         }),
-      ).timeout(
+      )
+          .timeout(
         const Duration(seconds: 15),
         onTimeout: () {
           throw Exception('Request timeout');
@@ -243,42 +286,44 @@ class _AddClientScreenState extends State<AddClientScreen> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = json.decode(response.body);
-        
+
         // Check if verification was successful
-        if (responseData['status'] == 'success' && 
-            responseData['data'] != null && 
+        if (responseData['status'] == 'success' &&
+            responseData['data'] != null &&
             responseData['data']['data'] != null &&
             responseData['data']['data']['kyc'] != null &&
-            responseData['data']['data']['kyc']['firstname'] != null && (responseData['data']['data']['kyc']['firstname']?.toString() ?? '').isNotEmpty) {
-          
+            responseData['data']['data']['kyc']['firstname'] != null &&
+            (responseData['data']['data']['kyc']['firstname']?.toString() ?? '')
+                .isNotEmpty) {
           final kycData = responseData['data']['data']['kyc'];
-          
+
           // Populate fields with response data
           setState(() {
             _firstNameController.text = kycData['firstname']?.toString() ?? '';
             _lastNameController.text = kycData['surname']?.toString() ?? '';
             _emailController.text = kycData['email']?.toString() ?? '';
             _phoneController.text = kycData['telephoneno']?.toString() ?? '';
-            
+
             // Format date of birth from DD-MM-YYYY to DD/MM/YYYY
             String dob = kycData['birthdate']?.toString() ?? '';
             if (dob.isNotEmpty) {
               _dobController.text = dob.replaceAll('-', '/');
             }
-            
-            _addressController.text = kycData['residence_address']?.toString() ?? '';
-            
+
+            _addressController.text =
+                kycData['residence_address']?.toString() ?? '';
+
             // Set state if available
-            String residenceState = kycData['residence_state']?.toString() ?? '';
-            if (residenceState.isNotEmpty && _nigerianStates.contains(residenceState)) {
+            String residenceState =
+                kycData['residence_state']?.toString() ?? '';
+            if (residenceState.isNotEmpty &&
+                _nigerianStates.contains(residenceState)) {
               _selectedState = residenceState;
               // Fetch LGAs for the state
               _fetchLgas(residenceState);
             }
-            
-            _ninVerified = true;
           });
-          
+
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -291,7 +336,9 @@ class _AddClientScreenState extends State<AddClientScreen> {
           // No data returned or verification failed
           if (mounted) {
             final kycData = responseData['data']?['data']?['kyc'];
-            final msg = kycData != null ? (kycData['status']?.toString() ?? 'Verification failed') : 'No data found. Please enter details manually';
+            final msg = kycData != null
+                ? (kycData['status']?.toString() ?? 'Verification failed')
+                : 'No data found. Please enter details manually';
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(msg),
@@ -303,7 +350,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Verification failed: ${response.statusCode}. Please enter details manually'),
+              content: Text(
+                  'Verification failed: ${response.statusCode}. Please enter details manually'),
             ),
           );
         }
@@ -315,20 +363,24 @@ class _AddClientScreenState extends State<AddClientScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}. Please enter details manually'),
+            content:
+                Text('Error: ${e.toString()}. Please enter details manually'),
           ),
         );
       }
     }
   }
 
+  // Kept for direct-create fallback if this form is reused without summary.
+  // ignore: unused_element
   Future<void> _createCustomer() async {
     try {
       final requestBody = {
         'cust_first_name': _firstNameController.text.trim(),
         'cust_middle_name': '', // Not collected in form
         'cust_last_name': _lastNameController.text.trim(),
-        'cust_type': widget.clientType == 'individual' ? 'Individual' : 'Corporate',
+        'cust_type':
+            widget.clientType == 'individual' ? 'Individual' : 'Corporate',
         'cust_occupation': '', // Not collected in form
         'cust_phone_no': _phoneController.text.trim(),
         'cust_email': _emailController.text.trim(),
@@ -341,55 +393,56 @@ class _AddClientScreenState extends State<AddClientScreen> {
         'cust_national_id_name': 'NIN',
         'cust_national_id_no': _ninController.text.trim(),
       };
-      
-      print('=== CREATE CUSTOMER API REQUEST ===');
-      print('URL: https://eportaltest.rexinsure.com/api/createcustomer');
-      print('Request Body: ${json.encode(requestBody)}');
-      
-      final response = await http.post(
+
+      debugPrint('=== CREATE CUSTOMER API REQUEST ===');
+      debugPrint('URL: https://eportaltest.rexinsure.com/api/createcustomer');
+      debugPrint('Request Body: ${json.encode(requestBody)}');
+
+      final response = await http
+          .post(
         Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(requestBody),
-      ).timeout(
+      )
+          .timeout(
         const Duration(seconds: 30),
         onTimeout: () {
           throw Exception('Request timeout');
         },
       );
 
-      print('=== CREATE CUSTOMER API RESPONSE ===');
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
-      print('===================================');
+      debugPrint('=== CREATE CUSTOMER API RESPONSE ===');
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response Body: ${response.body}');
+      debugPrint('===================================');
 
       if (mounted) {
         if (response.statusCode == 200 || response.statusCode == 201) {
-          final responseData = json.decode(response.body);
-          
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Customer created successfully'),
               backgroundColor: Colors.green,
             ),
           );
-          
+
           // Navigate back to clients list
           Navigator.pop(context);
         } else {
           final responseData = json.decode(response.body);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(responseData['message'] ?? 'Failed to create customer'),
+              content:
+                  Text(responseData['message'] ?? 'Failed to create customer'),
               backgroundColor: Colors.red,
             ),
           );
         }
       }
     } catch (e) {
-      print('=== CREATE CUSTOMER API ERROR ===');
-      print('Error: ${e.toString()}');
-      print('=================================');
-      
+      debugPrint('=== CREATE CUSTOMER API ERROR ===');
+      debugPrint('Error: ${e.toString()}');
+      debugPrint('=================================');
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -404,10 +457,12 @@ class _AddClientScreenState extends State<AddClientScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -435,7 +490,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       'Step 1 of 2',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: _secondaryTextColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -443,7 +498,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       'Client information',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: _secondaryTextColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -456,7 +511,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       child: Container(
                         height: 4,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E2D64),
+                          color: _agentAccent,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -466,7 +521,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       child: Container(
                         height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: _borderColor,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -476,7 +531,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
               ],
             ),
           ),
-          
+
           // Scrollable Content
           Expanded(
             child: SingleChildScrollView(
@@ -494,28 +549,22 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _ninController,
                     keyboardType: TextInputType.number,
                     maxLength: 11,
-                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                    decoration: InputDecoration(
-                      hintText: 'enter NIN (11 digits)',
-                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface),
+                    decoration:
+                        _inputDecoration('enter NIN (11 digits)').copyWith(
                       counterText: '',
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Verify Button
                   SizedBox(
                     width: double.infinity,
@@ -523,13 +572,16 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     child: ElevatedButton(
                       onPressed: _isVerifyingNin ? null : _verifyNin,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E2D64),
+                        backgroundColor: _agentAccent,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: 0,
-                        disabledBackgroundColor: Colors.grey[400],
+                        disabledBackgroundColor:
+                            AppTheme.disabledButtonColor(context),
+                        disabledForegroundColor:
+                            AppTheme.disabledButtonTextColor(context),
                       ),
                       child: _isVerifyingNin
                           ? const SizedBox(
@@ -540,7 +592,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : Text(
+                          : const Text(
                               'Verify',
                               style: TextStyle(
                                 fontSize: 14,
@@ -549,13 +601,13 @@ class _AddClientScreenState extends State<AddClientScreen> {
                             ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // OR divider
                   Row(
                     children: [
-                      Expanded(child: Divider(color: Colors.grey[300])),
+                      Expanded(child: Divider(color: _borderColor)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
@@ -563,16 +615,16 @@ class _AddClientScreenState extends State<AddClientScreen> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey[700],
+                            color: _secondaryTextColor,
                           ),
                         ),
                       ),
-                      Expanded(child: Divider(color: Colors.grey[300])),
+                      Expanded(child: Divider(color: _borderColor)),
                     ],
                   ),
-                  
-                  SizedBox(height: 24),
-                  
+
+                  const SizedBox(height: 24),
+
                   // First Name
                   Text(
                     'First Name',
@@ -582,26 +634,18 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _firstNameController,
                     autofillHints: const [AutofillHints.givenName],
-                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                    decoration: InputDecoration(
-                      hintText: 'enter first name',
-                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface),
+                    decoration: _inputDecoration('enter first name'),
                   ),
-                  
-                  SizedBox(height: 16),
-                  
+
+                  const SizedBox(height: 16),
+
                   // Last Name
                   Text(
                     'Last Name',
@@ -611,26 +655,18 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _lastNameController,
                     autofillHints: const [AutofillHints.familyName],
-                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                    decoration: InputDecoration(
-                      hintText: 'enter last name',
-                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface),
+                    decoration: _inputDecoration('enter last name'),
                   ),
-                  
-                  SizedBox(height: 16),
-                  
+
+                  const SizedBox(height: 16),
+
                   // Email Address
                   Text(
                     'Email Address',
@@ -640,27 +676,19 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
-                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                    decoration: InputDecoration(
-                      hintText: 'enter your email address',
-                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface),
+                    decoration: _inputDecoration('enter your email address'),
                   ),
-                  
-                  SizedBox(height: 16),
-                  
+
+                  const SizedBox(height: 16),
+
                   // Phone Number
                   Text(
                     'Phone Number',
@@ -670,27 +698,19 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     autofillHints: const [AutofillHints.telephoneNumber],
-                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                    decoration: InputDecoration(
-                      hintText: 'enter your phone number',
-                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface),
+                    decoration: _inputDecoration('enter your phone number'),
                   ),
-                  
-                  SizedBox(height: 16),
-                  
+
+                  const SizedBox(height: 16),
+
                   // Date of Birth
                   Text(
                     'Date of Birth',
@@ -711,32 +731,28 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       );
                       if (picked != null) {
                         setState(() {
-                          _dobController.text = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+                          _dobController.text =
+                              '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
                         });
                       }
                     },
                     child: AbsorbPointer(
                       child: TextField(
                         controller: _dobController,
-                        style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                        decoration: InputDecoration(
-                          hintText: 'dd/mm/yyyy',
-                          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                          filled: true,
-                          fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                          suffixIcon: Icon(Icons.calendar_today_outlined, color: Colors.grey[600], size: 20),
+                        style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(context).colorScheme.onSurface),
+                        decoration: _inputDecoration(
+                          'dd/mm/yyyy',
+                          suffixIcon: Icon(Icons.calendar_today_outlined,
+                              color: _secondaryTextColor, size: 20),
                         ),
                       ),
                     ),
                   ),
-                  
-                  SizedBox(height: 16),
-                  
+
+                  const SizedBox(height: 16),
+
                   // Address
                   Text(
                     'Address',
@@ -746,26 +762,18 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _addressController,
                     autofillHints: const [AutofillHints.streetAddressLine1],
-                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                    decoration: InputDecoration(
-                      hintText: 'enter your address',
-                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface),
+                    decoration: _inputDecoration('enter your address'),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // State and LGA
                   Row(
                     children: [
@@ -785,11 +793,17 @@ class _AddClientScreenState extends State<AddClientScreen> {
                             SearchableDropdown(
                               hint: 'select state',
                               value: _selectedState,
-                              items: _nigerianStates.where((s) => s != 'Select State').toList(),
+                              items: _nigerianStates
+                                  .where((s) => s != 'Select State')
+                                  .toList(),
                               fontSize: 14,
                               onChanged: (String? newValue) {
-                                setState(() { _selectedState = newValue; });
-                                if (newValue != null) { _fetchLgas(newValue); }
+                                setState(() {
+                                  _selectedState = newValue;
+                                });
+                                if (newValue != null) {
+                                  _fetchLgas(newValue);
+                                }
                               },
                             ),
                           ],
@@ -811,10 +825,12 @@ class _AddClientScreenState extends State<AddClientScreen> {
                             const SizedBox(height: 8),
                             _isLoadingLgas
                                 ? Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 16),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey[100],
+                                      color: _fieldColor,
                                       borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: _borderColor),
                                     ),
                                     child: Row(
                                       children: [
@@ -823,13 +839,15 @@ class _AddClientScreenState extends State<AddClientScreen> {
                                           width: 16,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
-                                            color: Colors.grey[600],
+                                            color: _secondaryTextColor,
                                           ),
                                         ),
                                         const SizedBox(width: 12),
                                         Text(
                                           'Loading...',
-                                          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                                          style: TextStyle(
+                                              color: _secondaryTextColor,
+                                              fontSize: 14),
                                         ),
                                       ],
                                     ),
@@ -838,23 +856,31 @@ class _AddClientScreenState extends State<AddClientScreen> {
                                     ? SearchableDropdown(
                                         hint: 'select LGA',
                                         value: _selectedLga,
-                                        items: _lgaList.map((lga) => lga['name']?.toString() ?? lga['lga']?.toString() ?? '').where((s) => s.isNotEmpty).toList(),
+                                        items: _lgaList
+                                            .map((lga) =>
+                                                lga['name']?.toString() ??
+                                                lga['lga']?.toString() ??
+                                                '')
+                                            .where((s) => s.isNotEmpty)
+                                            .toList(),
                                         fontSize: 14,
-                                        onChanged: (String? newValue) { setState(() { _selectedLga = newValue; }); },
+                                        onChanged: (String? newValue) {
+                                          setState(() {
+                                            _selectedLga = newValue;
+                                          });
+                                        },
                                       )
                                     : TextField(
                                         controller: _lgaController,
-                                        style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                                        decoration: InputDecoration(
-                                          hintText: _selectedState == null ? 'select state first' : 'enter LGA',
-                                          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                                          filled: true,
-                                          fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                            borderSide: BorderSide.none,
-                                          ),
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface),
+                                        decoration: _inputDecoration(
+                                          _selectedState == null
+                                              ? 'select state first'
+                                              : 'enter LGA',
                                         ),
                                         onChanged: (value) {
                                           setState(() {
@@ -867,9 +893,9 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Next Button
                   SizedBox(
                     width: double.infinity,
@@ -886,49 +912,57 @@ class _AddClientScreenState extends State<AddClientScreen> {
                         }
                         if (_ninController.text.trim().length != 11) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('NIN must be exactly 11 digits')),
+                            const SnackBar(
+                                content: Text('NIN must be exactly 11 digits')),
                           );
                           return;
                         }
                         if (_firstNameController.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter first name')),
+                            const SnackBar(
+                                content: Text('Please enter first name')),
                           );
                           return;
                         }
                         if (_lastNameController.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter last name')),
+                            const SnackBar(
+                                content: Text('Please enter last name')),
                           );
                           return;
                         }
                         if (_emailController.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter email address')),
+                            const SnackBar(
+                                content: Text('Please enter email address')),
                           );
                           return;
                         }
                         if (_phoneController.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter phone number')),
+                            const SnackBar(
+                                content: Text('Please enter phone number')),
                           );
                           return;
                         }
                         if (_dobController.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please select date of birth')),
+                            const SnackBar(
+                                content: Text('Please select date of birth')),
                           );
                           return;
                         }
                         if (_addressController.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter address')),
+                            const SnackBar(
+                                content: Text('Please enter address')),
                           );
                           return;
                         }
                         if (_selectedState == null || _selectedState!.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please select state')),
+                            const SnackBar(
+                                content: Text('Please select state')),
                           );
                           return;
                         }
@@ -938,7 +972,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                           );
                           return;
                         }
-                        
+
                         // Collect all client data
                         final clientData = {
                           'nin': _ninController.text,
@@ -951,7 +985,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                           'state': _selectedState ?? '',
                           'lga': _selectedLga ?? '',
                         };
-                        
+
                         // Navigate to summary screen
                         Navigator.push(
                           context,
@@ -964,7 +998,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E2D64),
+                        backgroundColor: _agentAccent,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -980,9 +1014,9 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Buy policy for customer Button
                   SizedBox(
                     width: double.infinity,
@@ -992,8 +1026,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
                         // Navigate to buy policy screen
                       },
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1E2D64),
-                        side: const BorderSide(color: Color(0xFF1E2D64), width: 1.5),
+                        foregroundColor: _agentAccent,
+                        side: BorderSide(color: _agentAccent, width: 1.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -1007,7 +1041,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 80), // Extra space for bottom nav
                 ],
               ),
@@ -1017,8 +1051,9 @@ class _AddClientScreenState extends State<AddClientScreen> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF1E2D64),
-        unselectedItemColor: Colors.grey,
+        backgroundColor: AppTheme.bottomNavBackgroundColor(context),
+        selectedItemColor: AppTheme.bottomNavSelectedColor(context),
+        unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
         currentIndex: 2,
         selectedFontSize: 11,
         unselectedFontSize: 11,
@@ -1026,13 +1061,15 @@ class _AddClientScreenState extends State<AddClientScreen> {
           if (index == 0) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const AgentDashboardScreen()),
               (route) => false,
             );
           } else if (index == 2) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ClientsListScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const ClientsListScreen()),
             );
           } else if (index == 3) {
             Navigator.push(
@@ -1042,7 +1079,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
           } else if (index == 4) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const AgentProfileScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const AgentProfileScreen()),
             );
           }
         },

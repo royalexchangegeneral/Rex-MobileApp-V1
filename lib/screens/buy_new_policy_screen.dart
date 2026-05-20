@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../utils/app_theme.dart';
 import 'new_policy_screen.dart';
 import 'select_client_screen.dart';
 import 'agent_dashboard_screen.dart';
@@ -12,13 +13,19 @@ class BuyNewPolicyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryTextColor =
+        isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+    final agentAccent = isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -26,7 +33,7 @@ class BuyNewPolicyScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -37,11 +44,12 @@ class BuyNewPolicyScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Who Are You Buying For?',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -49,19 +57,20 @@ class BuyNewPolicyScreen extends StatelessWidget {
               'Choose one to continue',
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.grey[600],
+                color: secondaryTextColor,
               ),
             ),
             const SizedBox(height: 24),
-            
+
             // For Myself Card
             _buildOptionCard(
               context,
               icon: Icons.person_outline,
-              iconColor: const Color(0xFF1E2D64),
-              iconBgColor: const Color(0xFFE8EAF6),
+              iconColor: agentAccent,
+              iconBgColor: agentAccent.withValues(alpha: 0.12),
               title: 'For Myself',
-              description: 'Purchase a new insurance policy for your own coverage',
+              description:
+                  'Purchase a new insurance policy for your own coverage',
               onTap: () {
                 // Navigate to policy selection for self
                 Navigator.push(
@@ -72,17 +81,18 @@ class BuyNewPolicyScreen extends StatelessWidget {
                 );
               },
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // For a Client Card
             _buildOptionCard(
               context,
               icon: Icons.people_outline,
-              iconColor: const Color(0xFF1E2D64),
-              iconBgColor: const Color(0xFFE8EAF6),
+              iconColor: agentAccent,
+              iconBgColor: agentAccent.withValues(alpha: 0.12),
               title: 'For a Client',
-              description: 'Add insurance coverage for one of your registered clients',
+              description:
+                  'Add insurance coverage for one of your registered clients',
               onTap: () {
                 // Navigate to client selection
                 Navigator.push(
@@ -93,29 +103,54 @@ class BuyNewPolicyScreen extends StatelessWidget {
                 );
               },
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Help text
             InkWell(
               onTap: () async {
                 final uri = Uri(scheme: 'tel', path: '+2347080606100');
                 try {
-                  final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  final launched = await launchUrl(uri,
+                      mode: LaunchMode.externalApplication);
                   if (!launched && context.mounted) {
-                    showDialog(context: context, builder: (ctx) => AlertDialog(
-                      title: const Text('Contact Support', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      content: const Text('+234 708 0606 100', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
-                    ));
+                    showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                              title: const Text('Contact Support',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                              content: const Text('+234 708 0606 100',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600)),
+                              actions: [
+                                TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text('OK'))
+                              ],
+                            ));
                   }
                 } catch (_) {
                   if (context.mounted) {
-                    showDialog(context: context, builder: (ctx) => AlertDialog(
-                      title: const Text('Contact Support', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      content: const Text('+234 708 0606 100', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
-                    ));
+                    showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                              title: const Text('Contact Support',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                              content: const Text('+234 708 0606 100',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600)),
+                              actions: [
+                                TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text('OK'))
+                              ],
+                            ));
                   }
                 }
               },
@@ -125,20 +160,21 @@ class BuyNewPolicyScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.info_outline, size: 18, color: Colors.grey[600]),
+                    Icon(Icons.info_outline,
+                        size: 18, color: secondaryTextColor),
                     const SizedBox(width: 8),
                     RichText(
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[600],
+                          color: secondaryTextColor,
                         ),
-                        children: const [
-                          TextSpan(text: 'Need help choosing? '),
+                        children: [
+                          const TextSpan(text: 'Need help choosing? '),
                           TextSpan(
                             text: 'Contact support',
                             style: TextStyle(
-                              color: Color(0xFF1E2D64),
+                              color: agentAccent,
                               fontWeight: FontWeight.w600,
                               decoration: TextDecoration.underline,
                             ),
@@ -156,8 +192,9 @@ class BuyNewPolicyScreen extends StatelessWidget {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF1E2D64),
-        unselectedItemColor: Colors.grey,
+        backgroundColor: AppTheme.bottomNavBackgroundColor(context),
+        selectedItemColor: AppTheme.bottomNavSelectedColor(context),
+        unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
         currentIndex: 1,
         selectedFontSize: 11,
         unselectedFontSize: 11,
@@ -165,13 +202,15 @@ class BuyNewPolicyScreen extends StatelessWidget {
           if (index == 0) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const AgentDashboardScreen()),
               (route) => false,
             );
           } else if (index == 2) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ClientsListScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const ClientsListScreen()),
             );
           } else if (index == 3) {
             Navigator.push(
@@ -181,7 +220,8 @@ class BuyNewPolicyScreen extends StatelessWidget {
           } else if (index == 4) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const AgentProfileScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const AgentProfileScreen()),
             );
           }
         },
@@ -220,15 +260,21 @@ class BuyNewPolicyScreen extends StatelessWidget {
     required String description,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final secondaryTextColor =
+        isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           children: [
@@ -251,9 +297,10 @@ class BuyNewPolicyScreen extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -261,7 +308,7 @@ class BuyNewPolicyScreen extends StatelessWidget {
                     description,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: secondaryTextColor,
                       height: 1.4,
                     ),
                   ),

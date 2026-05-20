@@ -7,7 +7,7 @@ import '../utils/app_theme.dart';
 
 class VerifyCodeScreen extends StatefulWidget {
   final String email;
-  
+
   const VerifyCodeScreen({super.key, required this.email});
 
   @override
@@ -24,6 +24,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     (index) => FocusNode(),
   );
   bool _isLoading = false;
+  bool get _isCodeComplete => _controllers.every((c) => c.text.isNotEmpty);
 
   @override
   void dispose() {
@@ -40,12 +41,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     if (value.isNotEmpty && index < 3) {
       _focusNodes[index + 1].requestFocus();
     }
-  }
-
-  void _onBackspace(int index) {
-    if (index > 0 && _controllers[index].text.isEmpty) {
-      _focusNodes[index - 1].requestFocus();
-    }
+    setState(() {});
   }
 
   Future<void> _verifyCode() async {
@@ -60,13 +56,13 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     setState(() => _isLoading = true);
     await Future.delayed(const Duration(seconds: 1));
     setState(() => _isLoading = false);
-    
+
     if (mounted) {
       final otp = _controllers.map((c) => c.text).join();
-      print('=== NAVIGATING TO RESET PASSWORD ===');
-      print('Email: ${widget.email}');
-      print('OTP: $otp');
-      print('====================================');
+      debugPrint('=== NAVIGATING TO RESET PASSWORD ===');
+      debugPrint('Email: ${widget.email}');
+      debugPrint('OTP: $otp');
+      debugPrint('====================================');
       Navigator.pushNamed(
         context,
         '/reset-password',
@@ -81,20 +77,22 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     setState(() => _isResending = true);
 
     try {
-      final response = await http.post(
+      final response = await http
+          .post(
         Uri.parse('https://eportaltest.rexinsure.com/api/otp'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'Email': widget.email}),
-      ).timeout(
+      )
+          .timeout(
         const Duration(seconds: 30),
         onTimeout: () {
           throw Exception('Request timeout');
         },
       );
 
-      print('=== RESEND OTP RESPONSE ===');
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
+      debugPrint('=== RESEND OTP RESPONSE ===');
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response Body: ${response.body}');
 
       setState(() => _isResending = false);
 
@@ -134,7 +132,8 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -154,8 +153,8 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 20),
-              
+              const SizedBox(height: 20),
+
               // Title
               Text(
                 'Please check your email',
@@ -165,9 +164,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Subtitle with email
               RichText(
                 text: TextSpan(
@@ -188,9 +187,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               // Code Input Fields
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -212,14 +211,25 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                       decoration: InputDecoration(
                         counterText: '',
                         filled: true,
-                        fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
+                        fillColor:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF1E1E1E)
+                                : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
+                          borderSide: BorderSide(
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.grey[700]!
+                                  : Colors.grey[300]!),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
+                          borderSide: BorderSide(
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.grey[700]!
+                                  : Colors.grey[300]!),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -234,7 +244,8 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                       ],
                       onChanged: (value) => _onCodeChanged(index, value),
                       onTap: () {
-                        _controllers[index].selection = TextSelection.fromPosition(
+                        _controllers[index].selection =
+                            TextSelection.fromPosition(
                           TextPosition(offset: _controllers[index].text.length),
                         );
                       },
@@ -242,20 +253,23 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                   );
                 }),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Verify Button
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _verifyCode,
+                  onPressed:
+                      _isLoading || !_isCodeComplete ? null : _verifyCode,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _controllers.every((c) => c.text.isNotEmpty)
-                        ? AppTheme.primaryBlue
-                        : Colors.grey[300],
+                    backgroundColor: AppTheme.primaryBlue,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor:
+                        AppTheme.disabledButtonColor(context),
+                    disabledForegroundColor:
+                        AppTheme.disabledButtonTextColor(context),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -270,7 +284,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                             strokeWidth: 2,
                           ),
                         )
-                      : Text(
+                      : const Text(
                           'Verify',
                           style: TextStyle(
                             fontSize: 14,
@@ -279,9 +293,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                         ),
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Resend Code Link
               Center(
                 child: Row(
@@ -305,7 +319,10 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                           ? const SizedBox(
                               width: 14,
                               height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black87),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.black87,
+                              ),
                             )
                           : Text(
                               'Resend code',

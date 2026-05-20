@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/app_theme.dart';
 import 'add_client_screen.dart';
 import 'add_corporate_client_screen.dart';
 import 'agent_dashboard_screen.dart';
@@ -11,13 +12,18 @@ class SelectClientTypeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryTextColor =
+        isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -25,7 +31,7 @@ class SelectClientTypeScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -36,11 +42,12 @@ class SelectClientTypeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Select Client Type',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -48,12 +55,12 @@ class SelectClientTypeScreen extends StatelessWidget {
               'Choose the type of client you want to onboard to get started with the right process',
               style: TextStyle(
                 fontSize: 11,
-                color: Colors.grey[600],
+                color: secondaryTextColor,
                 height: 1.4,
               ),
             ),
             const SizedBox(height: 24),
-            
+
             // Individual Client Card
             _buildClientTypeCard(
               context,
@@ -61,19 +68,21 @@ class SelectClientTypeScreen extends StatelessWidget {
               iconColor: const Color(0xFF2196F3),
               iconBgColor: const Color(0xFFE3F2FD),
               title: 'Individual Client',
-              description: 'For onboarding a single customer looking to purchase a personal insurance policy.',
+              description:
+                  'For onboarding a single customer looking to purchase a personal insurance policy.',
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const AddClientScreen(clientType: 'individual'),
+                    builder: (context) =>
+                        const AddClientScreen(clientType: 'individual'),
                   ),
                 );
               },
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Corporate Client Card
             _buildClientTypeCard(
               context,
@@ -81,7 +90,8 @@ class SelectClientTypeScreen extends StatelessWidget {
               iconColor: const Color(0xFFFF9800),
               iconBgColor: const Color(0xFFFFF3E0),
               title: 'Corporate Client',
-              description: 'Select this if you\'re onboarding a business, organization, or group entity.',
+              description:
+                  'Select this if you\'re onboarding a business, organization, or group entity.',
               onTap: () {
                 Navigator.push(
                   context,
@@ -96,8 +106,9 @@ class SelectClientTypeScreen extends StatelessWidget {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF1E2D64),
-        unselectedItemColor: Colors.grey,
+        backgroundColor: AppTheme.bottomNavBackgroundColor(context),
+        selectedItemColor: AppTheme.bottomNavSelectedColor(context),
+        unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
         currentIndex: 2,
         selectedFontSize: 11,
         unselectedFontSize: 11,
@@ -105,13 +116,15 @@ class SelectClientTypeScreen extends StatelessWidget {
           if (index == 0) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const AgentDashboardScreen()),
               (route) => false,
             );
           } else if (index == 2) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ClientsListScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const ClientsListScreen()),
             );
           } else if (index == 3) {
             Navigator.push(
@@ -121,7 +134,8 @@ class SelectClientTypeScreen extends StatelessWidget {
           } else if (index == 4) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const AgentProfileScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const AgentProfileScreen()),
             );
           }
         },
@@ -160,15 +174,21 @@ class SelectClientTypeScreen extends StatelessWidget {
     required String description,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final secondaryTextColor =
+        isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,9 +212,10 @@ class SelectClientTypeScreen extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -202,7 +223,7 @@ class SelectClientTypeScreen extends StatelessWidget {
                     description,
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.grey[600],
+                      color: secondaryTextColor,
                       height: 1.4,
                     ),
                   ),

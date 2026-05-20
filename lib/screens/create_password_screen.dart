@@ -10,7 +10,14 @@ import '../providers/auth_provider.dart';
 import 'customer_dashboard_screen.dart';
 
 class CreatePasswordScreen extends StatefulWidget {
-  const CreatePasswordScreen({super.key});
+  final bool createLoginWithApi;
+  final Map<String, String> accountData;
+
+  const CreatePasswordScreen({
+    super.key,
+    this.createLoginWithApi = false,
+    this.accountData = const {},
+  });
 
   @override
   State<CreatePasswordScreen> createState() => _CreatePasswordScreenState();
@@ -18,6 +25,7 @@ class CreatePasswordScreen extends StatefulWidget {
 
 class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscureNewPassword = true;
@@ -25,7 +33,23 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _loadSignupEmail();
+  }
+
+  Future<void> _loadSignupEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _emailController.text =
+          widget.accountData['email'] ?? prefs.getString('signup_email') ?? '';
+    });
+  }
+
+  @override
   void dispose() {
+    _emailController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -34,192 +58,194 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
   Future<void> _handleContinue() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
+
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('signup_password', _newPasswordController.text.trim());
-      
-      // Notify the platform to save credentials to Keychain / password manager
-      TextInput.finishAutofillContext();
-      
-      final isSignupFlow = prefs.getBool('is_signup_flow') ?? false;
-      
-      if (isSignupFlow) {
-        // Signup flow
-        final hasExistingPolicy = prefs.getBool('has_existing_policy') ?? false;
-        
-        if (hasExistingPolicy) {
-          await _createLoginForExistingPolicy();
-        } else {
-          // User doesn't have existing policy - create customer account
-          await _createSignupCustomer();
-        }
+      await prefs.setString(
+          'signup_password', _newPasswordController.text.trim());
+
+      if (widget.createLoginWithApi) {
+        await _createPolicyLogin();
       } else {
-        // Normal flow - go to existing policy question
-        setState(() => _isLoading = false);
-        if (mounted) {
-          Navigator.of(context).pushNamed('/existing-policy-question');
-        }
+        await _createSignupAccountWithApi();
       }
     }
   }
 
-  Future<void> _createSignupCustomer() async {
-    final prefs = await SharedPreferences.getInstance();
-    final firstName = prefs.getString('signup_first_name') ?? '';
-    final lastName = prefs.getString('signup_last_name') ?? '';
-    final email = prefs.getString('signup_email') ?? '';
-    final phone = prefs.getString('signup_phone') ?? '';
-    final nin = prefs.getString('signup_nin') ?? '';
-    final password = prefs.getString('signup_password') ?? '';
-    final dob = prefs.getString('signup_dob') ?? '';
-    final formattedDob = _normalizeDob(dob);
-    final state = prefs.getString('signup_state') ?? '';
-    final lga = prefs.getString('signup_lga') ?? '';
-    final address = prefs.getString('signup_address') ?? '';
+  Future<void> _createPolicyLogin() async {
+    final authProvider = context.read<AuthProvider>();
+    final firstName = (widget.accountData['firstName'] ?? '').trim();
+    final lastName = (widget.accountData['lastName'] ?? '').trim();
+    final email = (widget.accountData['email'] ?? _emailController.text).trim();
+    final phone = (widget.accountData['phone'] ?? '').trim();
+    final password = _newPasswordController.text.trim();
+
+    if (email.isEmpty || phone.isEmpty) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Missing customer email or phone number'),
+          backgroundColor: Colors.red));
+      return;
+    }
+
+    final payload = {
+      'cust_first_name': firstName.isNotEmpty ? firstName : 'Customer',
+      'cust_middle_name': '',
+      'cust_last_name': lastName,
+      'cust_occupation': widget.accountData['occupation'] ?? 'Business',
+      'cust_phone_no': phone,
+      'cust_email': email,
+      'cust_password': password,
+    };
 
     try {
-      // Step 1: Create Customer
-      final customerPayload = {
-        'cust_first_name': firstName,
-        'cust_middle_name': null,
-        'cust_last_name': lastName,
-        'cust_type': 'Individual',
-        'cust_occupation': 'Business',
-        'cust_phone_no': phone,
-        'cust_email': email,
-        'cust_address': _safeAddress(address),
-        'cust_town': null,
-        'cust_nationality': 'Nigerian',
-        'cust_state': _safeValue(state),
-        'cust_lga': _safeValue(lga),
-        'cust_dob': _safeValue(formattedDob),
-        'cust_national_id_name': 'NIN',
-        'cust_national_id_no': nin,
-      };
-      print('=== CREATE CUSTOMER ===');
-      print('Payload: ${json.encode(customerPayload)}');
-
-      final custResponse = await http
+      final response = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
+            Uri.parse('https://eportaltest.rexinsure.com/api/createlogin'),
             headers: {'Content-Type': 'application/json'},
-            body: json.encode(customerPayload),
+            body: json.encode(payload),
           )
           .timeout(const Duration(seconds: 15));
 
-      print('Response: ${custResponse.statusCode} - ${custResponse.body}');
+      if (!mounted) return;
 
-      if (custResponse.statusCode == 200 || custResponse.statusCode == 201) {
-        final custData = json.decode(custResponse.body);
-        if (custData['Status']?.toString().toLowerCase() == 'success' &&
-            custData['StatusCode'] != 409) {
-          // Step 2: Create Login
-          final loginPayload = {
-            'cust_first_name': firstName,
-            'cust_middle_name': '',
-            'cust_last_name': lastName,
-            'cust_occupation': 'Business',
-            'cust_phone_no': phone,
-            'cust_email': email,
-            'cust_password': password,
-          };
-          print('=== CREATE LOGIN ===');
-          print('Payload: ${json.encode(loginPayload)}');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = json.decode(response.body);
+        final status = data['Status']?.toString().toLowerCase() ?? '';
+        final statusCode = data['StatusCode']?.toString() ??
+            data['Statuscode']?.toString() ??
+            '';
 
-          final loginResponse = await http
-              .post(
-                Uri.parse('https://eportaltest.rexinsure.com/api/createlogin'),
-                headers: {'Content-Type': 'application/json'},
-                body: json.encode(loginPayload),
-              )
-              .timeout(const Duration(seconds: 15));
-
-          print(
-              'Response: ${loginResponse.statusCode} - ${loginResponse.body}');
-
+        if (status == 'success' || statusCode == '200' || statusCode == '201') {
+          final loginResult = await authProvider.login(email, password);
+          if (!mounted) return;
           setState(() => _isLoading = false);
 
-          final bool authenticated = await _authenticateUser(email, password);
-
-          if (authenticated) {
-            // Clear signup data
-            await prefs.remove('signup_first_name');
-            await prefs.remove('signup_last_name');
-            await prefs.remove('signup_email');
-            await prefs.remove('signup_phone');
-            await prefs.remove('signup_nin');
-            await prefs.remove('signup_password');
-            await prefs.remove('signup_dob');
-            await prefs.remove('signup_state');
-            await prefs.remove('signup_lga');
-            await prefs.remove('signup_address');
-            await prefs.remove('is_signup_flow');
-            await prefs.remove('has_existing_policy');
-
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Account created successfully!'),
-                  backgroundColor: Colors.green));
-              Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const CustomerDashboardScreen()),
-                  (r) => false);
-            }
+          if (loginResult.success) {
+            TextInput.finishAutofillContext();
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Account created successfully!'),
+                backgroundColor: Colors.green));
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const CustomerDashboardScreen()),
+              (r) => false,
+            );
+            return;
           }
-        } else {
-          setState(() => _isLoading = false);
-          if (mounted)
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(custData['Message']?.toString() ??
-                    custData['message']?.toString() ??
-                    'Customer creation failed'),
-                backgroundColor: Colors.red));
+
+          final fallbackSuccess = await authProvider.signup(
+            '$firstName $lastName'.trim().isEmpty
+                ? 'Customer'
+                : '$firstName $lastName'.trim(),
+            email,
+            password,
+            userData: {
+              'FirstName': firstName,
+              'Surname': lastName,
+              'Email': email,
+              'Phone': phone,
+              'PolicyReference': widget.accountData['reference'] ?? '',
+            },
+          );
+          if (!mounted) return;
+          if (fallbackSuccess) {
+            TextInput.finishAutofillContext();
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Account created successfully!'),
+                backgroundColor: Colors.green));
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const CustomerDashboardScreen()),
+              (r) => false,
+            );
+            return;
+          }
         }
+
+        final message = data['Message']?.toString() ??
+            data['message']?.toString() ??
+            'Unable to create account';
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
       } else {
         setState(() => _isLoading = false);
-        String errorMsg = 'Customer creation failed';
-        try {
-          final d = json.decode(custResponse.body);
-          errorMsg =
-              d['Message']?.toString() ?? d['message']?.toString() ?? errorMsg;
-        } catch (_) {}
-        if (mounted)
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(errorMsg), backgroundColor: Colors.red));
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-    }
-  }
-
-  Future<bool> _authenticateUser(String email, String password) async {
-    final authProvider = context.read<AuthProvider>();
-    final loginResult = await authProvider.login(email, password);
-    if (!loginResult.success) {
-      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(loginResult.message ?? 'Unable to authenticate user.'),
+          content: Text('Unable to create account (${response.statusCode})'),
           backgroundColor: Colors.red,
         ));
       }
-      return false;
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
     }
-    return true;
   }
 
-  Future<void> _createLoginForExistingPolicy() async {
+  Future<void> _createSignupAccountWithApi() async {
+    final authProvider = context.read<AuthProvider>();
     final prefs = await SharedPreferences.getInstance();
-    final firstName = prefs.getString('signup_first_name') ?? '';
+    final firstName = prefs.getString('signup_first_name') ?? 'Customer';
     final lastName = prefs.getString('signup_last_name') ?? '';
-    final email = prefs.getString('signup_email') ?? '';
     final phone = prefs.getString('signup_phone') ?? '';
-    final password = prefs.getString('signup_password') ?? '';
+    final fallbackEmail = phone.isEmpty
+        ? 'customer@example.com'
+        : '${phone.replaceAll(RegExp(r'[^0-9]'), '')}@rex.mock';
+    final email = prefs.getString('signup_email') ?? fallbackEmail;
+    final password = _newPasswordController.text.trim();
+    final hasExistingPolicy = prefs.getBool('has_existing_policy') ?? false;
 
     try {
+      if (!hasExistingPolicy) {
+        final customerPayload = {
+          'cust_first_name': firstName,
+          'cust_middle_name': null,
+          'cust_last_name': lastName,
+          'cust_type': 'Individual',
+          'cust_occupation': 'Business',
+          'cust_phone_no': phone,
+          'cust_email': email,
+          'cust_address': _safeAddress(prefs.getString('signup_address')),
+          'cust_town': null,
+          'cust_nationality': 'Nigerian',
+          'cust_state': _safeValue(prefs.getString('signup_state')),
+          'cust_lga': _safeValue(prefs.getString('signup_lga')),
+          'cust_dob': _safeValue(_normalizeDob(prefs.getString('signup_dob'))),
+          'cust_national_id_name': 'NIN',
+          'cust_national_id_no': prefs.getString('signup_nin') ?? '',
+        };
+
+        final customerResponse = await http
+            .post(
+              Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode(customerPayload),
+            )
+            .timeout(const Duration(seconds: 15));
+
+        if (customerResponse.statusCode != 200 &&
+            customerResponse.statusCode != 201) {
+          await _showSignupApiError(customerResponse.body,
+              fallback: 'Customer creation failed');
+          return;
+        }
+
+        final customerData = json.decode(customerResponse.body);
+        final status = customerData['Status']?.toString().toLowerCase();
+        final statusCode = customerData['StatusCode']?.toString() ??
+            customerData['Statuscode']?.toString();
+        if (status != 'success' || statusCode == '409') {
+          await _showSignupApiError(customerResponse.body,
+              fallback: 'Customer creation failed');
+          return;
+        }
+      }
+
       final loginPayload = {
         'cust_first_name': firstName,
         'cust_middle_name': '',
@@ -229,8 +255,6 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
         'cust_email': email,
         'cust_password': password,
       };
-      print('=== CREATE LOGIN FOR EXISTING POLICY ===');
-      print('Payload: ${json.encode(loginPayload)}');
 
       final loginResponse = await http
           .post(
@@ -240,83 +264,121 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
           )
           .timeout(const Duration(seconds: 15));
 
-      print('Response: ${loginResponse.statusCode} - ${loginResponse.body}');
-      setState(() => _isLoading = false);
+      if (loginResponse.statusCode != 200 && loginResponse.statusCode != 201) {
+        await _showSignupApiError(loginResponse.body,
+            fallback: 'Login creation failed');
+        return;
+      }
 
-      if (loginResponse.statusCode == 200 || loginResponse.statusCode == 201) {
-        final loginData = json.decode(loginResponse.body);
-        if (loginData['Status']?.toString().toLowerCase() == 'success') {
-          final authenticated = await _authenticateUser(email, password);
-          if (authenticated) {
-            for (final key in [
-              'signup_first_name',
-              'signup_last_name',
-              'signup_email',
-              'signup_phone',
-              'signup_nin',
-              'signup_password',
-              'signup_dob',
-              'signup_state',
-              'signup_lga',
-              'signup_address',
-              'is_signup_flow',
-              'has_existing_policy',
-            ]) {
-              await prefs.remove(key);
-            }
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Account created successfully!'),
-                  backgroundColor: Colors.green));
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()),
-                (r) => false,
-              );
-            }
-            return;
-          }
-        }
+      final loginData = json.decode(loginResponse.body);
+      final loginStatus = loginData['Status']?.toString().toLowerCase();
+      final loginStatusCode = loginData['StatusCode']?.toString() ??
+          loginData['Statuscode']?.toString();
 
-        final errorMsg = json.decode(loginResponse.body)['Message']?.toString() ??
-            json.decode(loginResponse.body)['message']?.toString() ??
-            'Failed to create login for existing policy';
-        if (mounted) {
+      if (loginStatus != 'success' &&
+          loginStatusCode != '200' &&
+          loginStatusCode != '201') {
+        await _showSignupApiError(loginResponse.body,
+            fallback: 'Login creation failed');
+        return;
+      }
+
+      final loginResult = await authProvider.login(email, password);
+      if (!mounted) return;
+
+      if (!loginResult.success) {
+        final fallbackSuccess = await authProvider.signup(
+          '$firstName $lastName'.trim(),
+          email,
+          password,
+          userData: {
+            'FirstName': firstName,
+            'Surname': lastName,
+            'Email': email,
+            'Phone': phone,
+            'NIN': prefs.getString('signup_nin') ?? '',
+            'DateOfBirth': prefs.getString('signup_dob') ?? '',
+            'State': prefs.getString('signup_state') ?? '',
+            'Lga': prefs.getString('signup_lga') ?? '',
+            'Address': prefs.getString('signup_address') ?? '',
+            'HasExistingPolicy': hasExistingPolicy,
+          },
+        );
+        if (!mounted) return;
+        if (!fallbackSuccess) {
+          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(errorMsg),
+              content:
+                  Text(loginResult.message ?? 'Unable to authenticate account'),
               backgroundColor: Colors.red));
-        }
-      } else {
-        String errorMsg = 'Failed to create login for existing policy';
-        try {
-          final d = json.decode(loginResponse.body);
-          errorMsg = d['Message']?.toString() ?? d['message']?.toString() ?? errorMsg;
-        } catch (_) {}
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(errorMsg),
-              backgroundColor: Colors.red));
+          return;
         }
       }
+
+      await _clearSignupData(prefs);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      TextInput.finishAutofillContext();
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Account created successfully!'),
+          backgroundColor: Colors.green));
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()),
+        (r) => false,
+      );
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> _showSignupApiError(String body,
+      {required String fallback}) async {
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    var message = fallback;
+    try {
+      final data = json.decode(body);
+      message = data['Message']?.toString() ??
+          data['message']?.toString() ??
+          fallback;
+    } catch (_) {}
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  Future<void> _clearSignupData(SharedPreferences prefs) async {
+    for (final key in [
+      'signup_first_name',
+      'signup_last_name',
+      'signup_email',
+      'signup_phone',
+      'signup_nin',
+      'signup_password',
+      'signup_dob',
+      'signup_state',
+      'signup_lga',
+      'signup_address',
+      'is_signup_flow',
+      'has_existing_policy',
+    ]) {
+      await prefs.remove(key);
     }
   }
 
   String? _safeValue(String? value) =>
-      (value == null || value.isEmpty) ? null : value;
+      (value == null || value.trim().isEmpty) ? null : value.trim();
 
   String _safeAddress(String? value) =>
-      (value == null || value.isEmpty) ? 'Lagos' : value;
+      (value == null || value.trim().isEmpty) ? 'Lagos' : value.trim();
 
-  String _normalizeDob(String? dob) {
-    const defaultDob = '1990-01-01';
-    if (dob == null || dob.trim().isEmpty) return defaultDob;
-    final normalized = dob.trim().replaceAll('/', '-');
+  String _normalizeDob(String? value) {
+    if (value == null || value.trim().isEmpty) return '';
+    final normalized = value.trim().replaceAll('/', '-');
     final parts = normalized.split('-');
     if (parts.length == 3) {
       if (parts[0].length == 4) {
@@ -326,12 +388,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
         return '${parts[2]}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}';
       }
     }
-    try {
-      final date = DateTime.parse(normalized);
-      return date.toIso8601String().split('T').first;
-    } catch (_) {
-      return defaultDob;
-    }
+    return normalized;
   }
 
   @override
@@ -340,7 +397,8 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -359,216 +417,309 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
           padding: const EdgeInsets.all(24.0),
           child: AutofillGroup(
             child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 20),
-                
-                Text(
-                  'Create Your Password',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                
-                const SizedBox(height: 12),
-                
-                Text(
-                  'This password will be used to sign into your account',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                    height: 1.5,
-                  ),
-                ),
-                
-                SizedBox(height: 32),
-                
-                Text(
-                  'New Password',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                SizedBox(height: 8),
-                TextFormField(
-                  controller: _newPasswordController,
-                  obscureText: _obscureNewPassword,
-                  autofillHints: const [AutofillHints.newPassword],
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: 'must be 8 characters',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 20),
+                  Text(
+                    'Create Your Password',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'This password will be used to sign into your account',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      height: 1.5,
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureNewPassword ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.grey[600],
+                  ),
+                  SizedBox(height: 32),
+                  if (_emailController.text.isNotEmpty) ...[
+                    Text(
+                      'Email Address',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
-                      onPressed: () {
-                        setState(() => _obscureNewPassword = !_obscureNewPassword);
-                      },
                     ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a password';
-                    }
-                    if (value.length < 8) {
-                      return 'Password must be at least 8 characters';
-                    }
-                    return null;
-                  },
-                ),
-                
-                SizedBox(height: 24),
-                
-                Text(
-                  'Confirm Password',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                SizedBox(height: 8),
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
-                  autofillHints: const [AutofillHints.newPassword],
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: 'enter password again',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.grey[600],
+                    SizedBox(height: 8),
+                    TextFormField(
+                      controller: _emailController,
+                      readOnly: true,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      autofillHints: const [
+                        AutofillHints.username,
+                        AutofillHints.email,
+                      ],
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 14,
                       ),
-                      onPressed: () {
-                        setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
-                      },
+                      decoration: InputDecoration(
+                        hintText: 'Your email',
+                        hintStyle: TextStyle(color: Colors.grey[400]),
+                        filled: true,
+                        fillColor:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF1E1E1E)
+                                : Colors.grey[50],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[700]!
+                                    : Colors.grey[300]!,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[700]!
+                                    : Colors.grey[300]!,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                              color: AppTheme.primaryBlue, width: 2),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 16),
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                  ],
+                  Text(
+                    'New Password',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
-                    }
-                    if (value != _newPasswordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
-                ),
-                
-                const SizedBox(height: 32),
-                
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleContinue,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
+                  SizedBox(height: 8),
+                  TextFormField(
+                    controller: _newPasswordController,
+                    obscureText: _obscureNewPassword,
+                    keyboardType: TextInputType.visiblePassword,
+                    textInputAction: TextInputAction.next,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    autofillHints: const [AutofillHints.newPassword],
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'must be 8 characters',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1E1E1E)
+                          : Colors.grey[50],
+                      border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[700]!
+                                    : Colors.grey[300]!),
                       ),
-                      elevation: 0,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[700]!
+                                    : Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: AppTheme.primaryBlue, width: 2),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 16),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureNewPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: Colors.grey[600],
+                        ),
+                        onPressed: () {
+                          setState(
+                              () => _obscureNewPassword = !_obscureNewPassword);
+                        },
+                      ),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a password';
+                      }
+                      if (value.length < 8) {
+                        return 'Password must be at least 8 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 24),
+                  Text(
+                    'Confirm Password',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  TextFormField(
+                    controller: _confirmPasswordController,
+                    obscureText: _obscureConfirmPassword,
+                    keyboardType: TextInputType.visiblePassword,
+                    textInputAction: TextInputAction.done,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    autofillHints: const [AutofillHints.newPassword],
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'enter password again',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1E1E1E)
+                          : Colors.grey[50],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[700]!
+                                    : Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[700]!
+                                    : Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: AppTheme.primaryBlue, width: 2),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 16),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirmPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: Colors.grey[600],
+                        ),
+                        onPressed: () {
+                          setState(() => _obscureConfirmPassword =
+                              !_obscureConfirmPassword);
+                        },
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please confirm your password';
+                      }
+                      if (value != _newPasswordController.text) {
+                        return 'Passwords do not match';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _handleContinue,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Continue',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          )
-                        : const Text(
-                            'Continue',
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Already have an account? ',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/login',
+                              (route) => false,
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(0, 0),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Log in',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Already have an account? ',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pushNamedAndRemoveUntil(
-                            '/login',
-                            (route) => false,
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: const Size(0, 0),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text(
-                          'Log in',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
           ),
         ),
       ),

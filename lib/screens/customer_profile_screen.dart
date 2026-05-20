@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
-import '../utils/theme_helper.dart';
 import '../providers/auth_provider.dart';
 import '../providers/session_cache_cleaner.dart';
 import '../providers/theme_provider.dart';
@@ -21,6 +20,19 @@ class CustomerProfileScreen extends StatefulWidget {
 }
 
 class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get _cardColor => _isDark ? const Color(0xFF111827) : Colors.white;
+
+  Color get _borderColor =>
+      _isDark ? const Color(0xFF334155) : Colors.grey[200]!;
+
+  Color get _secondaryTextColor =>
+      _isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
+  Color get _brandActionColor =>
+      _isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+
   @override
   void initState() {
     super.initState();
@@ -41,21 +53,26 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     // Try all key variants the API may return
     final firstName = userData?['FirstName']?.toString() ??
         userData?['Firstname']?.toString() ??
-        userData?['firstname']?.toString() ?? '';
+        userData?['firstname']?.toString() ??
+        '';
     final surname = userData?['LastName']?.toString() ??
         userData?['Lastname']?.toString() ??
         userData?['Surname']?.toString() ??
-        userData?['lastname']?.toString() ?? '';
-    final email = userData?['Email']?.toString() ??
-        userData?['email']?.toString() ?? '';
+        userData?['lastname']?.toString() ??
+        '';
+    final email =
+        userData?['Email']?.toString() ?? userData?['email']?.toString() ?? '';
     final phone = userData?['Phone']?.toString() ??
         userData?['MobileNo']?.toString() ??
         userData?['PhoneNo']?.toString() ??
         userData?['PhoneNumber']?.toString() ??
-        userData?['mobileno']?.toString() ?? '';
+        userData?['mobileno']?.toString() ??
+        '';
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back,
@@ -79,14 +96,18 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             Center(
               child: Column(
                 children: [
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: Colors.grey[200],
-                    child:
-                        Icon(Icons.person, size: 44, color: Colors.grey[400]),
+                    backgroundColor:
+                        _isDark ? const Color(0xFF1E293B) : Colors.grey[200],
+                    child: Icon(Icons.person,
+                        size: 44,
+                        color: _isDark
+                            ? const Color(0xFF94A3B8)
+                            : Colors.grey[400]),
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   Text(
                     '$firstName $surname',
                     style: TextStyle(
@@ -135,7 +156,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 8),
                       ),
-                      child: Text('Refer Now',
+                      child: const Text('Refer Now',
                           style: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.w600)),
                     ),
@@ -144,11 +165,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               ),
             ),
 
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
 
             // Personal Information
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text('Personal Information',
                   style: TextStyle(
                       fontSize: 14,
@@ -160,8 +181,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 16),
               padding: const EdgeInsets.symmetric(vertical: 4),
               decoration: BoxDecoration(
-                color: ThemeHelper.getCardColor(context),
+                color: _cardColor,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _borderColor),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +193,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   _buildInfoItem(context, 'Last Name', surname,
                       showDivider: false),
                   Divider(
-                      color: Colors.grey[200],
+                      color: _borderColor,
                       height: 1,
                       indent: 16,
                       endIndent: 16),
@@ -182,11 +204,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               ),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Settings
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text('Settings',
                   style: TextStyle(
                       fontSize: 14,
@@ -197,8 +219,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: ThemeHelper.getCardColor(context),
+                color: _cardColor,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _borderColor),
               ),
               child: Column(
                 children: [
@@ -215,7 +238,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                                 const NotificationSettingsScreen())),
                   ),
                   Divider(
-                      color: Colors.grey[200],
+                      color: _borderColor,
                       height: 1,
                       indent: 16,
                       endIndent: 16),
@@ -231,7 +254,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                             builder: (_) => const SecuritySettingsScreen())),
                   ),
                   Divider(
-                      color: Colors.grey[200],
+                      color: _borderColor,
                       height: 1,
                       indent: 16,
                       endIndent: 16),
@@ -243,7 +266,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     const Color(0xFF1E2D64),
                   ),
                   Divider(
-                      color: Colors.grey[200],
+                      color: _borderColor,
                       height: 1,
                       indent: 16,
                       endIndent: 16),
@@ -267,8 +290,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Container(
                 decoration: BoxDecoration(
-                  color: ThemeHelper.getCardColor(context),
+                  color: _cardColor,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _borderColor),
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -316,6 +340,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
+        color: AppTheme.bottomNavBackgroundColor(context),
         shape: const CircularNotchedRectangle(),
         notchMargin: 4,
         child: SizedBox(
@@ -357,24 +382,21 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   Widget _buildInfoItem(BuildContext context, String label, String value,
       {bool showDivider = true}) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(label,
-              style: TextStyle(
-                  fontSize: 11,
-                  color: ThemeHelper.getSecondaryTextColor(context))),
-          SizedBox(height: 4),
+              style: TextStyle(fontSize: 11, color: _secondaryTextColor)),
+          const SizedBox(height: 4),
           Text(value.isNotEmpty ? value : '-',
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 12),
-          if (showDivider)
-            Divider(color: ThemeHelper.getBorderColor(context), height: 1),
+          if (showDivider) Divider(color: _borderColor, height: 1),
         ],
       ),
     );
@@ -392,10 +414,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         child: Icon(icon, color: iconColor, size: 20),
       ),
       title: Text(title,
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF1E2D64))),
+              color: Theme.of(context).colorScheme.onSurface)),
       onTap: onTap,
     );
   }
@@ -416,22 +438,21 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         child: Icon(icon, color: iconColor, size: 20),
       ),
       title: Text(title,
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF1E2D64))),
+              color: Theme.of(context).colorScheme.onSurface)),
       subtitle: Text(
         themeProvider.isSystemMode
             ? 'Following system'
             : (isEffectivelyDark ? 'Dark' : 'Light'),
-        style: TextStyle(
-            fontSize: 10, color: ThemeHelper.getSecondaryTextColor(context)),
+        style: TextStyle(fontSize: 10, color: _secondaryTextColor),
       ),
       trailing: Switch(
         value: isEffectivelyDark,
         onChanged: (val) => themeProvider.setTheme(val),
         activeThumbColor: Colors.white,
-        activeTrackColor: const Color(0xFF1E2D64),
+        activeTrackColor: _brandActionColor,
       ),
       onLongPress: () {
         themeProvider.useSystemTheme();
@@ -454,11 +475,16 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon,
-              color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
+              color: isSelected
+                  ? AppTheme.bottomNavSelectedColor(context)
+                  : AppTheme.bottomNavUnselectedColor(context),
+              size: 20),
           Text(label,
               style: TextStyle(
                   fontSize: 10,
-                  color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+                  color: isSelected
+                      ? AppTheme.bottomNavSelectedColor(context)
+                      : AppTheme.bottomNavUnselectedColor(context))),
         ],
       ),
     );

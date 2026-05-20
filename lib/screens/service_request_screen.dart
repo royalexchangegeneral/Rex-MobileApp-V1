@@ -15,7 +15,9 @@ class ServiceRequestScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           leading: IconButton(
               icon: Icon(Icons.arrow_back,
@@ -171,6 +173,7 @@ class ServiceRequestScreen extends StatelessWidget {
       bottomNavigationBar: isAgentFlow
           ? buildAgentBottomNav(context, currentIndex: 1)
           : BottomAppBar(
+              color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),
               notchMargin: 4,
               child: SizedBox(
@@ -191,7 +194,7 @@ class ServiceRequestScreen extends StatelessWidget {
                                 (r) => false)),
                         _nav(context, Icons.description_outlined, 'Policies',
                             false, null),
-                        SizedBox(width: 48),
+                        const SizedBox(width: 48),
                         _nav(
                             context,
                             Icons.assignment_outlined,
@@ -216,7 +219,7 @@ class ServiceRequestScreen extends StatelessWidget {
   }
 
   Widget _section(BuildContext context, String t) => Padding(
-      padding: EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Text(t,
           style: TextStyle(
               fontSize: 16,
@@ -244,17 +247,19 @@ class ServiceRequestScreen extends StatelessWidget {
               }
             },
             child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 decoration: BoxDecoration(
                     color: ThemeHelper.getCardColor(ctx),
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: ThemeHelper.getBorderColor(ctx))),
                 child: Row(children: [
                   Container(
-                      padding: EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(10),
                       decoration:
                           BoxDecoration(color: bg, shape: BoxShape.circle),
                       child: Icon(icon, color: ic, size: 20)),
-                  SizedBox(width: 14),
+                  const SizedBox(width: 14),
                   Expanded(
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,10 +281,16 @@ class ServiceRequestScreen extends StatelessWidget {
       InkWell(
           onTap: o,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(i, color: s ? AppTheme.primaryNavy : Colors.grey, size: 20),
+            Icon(i,
+                color: s
+                    ? AppTheme.bottomNavSelectedColor(c)
+                    : AppTheme.bottomNavUnselectedColor(c),
+                size: 20),
             Text(l,
                 style: TextStyle(
                     fontSize: 10,
-                    color: s ? AppTheme.primaryNavy : Colors.grey))
+                    color: s
+                        ? AppTheme.bottomNavSelectedColor(c)
+                        : AppTheme.bottomNavUnselectedColor(c)))
           ]));
 }

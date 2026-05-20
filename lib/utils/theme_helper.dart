@@ -9,14 +9,14 @@ class ThemeHelper {
   // Get card/container color based on theme
   static Color getCardColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF1E1E1E)
+        ? const Color(0xFF111827)
         : Colors.white;
   }
 
   // Get secondary card color (for grey backgrounds)
   static Color getSecondaryCardColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF1E1E1E)
+        ? const Color(0xFF111827)
         : Colors.grey[50]!;
   }
 
@@ -30,7 +30,7 @@ class ThemeHelper {
   // Get secondary text color
   static Color getSecondaryTextColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? Colors.grey[400]!
+        ? const Color(0xFFCBD5E1)
         : Colors.grey[600]!;
   }
 
@@ -44,7 +44,7 @@ class ThemeHelper {
   // Get border color based on theme
   static Color getBorderColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? Colors.grey[700]!
+        ? const Color(0xFF334155)
         : Colors.grey[300]!;
   }
 

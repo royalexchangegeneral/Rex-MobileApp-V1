@@ -6,6 +6,7 @@ import '../widgets/agent_bottom_nav.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
+import 'my_policies_screen.dart';
 import 'new_policy_screen.dart';
 import 'faq_screen.dart';
 import 'customer_care_screen.dart';
@@ -41,6 +42,10 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   ];
   int _expandedIndex = 0;
 
+  Color get _actionColor => Theme.of(context).brightness == Brightness.dark
+      ? AppTheme.accentOrange
+      : AppTheme.primaryNavy;
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -50,7 +55,9 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           leading: IconButton(
               icon: Icon(Icons.arrow_back,
@@ -64,7 +71,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
           centerTitle: true),
       body: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             // Search
@@ -85,7 +92,9 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                 },
                 decoration: InputDecoration(
                     hintText: 'Search help',
-                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+                    hintStyle: TextStyle(
+                        color: ThemeHelper.getSecondaryTextColor(context),
+                        fontSize: 13),
                     suffixIcon: GestureDetector(
                       onTap: () {
                         if (_searchController.text.trim().isNotEmpty) {
@@ -98,8 +107,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                       isAgentFlow: widget.isAgentFlow)));
                         }
                       },
-                      child: Icon(Icons.search, color: Colors.grey[400]),
+                      child: Icon(Icons.search,
+                          color: ThemeHelper.getSecondaryTextColor(context)),
                     ),
+                    filled: true,
+                    fillColor: ThemeHelper.getCardColor(context),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide(
@@ -116,10 +128,10 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                     : Colors.grey[300]!)),
                     focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: AppTheme.primaryNavy)),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 16, vertical: 12))),
-            SizedBox(height: 24),
+                        borderSide: BorderSide(color: _actionColor)),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12))),
+            const SizedBox(height: 24),
             // How can we help you
             Text('How can we help you',
                 style: TextStyle(
@@ -156,7 +168,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                   initialCategory: 'Quotes',
                                   isAgentFlow: widget.isAgentFlow))))),
             ]),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Row(children: [
               Expanded(
                   child: _helpCard(
@@ -171,7 +183,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                               builder: (_) => FaqScreen(
                                   initialCategory: 'policy',
                                   isAgentFlow: widget.isAgentFlow))))),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                   child: _helpCard(
                       Icons.settings_outlined,
@@ -186,14 +198,14 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                   initialCategory: 'Account',
                                   isAgentFlow: widget.isAgentFlow))))),
             ]),
-            SizedBox(height: 28),
+            const SizedBox(height: 28),
             // Contact Us
             Text('Contact Us',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.onSurface)),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             _contactItem(
                 Icons.headset_mic_outlined,
                 'Customer Support',
@@ -243,7 +255,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     MaterialPageRoute(
                         builder: (_) => OfficeLocationsScreen(
                             isAgentFlow: widget.isAgentFlow)))),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             // FAQs
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Text('FAQs',
@@ -271,10 +283,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   onTap: () =>
                       setState(() => _expandedIndex = isExpanded ? -1 : i),
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
                         border: Border(
-                            bottom: BorderSide(color: Colors.grey[200]!))),
+                            bottom: BorderSide(
+                                color: ThemeHelper.getBorderColor(context)))),
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -291,14 +305,16 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                 isExpanded
                                     ? Icons.keyboard_arrow_up
                                     : Icons.keyboard_arrow_down,
-                                color: Colors.grey),
+                                color:
+                                    ThemeHelper.getSecondaryTextColor(context)),
                           ]),
                           if (isExpanded) ...[
                             const SizedBox(height: 8),
                             Text(_faqs[i]['a']!,
                                 style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey[600],
+                                    color: ThemeHelper.getSecondaryTextColor(
+                                        context),
                                     height: 1.5)),
                           ],
                         ]),
@@ -329,6 +345,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
       bottomNavigationBar: widget.isAgentFlow
           ? buildAgentBottomNav(context, currentIndex: 0)
           : BottomAppBar(
+              color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),
               notchMargin: 4,
               child: SizedBox(
@@ -346,8 +363,14 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                     builder: (_) =>
                                         const CustomerDashboardScreen()),
                                 (r) => false)),
-                        _nav(Icons.description_outlined, 'Policies', false,
-                            null),
+                        _nav(
+                            Icons.description_outlined,
+                            'Policies',
+                            false,
+                            () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const MyPoliciesScreen()))),
                         const SizedBox(width: 48),
                         _nav(
                             Icons.assignment_outlined,
@@ -375,18 +398,19 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     return GestureDetector(
         onTap: onTap,
         child: Container(
-            padding: EdgeInsets.all(14),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
                 color: ThemeHelper.getCardColor(context),
-                borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ThemeHelper.getBorderColor(context))),
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Container(
-                  padding: EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                       color: bg, borderRadius: BorderRadius.circular(10)),
                   child: Icon(icon, color: ic, size: 22)),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text(title,
                   style: TextStyle(
                       fontSize: 13,
@@ -405,17 +429,18 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     return GestureDetector(
         onTap: onTap,
         child: Container(
-            margin: EdgeInsets.only(bottom: 8),
-            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
                 color: ThemeHelper.getCardColor(context),
-                borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ThemeHelper.getBorderColor(context))),
             child: Row(children: [
               Container(
-                  padding: EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
                   child: Icon(icon, color: ic, size: 20)),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -430,7 +455,8 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                             fontSize: 10,
                             color: ThemeHelper.getSecondaryTextColor(context))),
                   ])),
-              Icon(Icons.chevron_right, color: Colors.grey[400], size: 20),
+              Icon(Icons.chevron_right,
+                  color: ThemeHelper.getSecondaryTextColor(context), size: 20),
             ])));
   }
 
@@ -466,9 +492,16 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   Widget _nav(IconData i, String l, bool s, VoidCallback? o) => InkWell(
       onTap: o,
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(i, color: s ? AppTheme.primaryNavy : Colors.grey, size: 20),
+        Icon(i,
+            color: s
+                ? AppTheme.bottomNavSelectedColor(context)
+                : AppTheme.bottomNavUnselectedColor(context),
+            size: 20),
         Text(l,
             style: TextStyle(
-                fontSize: 10, color: s ? AppTheme.primaryNavy : Colors.grey))
+                fontSize: 10,
+                color: s
+                    ? AppTheme.bottomNavSelectedColor(context)
+                    : AppTheme.bottomNavUnselectedColor(context)))
       ]));
 }

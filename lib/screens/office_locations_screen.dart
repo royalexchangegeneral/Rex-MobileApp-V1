@@ -10,6 +10,7 @@ import '../widgets/agent_bottom_nav.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
+import 'my_policies_screen.dart';
 import 'new_policy_screen.dart';
 
 class OfficeLocationsScreen extends StatefulWidget {
@@ -21,7 +22,6 @@ class OfficeLocationsScreen extends StatefulWidget {
 
 class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
   String _currentAddress = 'Detecting your location...';
-  double? _userLat, _userLng;
   int _closestIdx = 0;
   final _searchController = TextEditingController();
   String _searchQuery = '';
@@ -95,8 +95,6 @@ class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
       final pos = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.medium);
       print('=== GOT POSITION: ${pos.latitude}, ${pos.longitude} ===');
-      _userLat = pos.latitude;
-      _userLng = pos.longitude;
       _closestIdx = _findClosest(pos.latitude, pos.longitude);
       try {
         final placemarks =
@@ -173,7 +171,9 @@ class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
     final isOpen = _isOpen();
     final closest = _offices[_closestIdx];
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           leading: IconButton(
               icon: Icon(Icons.arrow_back,
@@ -187,7 +187,7 @@ class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
           centerTitle: true),
       body: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             TextField(
@@ -199,59 +199,72 @@ class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
                     setState(() => _searchQuery = v.toLowerCase()),
                 decoration: InputDecoration(
                     hintText: 'Search by location or zip',
-                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-                    suffixIcon:
-                        Icon(Icons.my_location, color: Colors.grey[400]),
+                    hintStyle: TextStyle(
+                        color: ThemeHelper.getSecondaryTextColor(context),
+                        fontSize: 13),
+                    suffixIcon: Icon(Icons.my_location,
+                        color: ThemeHelper.getSecondaryTextColor(context)),
+                    filled: true,
+                    fillColor: ThemeHelper.getCardColor(context),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide(
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.grey[700]!
-                                    : Colors.grey[300]!)),
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.grey[700]!
+                                : Colors.grey[300]!)),
                     enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.grey[700]!
+                                : Colors.grey[300]!)),
+                    focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide(
                             color:
                                 Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.grey[700]!
-                                    : Colors.grey[300]!)),
-                    focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide:
-                            const BorderSide(color: AppTheme.primaryNavy)),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12))),
+                                    ? AppTheme.accentOrange
+                                    : AppTheme.primaryNavy)),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12))),
             const SizedBox(height: 14),
             Row(children: [
-              Icon(Icons.my_location, color: AppTheme.primaryNavy, size: 16),
-              SizedBox(width: 6),
+              Icon(Icons.my_location,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppTheme.accentOrange
+                      : AppTheme.primaryNavy,
+                  size: 16),
+              const SizedBox(width: 6),
               Text('Your Current location',
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryNavy))
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppTheme.accentOrange
+                          : AppTheme.primaryNavy))
             ]),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(_currentAddress,
-                style: TextStyle(fontSize: 12, color: Colors.grey[700])),
-            SizedBox(height: 14),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: ThemeHelper.getSecondaryTextColor(context))),
+            const SizedBox(height: 14),
             // Map
             ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: SizedBox(
                     height: 200,
                     child: WebViewWidget(controller: _mapController))),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Center(
                 child: Text('Location closest to you',
                     style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.onSurface))),
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
             _buildCard(context, closest, isOpen),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Center(
                 child: Text('Our Office Location',
                     style: TextStyle(
@@ -292,6 +305,7 @@ class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
       bottomNavigationBar: widget.isAgentFlow
           ? buildAgentBottomNav(context, currentIndex: 0)
           : BottomAppBar(
+              color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),
               notchMargin: 4,
               child: SizedBox(
@@ -309,8 +323,14 @@ class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
                                     builder: (_) =>
                                         const CustomerDashboardScreen()),
                                 (r) => false)),
-                        _nav(Icons.description_outlined, 'Policies', false,
-                            null),
+                        _nav(
+                            Icons.description_outlined,
+                            'Policies',
+                            false,
+                            () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const MyPoliciesScreen()))),
                         const SizedBox(width: 48),
                         _nav(
                             Icons.assignment_outlined,
@@ -335,20 +355,23 @@ class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
 
   Widget _buildCard(BuildContext ctx, Map<String, dynamic> o, bool isOpen) {
     return Container(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
             color: ThemeHelper.getCardColor(ctx),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!)),
+            border: Border.all(color: ThemeHelper.getBorderColor(ctx))),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Container(
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                     color: const Color(0xFFE3F2FD), shape: BoxShape.circle),
                 child: Icon(Icons.business,
-                    color: AppTheme.primaryNavy, size: 18)),
-            SizedBox(width: 10),
+                    color: Theme.of(ctx).brightness == Brightness.dark
+                        ? AppTheme.accentOrange
+                        : AppTheme.primaryNavy,
+                    size: 18)),
+            const SizedBox(width: 10),
             Expanded(
                 child: Text(o['name'],
                     style: TextStyle(
@@ -411,9 +434,11 @@ class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
             Container(
                 decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.grey[300]!)),
+                    border: Border.all(color: ThemeHelper.getBorderColor(ctx))),
                 child: IconButton(
-                    icon: Icon(Icons.phone, size: 18, color: Colors.grey[500]),
+                    icon: Icon(Icons.phone,
+                        size: 18,
+                        color: ThemeHelper.getSecondaryTextColor(ctx)),
                     constraints:
                         const BoxConstraints(minWidth: 40, minHeight: 40),
                     padding: EdgeInsets.zero,
@@ -445,9 +470,16 @@ class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
   Widget _nav(IconData i, String l, bool s, VoidCallback? o) => InkWell(
       onTap: o,
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(i, color: s ? AppTheme.primaryNavy : Colors.grey, size: 20),
+        Icon(i,
+            color: s
+                ? AppTheme.bottomNavSelectedColor(context)
+                : AppTheme.bottomNavUnselectedColor(context),
+            size: 20),
         Text(l,
             style: TextStyle(
-                fontSize: 10, color: s ? AppTheme.primaryNavy : Colors.grey))
+                fontSize: 10,
+                color: s
+                    ? AppTheme.bottomNavSelectedColor(context)
+                    : AppTheme.bottomNavUnselectedColor(context)))
       ]));
 }

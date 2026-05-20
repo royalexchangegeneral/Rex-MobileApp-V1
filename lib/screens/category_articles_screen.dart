@@ -309,6 +309,7 @@ class CategoryArticlesScreen extends StatelessWidget {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
+        color: AppTheme.bottomNavBackgroundColor(context),
         shape: const CircularNotchedRectangle(),
         notchMargin: 4,
         child: SizedBox(
@@ -316,21 +317,24 @@ class CategoryArticlesScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(Icons.home_outlined, 'Home', false, onTap: () {
+              _buildNavItem(context, Icons.home_outlined, 'Home', false,
+                  onTap: () {
                 Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
                         builder: (_) => const CustomerDashboardScreen()),
                     (route) => false);
               }),
-              _buildNavItem(Icons.description_outlined, 'Policies', false),
+              _buildNavItem(
+                  context, Icons.description_outlined, 'Policies', false),
               const SizedBox(width: 48),
-              _buildNavItem(Icons.assignment_outlined, 'Claims', false,
+              _buildNavItem(context, Icons.assignment_outlined, 'Claims', false,
                   onTap: () {
                 Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
               }),
-              _buildNavItem(Icons.person_outline, 'Profile', false, onTap: () {
+              _buildNavItem(context, Icons.person_outline, 'Profile', false,
+                  onTap: () {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -399,7 +403,8 @@ class CategoryArticlesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool isSelected,
+  Widget _buildNavItem(
+      BuildContext context, IconData icon, String label, bool isSelected,
       {VoidCallback? onTap}) {
     return InkWell(
       onTap: onTap,
@@ -407,11 +412,16 @@ class CategoryArticlesScreen extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon,
-              color: isSelected ? AppTheme.primaryNavy : Colors.grey, size: 20),
+              color: isSelected
+                  ? AppTheme.bottomNavSelectedColor(context)
+                  : AppTheme.bottomNavUnselectedColor(context),
+              size: 20),
           Text(label,
               style: TextStyle(
                   fontSize: 10,
-                  color: isSelected ? AppTheme.primaryNavy : Colors.grey)),
+                  color: isSelected
+                      ? AppTheme.bottomNavSelectedColor(context)
+                      : AppTheme.bottomNavUnselectedColor(context))),
         ],
       ),
     );

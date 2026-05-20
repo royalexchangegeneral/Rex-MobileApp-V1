@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import '../utils/theme_helper.dart';
 import '../widgets/agent_bottom_nav.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
@@ -9,7 +10,9 @@ import 'new_policy_screen.dart';
 class TrackTicketScreen extends StatefulWidget {
   final List<Map<String, dynamic>> tickets;
   final bool isAgentFlow;
-  const TrackTicketScreen({Key? key, required this.tickets, this.isAgentFlow = false}) : super(key: key);
+  const TrackTicketScreen(
+      {Key? key, required this.tickets, this.isAgentFlow = false})
+      : super(key: key);
 
   @override
   State<TrackTicketScreen> createState() => _TrackTicketScreenState();
@@ -40,9 +43,18 @@ class _TrackTicketScreenState extends State<TrackTicketScreen> {
       if (filter == 'All') {
         _filteredTickets = widget.tickets;
       } else {
-        final normalizedFilter = filter.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', '');
+        final normalizedFilter = filter
+            .toLowerCase()
+            .replaceAll(' ', '')
+            .replaceAll('_', '')
+            .replaceAll('-', '');
         _filteredTickets = widget.tickets.where((t) {
-          final status = (t['status'] as String?)?.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', '') ?? '';
+          final status = (t['status'] as String?)
+                  ?.toLowerCase()
+                  .replaceAll(' ', '')
+                  .replaceAll('_', '')
+                  .replaceAll('-', '') ??
+              '';
           return status == normalizedFilter;
         }).toList();
       }
@@ -92,7 +104,6 @@ class _TrackTicketScreenState extends State<TrackTicketScreen> {
   }
 
   Color _statusBg(String status) {
-    final color = _statusColor(status);
     switch (status.toLowerCase()) {
       case 'open':
         return const Color(0xFFE8F5E9);
@@ -110,13 +121,20 @@ class _TrackTicketScreenState extends State<TrackTicketScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Track Ticket', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text('Track Ticket',
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+                fontSize: 18)),
         centerTitle: true,
       ),
       body: Padding(
@@ -129,12 +147,33 @@ class _TrackTicketScreenState extends State<TrackTicketScreen> {
               onChanged: (_) => _applySearch(),
               decoration: InputDecoration(
                 hintText: 'Search tickets',
-                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-                suffixIcon: Icon(Icons.search, color: Colors.grey[400]),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primaryNavy)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                hintStyle: TextStyle(
+                    color: ThemeHelper.getSecondaryTextColor(context),
+                    fontSize: 13),
+                suffixIcon: Icon(Icons.search,
+                    color: ThemeHelper.getSecondaryTextColor(context)),
+                filled: true,
+                fillColor: ThemeHelper.getCardColor(context),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.grey[700]!
+                            : Colors.grey[300]!)),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.grey[700]!
+                            : Colors.grey[300]!)),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppTheme.accentOrange
+                            : AppTheme.primaryNavy)),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
             ),
             const SizedBox(height: 16),
@@ -145,33 +184,43 @@ class _TrackTicketScreenState extends State<TrackTicketScreen> {
                   _buildFilterChip('All', _selectedFilter == 'All'),
                   const SizedBox(width: 8),
                   _buildFilterChip('Open', _selectedFilter == 'Open'),
-                  SizedBox(width: 8),
-                  _buildFilterChip('In Progress', _selectedFilter == 'In Progress'),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
+                  _buildFilterChip(
+                      'In Progress', _selectedFilter == 'In Progress'),
+                  const SizedBox(width: 8),
                   _buildFilterChip('Resolved', _selectedFilter == 'Resolved'),
                 ],
               ),
             ),
-            SizedBox(height: 16),
-            Text('Your Tickets', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+            const SizedBox(height: 16),
+            Text('Your Tickets',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 10),
             Expanded(
               child: ListView.builder(
                 itemCount: _displayedTickets.length,
                 itemBuilder: (context, i) {
                   final t = _displayedTickets[i];
-                  final createdAt = t['created_at'] != null ? DateTime.tryParse(t['created_at']) : null;
-                  final status = (t['status'] as String?)?.toLowerCase() ?? 'open';
-                  final displayStatus = status == 'open' ? 'Open' : status.capitalize();
+                  final createdAt = t['created_at'] != null
+                      ? DateTime.tryParse(t['created_at'])
+                      : null;
+                  final status =
+                      (t['status'] as String?)?.toLowerCase() ?? 'open';
+                  final displayStatus =
+                      status == 'open' ? 'Open' : status.capitalize();
                   final statusColor = _statusColor(status);
                   final statusBg = _statusBg(status);
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: ThemeHelper.getCardColor(context),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[200]!),
+                      border: Border.all(
+                          color: ThemeHelper.getBorderColor(context)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,10 +228,18 @@ class _TrackTicketScreenState extends State<TrackTicketScreen> {
                         Row(
                           children: [
                             Expanded(
-                              child: Text('#TK${t['id']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15), overflow: TextOverflow.ellipsis),
+                              child: Text('#TK${t['id']}',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface),
+                                  overflow: TextOverflow.ellipsis),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 4),
                               decoration: BoxDecoration(
                                 color: statusBg,
                                 borderRadius: BorderRadius.circular(14),
@@ -200,25 +257,51 @@ class _TrackTicketScreenState extends State<TrackTicketScreen> {
                           ],
                         ),
                         const SizedBox(height: 6),
-                        Text(t['category'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), overflow: TextOverflow.ellipsis),
+                        Text(t['category'] ?? '',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: Theme.of(context).colorScheme.onSurface),
+                            overflow: TextOverflow.ellipsis),
                         if (t['sub_category'] != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 2.0),
-                            child: Text(t['sub_category'], style: const TextStyle(color: AppTheme.primaryNavy, fontSize: 12), overflow: TextOverflow.ellipsis),
+                            child: Text(t['sub_category'],
+                                style: TextStyle(
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? AppTheme.accentOrange
+                                        : AppTheme.primaryNavy,
+                                    fontSize: 12),
+                                overflow: TextOverflow.ellipsis),
                           ),
                         if (t['description'] != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(t['description'], style: const TextStyle(fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+                            child: Text(t['description'],
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    color: ThemeHelper.getSecondaryTextColor(
+                                        context)),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis),
                           ),
                         Row(
                           children: [
-                            Icon(Icons.access_time, size: 14, color: Colors.grey[500]),
+                            Icon(Icons.access_time,
+                                size: 14,
+                                color:
+                                    ThemeHelper.getSecondaryTextColor(context)),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                createdAt != null ? _formatTimeAgo(createdAt) : '',
-                                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                                createdAt != null
+                                    ? _formatTimeAgo(createdAt)
+                                    : '',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: ThemeHelper.getSecondaryTextColor(
+                                        context)),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -233,26 +316,82 @@ class _TrackTicketScreenState extends State<TrackTicketScreen> {
           ],
         ),
       ),
-      floatingActionButton: widget.isAgentFlow ? null : Transform.translate(offset: const Offset(0, 15), child: SizedBox(width: 52, height: 52, child: FloatingActionButton(
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-        backgroundColor: AppTheme.accentOrange, shape: const CircleBorder(), elevation: 1, child: const Icon(Icons.add, color: Colors.white, size: 30)))),
+      floatingActionButton: widget.isAgentFlow
+          ? null
+          : Transform.translate(
+              offset: const Offset(0, 15),
+              child: SizedBox(
+                  width: 52,
+                  height: 52,
+                  child: FloatingActionButton(
+                      onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const NewPolicyScreen())),
+                      backgroundColor: AppTheme.accentOrange,
+                      shape: const CircleBorder(),
+                      elevation: 1,
+                      child: const Icon(Icons.add,
+                          color: Colors.white, size: 30)))),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: widget.isAgentFlow ? buildAgentBottomNav(context, currentIndex: 0) : BottomAppBar(shape: const CircularNotchedRectangle(), notchMargin: 4,
-        child: SizedBox(height: 44, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-          _nav(Icons.home_outlined, 'Home', false, () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()), (r) => false)),
-          _nav(Icons.description_outlined, 'Policies', false, null), const SizedBox(width: 48),
-          _nav(Icons.assignment_outlined, 'Claims', false, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyClaimsScreen()))),
-          _nav(Icons.person_outline, 'Profile', true, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerProfileScreen()))),
-        ]))),
+      bottomNavigationBar: widget.isAgentFlow
+          ? buildAgentBottomNav(context, currentIndex: 0)
+          : BottomAppBar(
+              color: AppTheme.bottomNavBackgroundColor(context),
+              shape: const CircularNotchedRectangle(),
+              notchMargin: 4,
+              child: SizedBox(
+                  height: 44,
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _nav(
+                            Icons.home_outlined,
+                            'Home',
+                            false,
+                            () => Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        const CustomerDashboardScreen()),
+                                (r) => false)),
+                        _nav(Icons.description_outlined, 'Policies', false,
+                            null),
+                        const SizedBox(width: 48),
+                        _nav(
+                            Icons.assignment_outlined,
+                            'Claims',
+                            false,
+                            () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const MyClaimsScreen()))),
+                        _nav(
+                            Icons.person_outline,
+                            'Profile',
+                            true,
+                            () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        const CustomerProfileScreen()))),
+                      ]))),
     );
   }
 
   Widget _buildFilterChip(String label, bool selected) {
     return ChoiceChip(
-      label: Text(label, style: TextStyle(color: selected ? Colors.white : Colors.black, fontSize: 12)),
+      label: Text(label,
+          style: TextStyle(
+              color: selected
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onSurface,
+              fontSize: 12)),
       selected: selected,
-      selectedColor: AppTheme.primaryNavy,
-      backgroundColor: Colors.grey[200],
+      selectedColor: Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.accentOrange
+          : AppTheme.primaryNavy,
+      backgroundColor: ThemeHelper.getCardColor(context),
       showCheckmark: false,
       onSelected: (isSelected) {
         if (isSelected) _filterTickets(label);
@@ -262,10 +401,24 @@ class _TrackTicketScreenState extends State<TrackTicketScreen> {
     );
   }
 
-  Widget _nav(IconData i, String l, bool s, VoidCallback? o) => InkWell(onTap: o, child: Column(mainAxisSize: MainAxisSize.min, children: [
-    Icon(i, color: s ? AppTheme.primaryNavy : Colors.grey, size: 20), Text(l, style: TextStyle(fontSize: 10, color: s ? AppTheme.primaryNavy : Colors.grey))]));
+  Widget _nav(IconData i, String l, bool s, VoidCallback? o) => InkWell(
+      onTap: o,
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(i,
+            color: s
+                ? AppTheme.bottomNavSelectedColor(context)
+                : AppTheme.bottomNavUnselectedColor(context),
+            size: 20),
+        Text(l,
+            style: TextStyle(
+                fontSize: 10,
+                color: s
+                    ? AppTheme.bottomNavSelectedColor(context)
+                    : AppTheme.bottomNavUnselectedColor(context)))
+      ]));
 }
 
 extension StringCasingExtension on String {
-  String capitalize() => isEmpty ? this : '${this[0].toUpperCase()}${substring(1)}';
+  String capitalize() =>
+      isEmpty ? this : '${this[0].toUpperCase()}${substring(1)}';
 }

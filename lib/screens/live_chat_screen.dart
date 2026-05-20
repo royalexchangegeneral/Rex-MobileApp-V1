@@ -20,15 +20,27 @@ class _LiveChatScreenState extends State<LiveChatScreen> {
         onPageStarted: (_) => setState(() => _isLoading = true),
         onPageFinished: (_) => setState(() => _isLoading = false),
       ))
-      ..loadRequest(Uri.parse('https://tawk.to/chat/6687fe38eaf3bd8d4d1876c4/1i21ji3qp'));
+      ..loadRequest(
+          Uri.parse('https://tawk.to/chat/6687fe38eaf3bd8d4d1876c4/1i21ji3qp'));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(elevation: 0,
-        leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
-        title: Text('Chat', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)), centerTitle: true),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 0,
+          leading: IconButton(
+              icon: Icon(Icons.arrow_back,
+                  color: Theme.of(context).colorScheme.onSurface),
+              onPressed: () => Navigator.pop(context)),
+          title: Text('Chat',
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18)),
+          centerTitle: true),
       body: Stack(children: [
         WebViewWidget(controller: _controller),
         if (_isLoading) const Center(child: CircularProgressIndicator()),
