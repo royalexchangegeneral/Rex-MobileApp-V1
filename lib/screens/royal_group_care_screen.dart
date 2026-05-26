@@ -239,12 +239,12 @@ class RoyalGroupCareScreen extends StatelessWidget {
               expandedHeight: 450,
               pinned: false,
               leading: Container(
-                  margin: EdgeInsets.all(8),
+                  margin: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.3),
                       shape: BoxShape.circle),
                   child: IconButton(
-                      icon: Icon(Icons.arrow_back, color: Colors.white),
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () => Navigator.pop(context))),
               flexibleSpace: FlexibleSpaceBar(
                   background: Column(children: [
@@ -263,7 +263,7 @@ class RoyalGroupCareScreen extends StatelessWidget {
                 ])),
                 Container(
                     color: ThemeHelper.getCardColor(context),
-                    padding: EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(24),
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -273,7 +273,7 @@ class RoyalGroupCareScreen extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                   color:
                                       Theme.of(context).colorScheme.onSurface)),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                               'Royal Group Care is an insurance product specially designed for Groups, Associations and Staff of organizations to provide compensation in case of an accident resulting in bodily injury, medical expenses, permanent disability, or death.',
                               style: TextStyle(

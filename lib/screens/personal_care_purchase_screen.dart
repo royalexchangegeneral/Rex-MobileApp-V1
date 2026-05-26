@@ -453,6 +453,12 @@ class _PersonalCarePurchaseScreenState
 
   // Step 0: NIN Verification
   Widget _buildNinStep() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final hintColor = isDark ? const Color(0xFF94A3B8) : Colors.grey[400]!;
+    final accent = isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -472,28 +478,19 @@ class _PersonalCarePurchaseScreenState
               color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Enter your NIN (11 digits)',
-            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+            hintStyle: TextStyle(color: hintColor, fontSize: 14),
             filled: true,
-            fillColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1E1E1E)
-                : Colors.white,
+            fillColor: fieldColor,
             counterText: '',
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[700]!
-                        : Colors.grey[300]!)),
+                borderSide: BorderSide(color: borderColor)),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[700]!
-                        : Colors.grey[300]!)),
+                borderSide: BorderSide(color: borderColor)),
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide:
-                    const BorderSide(color: AppTheme.primaryNavy, width: 2)),
+                borderSide: BorderSide(color: accent, width: 2)),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
@@ -879,8 +876,12 @@ class _PersonalCarePurchaseScreenState
           Expanded(
               child: Text(
             'I hereby consent to the collection, processing, use and the transfer of personal data to third parties (within or outside Nigeria), for the performance of this contract and any other data processing activities which may arise therefrom between myself and Rex Insurance Limited (Rex Insurance). I affirm that I am aware and take cognizance of my rights under the relevant Data Protection Laws in Nigeria and other terms detailed in the Data Protection and Privacy Policy of Rex Insurance available on our policy.\nI authorize and consent that any person who may be in possession of, or hereafter acquire, any information pertaining to my records may disclose such information to Rex Insurance.',
-            style:
-                TextStyle(fontSize: 10, color: Colors.grey[700], height: 1.4),
+            style: TextStyle(
+                fontSize: 10,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFCBD5E1)
+                    : Colors.grey[700],
+                height: 1.4),
           )),
         ]),
         const SizedBox(height: 30),
@@ -1080,6 +1081,11 @@ class _PersonalCarePurchaseScreenState
       {TextInputType? keyboardType,
       int maxLines = 1,
       List<String>? autofillHints}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final hintColor = isDark ? const Color(0xFF94A3B8) : Colors.grey[400]!;
+    final accent = isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
     String? errorText;
     if (keyboardType == TextInputType.emailAddress &&
         controller.text.trim().isNotEmpty) {
@@ -1104,29 +1110,20 @@ class _PersonalCarePurchaseScreenState
           color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+        hintStyle: TextStyle(color: hintColor, fontSize: 13),
         errorText: errorText,
-        errorStyle: TextStyle(fontSize: 11),
+        errorStyle: const TextStyle(fontSize: 11),
         filled: true,
-        fillColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1E1E1E)
-            : Colors.white,
+        fillColor: fieldColor,
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.grey[700]!
-                    : Colors.grey[300]!)),
+            borderSide: BorderSide(color: borderColor)),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.grey[700]!
-                    : Colors.grey[300]!)),
+            borderSide: BorderSide(color: borderColor)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide:
-                const BorderSide(color: AppTheme.primaryNavy, width: 2)),
+            borderSide: BorderSide(color: accent, width: 2)),
         errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide: const BorderSide(color: Colors.red, width: 1.5)),
@@ -1141,20 +1138,26 @@ class _PersonalCarePurchaseScreenState
 
   Widget _dropdown(String hint, String? value, List<String> items,
       ValueChanged<String?> onChanged) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final hintColor = isDark ? const Color(0xFF94A3B8) : Colors.grey[400]!;
+    final iconColor = isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
     return Container(
       decoration: BoxDecoration(
+          color: fieldColor,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[300]!)),
+          border: Border.all(color: borderColor)),
       child: DropdownButtonFormField<String>(
-        value: value,
-        hint:
-            Text(hint, style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+        initialValue: value,
+        dropdownColor: isDark ? const Color(0xFF111827) : Colors.white,
+        hint: Text(hint, style: TextStyle(color: hintColor, fontSize: 13)),
         style: TextStyle(
             color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
         decoration: const InputDecoration(
             border: InputBorder.none,
             contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
-        icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+        icon: Icon(Icons.keyboard_arrow_down, color: iconColor),
         items: items
             .map((s) => DropdownMenuItem(value: s, child: Text(s)))
             .toList(),

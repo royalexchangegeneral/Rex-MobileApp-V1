@@ -261,19 +261,21 @@ class CategoryArticlesScreen extends StatelessWidget {
                     ),
                     child: Icon(icon, color: color, size: 30),
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   Text(title,
                       style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: color)),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text('${articles.length} articles',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: ThemeHelper.getSecondaryTextColor(context))),
                 ],
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Text('All Articles',
                 style: TextStyle(
                     fontSize: 16,
@@ -363,7 +365,7 @@ class CategoryArticlesScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: ThemeHelper.getCardColor(context),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
+          border: Border.all(color: ThemeHelper.getBorderColor(context)),
         ),
         child: Row(
           children: [
@@ -377,7 +379,7 @@ class CategoryArticlesScreen extends StatelessWidget {
               child: Center(
                   child: Icon(Icons.article_outlined, color: color, size: 20)),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,13 +392,17 @@ class CategoryArticlesScreen extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(article['desc']!,
                       style: TextStyle(
-                          fontSize: 10, color: Colors.grey[500], height: 1.3)),
+                          fontSize: 10,
+                          color: ThemeHelper.getSecondaryTextColor(context),
+                          height: 1.3)),
                 ],
               ),
             ),
             const SizedBox(width: 8),
             Text(article['read']!,
-                style: TextStyle(fontSize: 9, color: Colors.grey[400])),
+                style: TextStyle(
+                    fontSize: 9,
+                    color: ThemeHelper.getSecondaryTextColor(context))),
           ],
         ),
       ),
@@ -481,7 +487,9 @@ class _ArticleDetailScreenState extends State<_ArticleDetailScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text('${_currentIndex + 1} of ${widget.articles.length}',
-            style: TextStyle(fontSize: 14, color: Colors.grey)),
+            style: TextStyle(
+                fontSize: 14,
+                color: ThemeHelper.getSecondaryTextColor(context))),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -492,7 +500,7 @@ class _ArticleDetailScreenState extends State<_ArticleDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
@@ -501,7 +509,7 @@ class _ArticleDetailScreenState extends State<_ArticleDetailScreen> {
                   style: TextStyle(
                       fontSize: 10, color: color, fontWeight: FontWeight.w600)),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(article['title']!,
                 style: TextStyle(
                     fontSize: 20,
@@ -512,12 +520,15 @@ class _ArticleDetailScreenState extends State<_ArticleDetailScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.03),
+                color: ThemeHelper.getCardColor(context),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ThemeHelper.getBorderColor(context)),
               ),
               child: Text(article['body']!,
                   style: TextStyle(
-                      fontSize: 13, color: Colors.grey[700], height: 1.7)),
+                      fontSize: 13,
+                      color: ThemeHelper.getSecondaryTextColor(context),
+                      height: 1.7)),
             ),
             const SizedBox(height: 24),
 
@@ -531,14 +542,15 @@ class _ArticleDetailScreenState extends State<_ArticleDetailScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey[50],
+                          color: ThemeHelper.getCardColor(context),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey[200]!),
+                          border: Border.all(
+                              color: ThemeHelper.getBorderColor(context)),
                         ),
                         child: Row(
                           children: [
                             Icon(Icons.arrow_back_ios, size: 14, color: color),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -549,7 +561,7 @@ class _ArticleDetailScreenState extends State<_ArticleDetailScreen> {
                                           color: Theme.of(context)
                                               .colorScheme
                                               .onSurface)),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
                                     widget.articles[_currentIndex - 1]
                                         ['title']!,
@@ -580,9 +592,10 @@ class _ArticleDetailScreenState extends State<_ArticleDetailScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey[50],
+                          color: ThemeHelper.getCardColor(context),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey[200]!),
+                          border: Border.all(
+                              color: ThemeHelper.getBorderColor(context)),
                         ),
                         child: Row(
                           children: [
@@ -596,7 +609,7 @@ class _ArticleDetailScreenState extends State<_ArticleDetailScreen> {
                                           color: Theme.of(context)
                                               .colorScheme
                                               .onSurface)),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
                                     widget.articles[_currentIndex + 1]
                                         ['title']!,

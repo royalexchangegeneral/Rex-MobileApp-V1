@@ -240,8 +240,8 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final onSurface = Theme.of(context).colorScheme.onSurface;
-    final fillColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final borderColor = isDark ? Colors.grey[700]! : Colors.grey[400]!;
+    final fillColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[400]!;
 
     return Scaffold(
       appBar: AppBar(
@@ -602,6 +602,10 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
       String label, String hint, TextEditingController controller,
       {TextInputType? keyboardType}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final hintColor = isDark ? const Color(0xFF94A3B8) : Colors.grey[400]!;
+    final accent = isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -615,20 +619,18 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
               color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+            hintStyle: TextStyle(color: hintColor, fontSize: 13),
             filled: true,
-            fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            fillColor: fieldColor,
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: isDark ? Colors.grey[700]! : Colors.grey[300]!)),
+                borderSide: BorderSide(color: borderColor)),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: isDark ? Colors.grey[700]! : Colors.grey[300]!)),
-            focusedBorder: const OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-                borderSide: BorderSide(color: AppTheme.primaryNavy, width: 2)),
+                borderSide: BorderSide(color: borderColor)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
+                borderSide: BorderSide(color: accent, width: 2)),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),

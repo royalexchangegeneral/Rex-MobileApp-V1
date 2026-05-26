@@ -22,7 +22,6 @@ class SecuritySettingsScreen extends StatefulWidget {
 }
 
 class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
-  bool _twoFactorAuth = false;
   bool _biometricLogin = false;
   bool _biometricAvailable = false;
 
@@ -158,36 +157,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
 
             const SizedBox(height: 24),
 
-            // Two-Factor Authentication
-            _buildSecurityItem(
-              icon: Icons.key,
-              iconColor: const Color(0xFF1E2D64),
-              iconBgColor: const Color(0xFF1E2D64).withValues(alpha: 0.1),
-              title: 'Two-Factor Authentication',
-              subtitle: 'Enabled - Authentication app',
-              hasToggle: true,
-              toggleValue: _twoFactorAuth,
-              onToggleChanged: (value) {
-                setState(() {
-                  _twoFactorAuth = value;
-                });
-              },
-            ),
-
-            const SizedBox(height: 12),
-
-            // Password
-            _buildSecurityItem(
-              icon: Icons.lock_outline,
-              iconColor: const Color(0xFF1E2D64),
-              iconBgColor: const Color(0xFF1E2D64).withValues(alpha: 0.1),
-              title: 'Password',
-              subtitle: 'Last changed 30 days ago',
-              actionText: 'Change',
-              onActionTap: () {},
-            ),
-
-            const SizedBox(height: 12),
+            // Hidden for now: Two-Factor Authentication and Password cards.
 
             // Biometric Login
             _buildSecurityItem(

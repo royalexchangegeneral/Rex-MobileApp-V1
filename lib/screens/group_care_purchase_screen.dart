@@ -27,6 +27,27 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
 
   bool _isPayingNow = false;
 
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get _cardColor => _isDark ? const Color(0xFF111827) : Colors.grey[50]!;
+
+  Color get _fieldColor => _isDark ? const Color(0xFF111827) : Colors.white;
+
+  Color get _sectionColor =>
+      _isDark ? const Color(0xFF111827) : Colors.grey[100]!;
+
+  Color get _borderColor =>
+      _isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+
+  Color get _secondaryTextColor =>
+      _isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
+  Color get _mutedTextColor =>
+      _isDark ? const Color(0xFF94A3B8) : Colors.grey[500]!;
+
+  Color get _agentAccent =>
+      _isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+
   // Step 0: Group & Contact
   final _groupNameController = TextEditingController();
   final _groupEmailController = TextEditingController();
@@ -144,10 +165,11 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
       return;
     }
     setState(() {
-      if (isChairman)
+      if (isChairman) {
         _isVerifyingChairNin = true;
-      else
+      } else {
         _isVerifyingSecNin = true;
+      }
     });
     try {
       final response = await http
@@ -161,14 +183,15 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
             }),
           )
           .timeout(const Duration(seconds: 15));
-      print(
+      debugPrint(
           '=== NIN VERIFY (${isChairman ? "Chairman" : "Secretary"}): ${response.statusCode} ===');
-      print('Body: ${response.body}');
+      debugPrint('Body: ${response.body}');
       setState(() {
-        if (isChairman)
+        if (isChairman) {
           _isVerifyingChairNin = false;
-        else
+        } else {
           _isVerifyingSecNin = false;
+        }
       });
       if ((response.statusCode == 200 || response.statusCode == 201)) {
         final data = json.decode(response.body);
@@ -182,36 +205,41 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
             nameController.text =
                 '${kyc['firstname'] ?? ''} ${kyc['surname'] ?? ''}'.trim();
             phoneController.text = kyc['telephoneno']?.toString() ?? '';
-            if (isChairman)
+            if (isChairman) {
               _chairNinStatus = 'verified';
-            else
+            } else {
               _secNinStatus = 'verified';
+            }
           });
-          if (mounted)
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text(
                     '${isChairman ? "Chairman" : "Secretary"} NIN verified'),
                 backgroundColor: Colors.green));
+          }
         } else {
           final kyc = data['data']?['data']?['kyc'];
           final msg = kyc != null
               ? (kyc['status']?.toString() ?? 'Verification failed')
               : 'No data found for this NIN';
-          if (mounted)
+          if (mounted) {
             ScaffoldMessenger.of(context)
                 .showSnackBar(SnackBar(content: Text(msg)));
+          }
         }
       }
     } catch (e) {
       setState(() {
-        if (isChairman)
+        if (isChairman) {
           _isVerifyingChairNin = false;
-        else
+        } else {
           _isVerifyingSecNin = false;
+        }
       });
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 
@@ -295,9 +323,10 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
       }
     } catch (e) {
       setState(() => _isPayingNow = false);
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      }
     }
   }
 
@@ -307,9 +336,10 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
         initialDate: DateTime(2000),
         firstDate: DateTime(1920),
         lastDate: DateTime.now());
-    if (picked != null)
+    if (picked != null) {
       setState(() => _memberDobController.text =
           '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}');
+    }
   }
 
   void _addMember() {
@@ -354,13 +384,15 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
     try {
       final result = await FilePicker.platform.pickFiles(
           type: FileType.custom, allowedExtensions: ['xlsx', 'xls', 'csv']);
-      if (result != null && result.files.isNotEmpty)
+      if (result != null && result.files.isNotEmpty) {
         setState(() => _uploadedFileName = result.files.first.name);
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('File picker error: $e'),
             backgroundColor: Colors.red));
+      }
     }
   }
 
@@ -379,25 +411,28 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
             subject: 'Group Members Sample', sharePositionOrigin: origin);
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
           elevation: 0,
           leading: IconButton(
               icon: Icon(Icons.arrow_back,
                   color: Theme.of(context).colorScheme.onSurface),
               onPressed: () {
-                if (_currentStep > 0)
+                if (_currentStep > 0) {
                   setState(() => _currentStep--);
-                else
+                } else {
                   Navigator.pop(context);
+                }
               }),
           title: Text(
               _currentStep == 3
@@ -431,14 +466,14 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
     final totalSteps = _currentStep == 3 ? 3 : 4;
     final stepNum = _currentStep == 3 ? 3 : _currentStep + 1;
     return Padding(
-        padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
         child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('Step $stepNum of $totalSteps',
                 style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.primaryNavy)),
+                    color: _agentAccent)),
             Flexible(
                 child: Text(labels[_currentStep],
                     style: TextStyle(
@@ -457,9 +492,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
                           margin: EdgeInsets.only(
                               right: i < totalSteps - 1 ? 4 : 0),
                           decoration: BoxDecoration(
-                              color: i < stepNum
-                                  ? AppTheme.primaryNavy
-                                  : Colors.grey[300],
+                              color: i < stepNum ? _agentAccent : _borderColor,
                               borderRadius: BorderRadius.circular(2)))))),
         ]));
   }
@@ -626,7 +659,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
                       _secNinController.text.trim().isNotEmpty
                   ? () => setState(() => _currentStep = 2)
                   : null),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           _outlineBtn('Back', () => setState(() => _currentStep = 0)),
         ]));
   }
@@ -634,9 +667,11 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
   Widget _sectionHeader(String title) {
     return Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-            color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+            color: _sectionColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: _borderColor)),
         child: Row(children: [
           Expanded(
               child: Text(title,
@@ -644,7 +679,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.onSurface))),
-          Icon(Icons.remove, size: 18, color: Colors.grey)
+          Icon(Icons.remove, size: 18, color: _secondaryTextColor)
         ]));
   }
 
@@ -654,8 +689,11 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            const Text('Click to add single members',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+            Text('Click to add single members',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(width: 8),
             GestureDetector(
                 onTap: _addMember,
@@ -663,7 +701,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                        color: AppTheme.primaryNavy,
+                        color: _agentAccent,
                         borderRadius: BorderRadius.circular(16)),
                     child: const Row(mainAxisSize: MainAxisSize.min, children: [
                       Text('Add ',
@@ -692,8 +730,8 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
               onTap: _pickDob,
               child: AbsorbPointer(
                   child: _tf('dd/mm/yyyy', _memberDobController,
-                      suffixIcon: const Icon(Icons.calendar_today,
-                          size: 18, color: Colors.grey)))),
+                      suffixIcon: Icon(Icons.calendar_today,
+                          size: 18, color: _secondaryTextColor)))),
           const SizedBox(height: 12),
           _label('Occupation'),
           const SizedBox(height: 6),
@@ -759,8 +797,9 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
                 width: double.infinity,
                 child: OutlinedButton(
                     onPressed: () => setState(() {
-                          if (_coverMembers.isNotEmpty)
+                          if (_coverMembers.isNotEmpty) {
                             _coverMembers.removeLast();
+                          }
                         }),
                     style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
@@ -778,9 +817,9 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                      color: Colors.grey[50],
+                      color: _cardColor,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[200]!)),
+                      border: Border.all(color: _borderColor)),
                   child: Column(children: [
                     _mRow('Name', m['name'] ?? ''),
                     _mRow('Gender', m['gender'] ?? ''),
@@ -791,8 +830,11 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
             }),
           ],
           const SizedBox(height: 20),
-          const Text('Click to upload bulk members',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+          Text('Click to upload bulk members',
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
           Row(children: [
             OutlinedButton.icon(
@@ -803,11 +845,11 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
                 style: OutlinedButton.styleFrom(
                     foregroundColor:
                         Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
+                            ? AppTheme.accentOrange
                             : AppTheme.primaryNavy,
                     side: BorderSide(
                         color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
+                            ? AppTheme.accentOrange
                             : AppTheme.primaryNavy),
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -831,7 +873,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
           ]),
           const SizedBox(height: 8),
           Text('Upload a file (Upload an Excel file max 2 MB)',
-              style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+              style: TextStyle(fontSize: 11, color: _mutedTextColor)),
           const SizedBox(height: 8),
           GestureDetector(
               onTap: _pickFile,
@@ -839,14 +881,14 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
+                      color: _isDark ? _cardColor : Colors.transparent,
+                      border: Border.all(color: _borderColor),
                       borderRadius: BorderRadius.circular(8)),
                   child: Column(children: [
                     Icon(Icons.cloud_upload_outlined,
-                        size: 32, color: Colors.grey[400]),
+                        size: 32, color: _mutedTextColor),
                     Text('Drop your files here',
-                        style:
-                            TextStyle(fontSize: 12, color: Colors.grey[500])),
+                        style: TextStyle(fontSize: 12, color: _mutedTextColor)),
                     Text('Browse file from your phone',
                         style: TextStyle(fontSize: 11, color: Colors.blue[400]))
                   ]))),
@@ -856,15 +898,18 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8)),
+                    color: _sectionColor,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: _borderColor)),
                 child: Row(children: [
-                  const Icon(Icons.insert_drive_file,
-                      size: 16, color: Colors.grey),
+                  Icon(Icons.insert_drive_file,
+                      size: 16, color: _secondaryTextColor),
                   const SizedBox(width: 8),
                   Expanded(
                       child: Text(_uploadedFileName!,
-                          style: const TextStyle(fontSize: 12))),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurface))),
                   GestureDetector(
                       onTap: () => setState(() => _uploadedFileName = null),
                       child:
@@ -880,34 +925,36 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
                     value: _consentChecked,
                     onChanged: (v) =>
                         setState(() => _consentChecked = v ?? false),
-                    activeColor: AppTheme.primaryNavy)),
+                    activeColor: _agentAccent)),
             const SizedBox(width: 8),
             Expanded(
                 child: Text(
                     'I hereby consent to the collection, processing, use and the transfer of personal data to third parties (within or outside Nigeria), for the performance of this contract and any other data processing activities which may arise therefrom between myself and Rex Insurance Limited (Rex Insurance). I affirm that I am aware and take cognizance of my rights under the relevant Data Protection Laws in Nigeria and other terms detailed in the Data Protection and Privacy Policy of Rex Insurance available on our policy.\nI authorize and consent that any person who may be in possession of, or hereafter acquire, any information pertaining to my records may disclose such information to Rex Insurance.',
                     style: TextStyle(
-                        fontSize: 10, color: Colors.grey[700], height: 1.4))),
+                        fontSize: 10,
+                        color: _secondaryTextColor,
+                        height: 1.4))),
           ]),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           _btn(
               'Submit',
               (_coverMembers.isNotEmpty || _uploadedFileName != null) &&
                       _consentChecked
                   ? () => setState(() => _currentStep = 3)
                   : null),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           _outlineBtn('Back', () => setState(() => _currentStep = 1)),
         ]));
   }
 
   Widget _mRow(String l, String v) => Padding(
-      padding: EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: 4),
       child: Row(children: [
         Expanded(
             flex: 2,
             child: Text(l,
-                style: TextStyle(fontSize: 11, color: Colors.grey[600]))),
-        SizedBox(width: 8),
+                style: TextStyle(fontSize: 11, color: _secondaryTextColor))),
+        const SizedBox(width: 8),
         Expanded(
             flex: 3,
             child: Text(v,
@@ -957,7 +1004,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
                     _sRow('NOK', m['nokName'] ?? ''),
                     _sRow('Relationship', m['nokRelationship'] ?? ''),
                     if (_coverMembers.indexOf(m) < _coverMembers.length - 1)
-                      Divider(color: Colors.grey[300]),
+                      Divider(color: _borderColor),
                   ]))),
             ]),
           ],
@@ -972,57 +1019,48 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
                             ? AppTheme.accentOrange
                             : AppTheme.primaryNavy,
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8))),
                 child: _isPayingNow
-                    ? SizedBox(
+                    ? const SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                    : Text('Pay Now',
+                    : const Text('Pay Now',
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600)),
               )),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
         ]));
   }
 
   Widget _sec(String title, List<Widget> rows) => Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF111827)
-              : Colors.grey[50],
+          color: _cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF334155)
-                  : Colors.grey[200]!)),
+          border: Border.all(color: _borderColor)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(title,
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.onSurface)),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         ...rows
       ]));
 
   Widget _sRow(String l, String v) => Padding(
-      padding: EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(
             flex: 2,
             child: Text(l,
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFFCBD5E1)
-                        : Colors.grey[600]))),
-        SizedBox(width: 8),
+                style: TextStyle(fontSize: 12, color: _secondaryTextColor))),
+        const SizedBox(width: 8),
         Expanded(
             flex: 3,
             child: Text(v.isNotEmpty ? v : '-',
@@ -1068,13 +1106,15 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
         c.text.trim().isNotEmpty) {
       final emailRegex =
           RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-      if (!emailRegex.hasMatch(c.text.trim()))
+      if (!emailRegex.hasMatch(c.text.trim())) {
         errorText = 'Enter a valid email address';
+      }
     }
     if (keyboardType == TextInputType.phone && c.text.trim().isNotEmpty) {
       final cleaned = c.text.replaceAll(RegExp(r'[^0-9+]'), '');
-      if (cleaned.length < 10 || cleaned.length > 15)
+      if (cleaned.length < 10 || cleaned.length > 15) {
         errorText = 'Enter a valid phone number';
+      }
     }
     return TextField(
         controller: c,
@@ -1087,57 +1127,51 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
             color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
         decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+            hintStyle: TextStyle(color: _mutedTextColor, fontSize: 13),
             filled: true,
-            fillColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1E1E1E)
-                : Colors.white,
+            fillColor: _fieldColor,
             counterText: '',
             suffixIcon: suffixIcon,
             errorText: errorText,
-            errorStyle: TextStyle(fontSize: 11),
+            errorStyle: const TextStyle(fontSize: 11),
             errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.red, width: 1.5)),
+                borderSide: const BorderSide(color: Colors.red, width: 1.5)),
             focusedErrorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.red, width: 2)),
+                borderSide: const BorderSide(color: Colors.red, width: 2)),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[700]!
-                        : Colors.grey[300]!)),
+                borderSide: BorderSide(color: _borderColor)),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[700]!
-                        : Colors.grey[300]!)),
+                borderSide: BorderSide(color: _borderColor)),
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppTheme.primaryNavy, width: 2)),
+                borderSide: BorderSide(color: _agentAccent, width: 2)),
             contentPadding:
-                EdgeInsets.symmetric(horizontal: 14, vertical: 12)));
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12)));
   }
 
   Widget _dd(String hint, String? value, List<String> items,
           ValueChanged<String?> onChanged) =>
       Container(
           decoration: BoxDecoration(
+              color: _fieldColor,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!)),
+              border: Border.all(color: _borderColor)),
           child: DropdownButtonFormField<String>(
-              value: value,
+              initialValue: value,
               hint: Text(hint,
-                  style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+                  style: TextStyle(color: _mutedTextColor, fontSize: 13)),
               style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
-              decoration: InputDecoration(
+              dropdownColor: _isDark ? const Color(0xFF111827) : Colors.white,
+              decoration: const InputDecoration(
                   border: InputBorder.none,
                   contentPadding:
                       EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
-              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+              icon: Icon(Icons.keyboard_arrow_down, color: _secondaryTextColor),
               items: items
                   .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                   .toList(),

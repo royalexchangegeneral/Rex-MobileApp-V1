@@ -17,6 +17,7 @@ class AgentPoliciesScreen extends StatefulWidget {
 
 class _AgentPoliciesScreenState extends State<AgentPoliciesScreen> {
   int _selectedFilter = 0;
+  String _selectedCategory = 'All Categories';
   final List<String> _filters = ['All', 'Active', 'Expired'];
   final _searchController = TextEditingController();
 
@@ -43,16 +44,39 @@ class _AgentPoliciesScreenState extends State<AgentPoliciesScreen> {
       policies = policies.where((p) => p['status'] == 'Expired').toList();
     }
 
+    if (_selectedCategory != 'All Categories') {
+      policies = policies.where((p) {
+        final category = _policyCategory(p).toLowerCase();
+        return category == _selectedCategory.toLowerCase();
+      }).toList();
+    }
+
     final query = _searchController.text.toLowerCase().trim();
     if (query.isNotEmpty) {
       policies = policies.where((p) {
         final text =
-            '${p['policyClass']} ${p['policyId']} ${p['insured']} ${p['customerName']}'
+            '${p['policyClass']} ${p['category']} ${p['policyId']} ${p['insured']} ${p['customerName']}'
                 .toLowerCase();
         return text.contains(query);
       }).toList();
     }
     return policies;
+  }
+
+  String _policyCategory(Map<String, dynamic> policy) {
+    final category = policy['category']?.toString().trim() ?? '';
+    if (category.isNotEmpty) return category;
+    return policy['policyClass']?.toString().trim() ?? 'Uncategorized';
+  }
+
+  List<String> _categoryOptions(List<Map<String, dynamic>> policies) {
+    final categories = policies
+        .map(_policyCategory)
+        .where((category) => category.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return ['All Categories', ...categories];
   }
 
   @override
@@ -69,6 +93,10 @@ class _AgentPoliciesScreenState extends State<AgentPoliciesScreen> {
           ap.policies.where((p) => p['status'] == 'Active').length;
       final expiredCount =
           ap.policies.where((p) => p['status'] == 'Expired').length;
+      final categoryOptions = _categoryOptions(ap.policies);
+      if (!categoryOptions.contains(_selectedCategory)) {
+        _selectedCategory = 'All Categories';
+      }
 
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -132,6 +160,50 @@ class _AgentPoliciesScreenState extends State<AgentPoliciesScreen> {
                       borderSide: BorderSide(color: _agentAccent)),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Category dropdown
+              Text(
+                'Category',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: _isDark ? _cardColor : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _borderColor),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedCategory,
+                    isExpanded: true,
+                    dropdownColor:
+                        _isDark ? const Color(0xFF111827) : Colors.white,
+                    icon: Icon(Icons.keyboard_arrow_down,
+                        color: _secondaryTextColor, size: 20),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    items: categoryOptions
+                        .map((category) => DropdownMenuItem(
+                              value: category,
+                              child: Text(category),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => _selectedCategory = value);
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -282,6 +354,7 @@ class _AgentPoliciesScreenState extends State<AgentPoliciesScreen> {
     final isActive = p['status'] == 'Active';
     final statusColor = isActive ? Colors.green : Colors.grey;
     final policyClass = p['policyClass']?.toString() ?? '';
+    final category = _policyCategory(p);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -321,6 +394,10 @@ class _AgentPoliciesScreenState extends State<AgentPoliciesScreen> {
                     Text('Policy #${p['policyId']}',
                         style: TextStyle(
                             fontSize: 10, color: _secondaryTextColor)),
+                    if (category.isNotEmpty && category != policyClass)
+                      Text('Category: $category',
+                          style: TextStyle(
+                              fontSize: 10, color: _secondaryTextColor)),
                   ],
                 ),
               ),

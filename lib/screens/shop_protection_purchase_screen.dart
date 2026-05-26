@@ -542,214 +542,215 @@ class _ShopProtectionPurchaseScreenState
         ]));
   }
 
-  Widget _ninStep() => Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('National Identification Number *',
+  Widget _ninStep() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final hintColor = isDark ? const Color(0xFF94A3B8) : Colors.grey[400]!;
+    final accent = isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+
+    return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('National Identification Number *',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).colorScheme.onSurface)),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _ninController,
+            keyboardType: TextInputType.number,
+            maxLength: 11,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (_) => setState(() {}),
             style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _ninController,
-          keyboardType: TextInputType.number,
-          maxLength: 11,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onChanged: (_) => setState(() {}),
-          style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
-          decoration: InputDecoration(
-              hintText: 'Enter your 11-digit NIN',
-              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-              filled: true,
-              fillColor: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF1E1E1E)
-                  : Colors.white,
-              counterText: '',
-              border: OutlineInputBorder(
+                color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
+            decoration: InputDecoration(
+                hintText: 'Enter your 11-digit NIN',
+                hintStyle: TextStyle(color: hintColor, fontSize: 13),
+                filled: true,
+                fillColor: fieldColor,
+                counterText: '',
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: borderColor)),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: borderColor)),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: accent, width: 2)),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12)),
+          ),
+          if (!_ninFailed && !_ninVerified) ...[
+            const SizedBox(height: 40),
+            _btn(
+                'Continue',
+                _ninController.text.trim().length == 11 && !_isVerifying
+                    ? _verifyNin
+                    : null,
+                loading: _isVerifying),
+          ],
+          if (_ninVerified) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                  color: Colors.green[50],
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[700]!
-                          : Colors.grey[300]!)),
-              enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[700]!
-                          : Colors.grey[300]!)),
-              focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide:
-                      const BorderSide(color: AppTheme.primaryNavy, width: 2)),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12)),
-        ),
-        if (!_ninFailed && !_ninVerified) ...[
-          const SizedBox(height: 40),
-          _btn(
-              'Continue',
-              _ninController.text.trim().length == 11 && !_isVerifying
-                  ? _verifyNin
-                  : null,
-              loading: _isVerifying),
-        ],
-        if (_ninVerified) ...[
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: Colors.green[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green[200]!)),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Icon(Icons.check_circle, size: 16, color: Colors.green[700]),
-              const SizedBox(width: 8),
-              Expanded(
-                  child: Text('NIN Verified — review and adjust details below',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.green[700]))),
-            ]),
-          ),
-          const SizedBox(height: 16),
-          _label('First Name *'),
-          const SizedBox(height: 6),
-          _tf('first name', _manualFirstNameController,
-              autofillHints: [AutofillHints.givenName]),
-          const SizedBox(height: 12),
-          _label('Last Name *'),
-          const SizedBox(height: 6),
-          _tf('last name', _manualLastNameController,
-              autofillHints: [AutofillHints.familyName]),
-          const SizedBox(height: 12),
-          _label('Email *'),
-          const SizedBox(height: 6),
-          _tf('email', _manualEmailController,
-              keyboardType: TextInputType.emailAddress,
-              autofillHints: [AutofillHints.email]),
-          const SizedBox(height: 12),
-          _label('Phone Number *'),
-          const SizedBox(height: 6),
-          _tf('phone number', _manualPhoneController,
-              keyboardType: TextInputType.phone,
-              autofillHints: [AutofillHints.telephoneNumber]),
-          const SizedBox(height: 12),
-          _label('Address'),
-          const SizedBox(height: 6),
-          _tf('address', _manualAddressController,
-              maxLines: 2, autofillHints: [AutofillHints.streetAddressLine1]),
-          const SizedBox(height: 12),
-          _label('State'),
-          const SizedBox(height: 6),
-          SearchableDropdown(
-            hint: 'select state',
-            value: _selectedManualState,
-            items: _nigerianStates,
-            onChanged: (v) => setState(() => _selectedManualState = v),
-          ),
-          const SizedBox(height: 24),
-          _btn(
-              'Continue',
-              _manualFirstNameController.text.trim().isNotEmpty &&
-                      _manualLastNameController.text.trim().isNotEmpty &&
-                      _manualEmailController.text.trim().isNotEmpty &&
-                      RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-                          .hasMatch(_manualEmailController.text.trim()) &&
-                      _manualPhoneController.text.trim().isNotEmpty
-                  ? () {
-                      setState(() {
-                        _firstName = _manualFirstNameController.text.trim();
-                        _lastName = _manualLastNameController.text.trim();
-                        _email = _manualEmailController.text.trim();
-                        _emailController.text = _email;
-                        _phone = _manualPhoneController.text.trim();
-                        _address = _manualAddressController.text.trim();
-                        _state = _selectedManualState ?? '';
-                        _currentStep = 1;
-                      });
-                    }
-                  : null),
-        ],
-        if (_ninFailed) ...[
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: Colors.orange[50],
-                borderRadius: BorderRadius.circular(8)),
-            child: Row(children: [
-              Icon(Icons.info_outline, size: 16, color: Colors.orange[700]),
-              const SizedBox(width: 8),
-              Expanded(
-                  child: Text(
-                      'NIN verification failed. Please enter your details manually.',
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.orange[700]))),
-            ]),
-          ),
-          const SizedBox(height: 16),
-          _label('First Name *'),
-          const SizedBox(height: 6),
-          _tf('enter first name', _manualFirstNameController,
-              autofillHints: [AutofillHints.givenName]),
-          const SizedBox(height: 12),
-          _label('Last Name *'),
-          const SizedBox(height: 6),
-          _tf('enter last name', _manualLastNameController,
-              autofillHints: [AutofillHints.familyName]),
-          const SizedBox(height: 12),
-          _label('Email *'),
-          const SizedBox(height: 6),
-          _tf('enter email', _manualEmailController,
-              keyboardType: TextInputType.emailAddress,
-              autofillHints: [AutofillHints.email]),
-          const SizedBox(height: 12),
-          _label('Phone Number *'),
-          const SizedBox(height: 6),
-          _tf('enter phone number', _manualPhoneController,
-              keyboardType: TextInputType.phone,
-              autofillHints: [AutofillHints.telephoneNumber]),
-          const SizedBox(height: 12),
-          _label('Address'),
-          const SizedBox(height: 6),
-          _tf('enter address', _manualAddressController,
-              maxLines: 2, autofillHints: [AutofillHints.streetAddressLine1]),
-          const SizedBox(height: 12),
-          _label('State'),
-          const SizedBox(height: 6),
-          SearchableDropdown(
-            hint: 'select state',
-            value: _selectedManualState,
-            items: _nigerianStates,
-            onChanged: (v) => setState(() => _selectedManualState = v),
-          ),
-          const SizedBox(height: 24),
-          _btn(
-              'Continue',
-              _manualFirstNameController.text.trim().isNotEmpty &&
-                      _manualLastNameController.text.trim().isNotEmpty &&
-                      _manualEmailController.text.trim().isNotEmpty &&
-                      RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-                          .hasMatch(_manualEmailController.text.trim()) &&
-                      _manualPhoneController.text.trim().isNotEmpty
-                  ? () {
-                      setState(() {
-                        _firstName = _manualFirstNameController.text.trim();
-                        _lastName = _manualLastNameController.text.trim();
-                        _email = _manualEmailController.text.trim();
-                        _emailController.text = _email;
-                        _phone = _manualPhoneController.text.trim();
-                        _address = _manualAddressController.text.trim();
-                        _state = _selectedManualState ?? '';
-                        _currentStep = 1;
-                      });
-                    }
-                  : null),
-        ],
-      ]));
+                  border: Border.all(color: Colors.green[200]!)),
+              child:
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Icon(Icons.check_circle, size: 16, color: Colors.green[700]),
+                const SizedBox(width: 8),
+                Expanded(
+                    child: Text(
+                        'NIN Verified — review and adjust details below',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.green[700]))),
+              ]),
+            ),
+            const SizedBox(height: 16),
+            _label('First Name *'),
+            const SizedBox(height: 6),
+            _tf('first name', _manualFirstNameController,
+                autofillHints: [AutofillHints.givenName]),
+            const SizedBox(height: 12),
+            _label('Last Name *'),
+            const SizedBox(height: 6),
+            _tf('last name', _manualLastNameController,
+                autofillHints: [AutofillHints.familyName]),
+            const SizedBox(height: 12),
+            _label('Email *'),
+            const SizedBox(height: 6),
+            _tf('email', _manualEmailController,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: [AutofillHints.email]),
+            const SizedBox(height: 12),
+            _label('Phone Number *'),
+            const SizedBox(height: 6),
+            _tf('phone number', _manualPhoneController,
+                keyboardType: TextInputType.phone,
+                autofillHints: [AutofillHints.telephoneNumber]),
+            const SizedBox(height: 12),
+            _label('Address'),
+            const SizedBox(height: 6),
+            _tf('address', _manualAddressController,
+                maxLines: 2, autofillHints: [AutofillHints.streetAddressLine1]),
+            const SizedBox(height: 12),
+            _label('State'),
+            const SizedBox(height: 6),
+            SearchableDropdown(
+              hint: 'select state',
+              value: _selectedManualState,
+              items: _nigerianStates,
+              onChanged: (v) => setState(() => _selectedManualState = v),
+            ),
+            const SizedBox(height: 24),
+            _btn(
+                'Continue',
+                _manualFirstNameController.text.trim().isNotEmpty &&
+                        _manualLastNameController.text.trim().isNotEmpty &&
+                        _manualEmailController.text.trim().isNotEmpty &&
+                        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+                            .hasMatch(_manualEmailController.text.trim()) &&
+                        _manualPhoneController.text.trim().isNotEmpty
+                    ? () {
+                        setState(() {
+                          _firstName = _manualFirstNameController.text.trim();
+                          _lastName = _manualLastNameController.text.trim();
+                          _email = _manualEmailController.text.trim();
+                          _emailController.text = _email;
+                          _phone = _manualPhoneController.text.trim();
+                          _address = _manualAddressController.text.trim();
+                          _state = _selectedManualState ?? '';
+                          _currentStep = 1;
+                        });
+                      }
+                    : null),
+          ],
+          if (_ninFailed) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  borderRadius: BorderRadius.circular(8)),
+              child: Row(children: [
+                Icon(Icons.info_outline, size: 16, color: Colors.orange[700]),
+                const SizedBox(width: 8),
+                Expanded(
+                    child: Text(
+                        'NIN verification failed. Please enter your details manually.',
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.orange[700]))),
+              ]),
+            ),
+            const SizedBox(height: 16),
+            _label('First Name *'),
+            const SizedBox(height: 6),
+            _tf('enter first name', _manualFirstNameController,
+                autofillHints: [AutofillHints.givenName]),
+            const SizedBox(height: 12),
+            _label('Last Name *'),
+            const SizedBox(height: 6),
+            _tf('enter last name', _manualLastNameController,
+                autofillHints: [AutofillHints.familyName]),
+            const SizedBox(height: 12),
+            _label('Email *'),
+            const SizedBox(height: 6),
+            _tf('enter email', _manualEmailController,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: [AutofillHints.email]),
+            const SizedBox(height: 12),
+            _label('Phone Number *'),
+            const SizedBox(height: 6),
+            _tf('enter phone number', _manualPhoneController,
+                keyboardType: TextInputType.phone,
+                autofillHints: [AutofillHints.telephoneNumber]),
+            const SizedBox(height: 12),
+            _label('Address'),
+            const SizedBox(height: 6),
+            _tf('enter address', _manualAddressController,
+                maxLines: 2, autofillHints: [AutofillHints.streetAddressLine1]),
+            const SizedBox(height: 12),
+            _label('State'),
+            const SizedBox(height: 6),
+            SearchableDropdown(
+              hint: 'select state',
+              value: _selectedManualState,
+              items: _nigerianStates,
+              onChanged: (v) => setState(() => _selectedManualState = v),
+            ),
+            const SizedBox(height: 24),
+            _btn(
+                'Continue',
+                _manualFirstNameController.text.trim().isNotEmpty &&
+                        _manualLastNameController.text.trim().isNotEmpty &&
+                        _manualEmailController.text.trim().isNotEmpty &&
+                        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+                            .hasMatch(_manualEmailController.text.trim()) &&
+                        _manualPhoneController.text.trim().isNotEmpty
+                    ? () {
+                        setState(() {
+                          _firstName = _manualFirstNameController.text.trim();
+                          _lastName = _manualLastNameController.text.trim();
+                          _email = _manualEmailController.text.trim();
+                          _emailController.text = _email;
+                          _phone = _manualPhoneController.text.trim();
+                          _address = _manualAddressController.text.trim();
+                          _state = _selectedManualState ?? '';
+                          _currentStep = 1;
+                        });
+                      }
+                    : null),
+          ],
+        ]));
+  }
 
   Widget _socioStep() {
     final needsEmail = _emailController.text.trim().isEmpty;
@@ -1000,7 +1001,11 @@ class _ShopProtectionPurchaseScreenState
               child: Text(
                   'I hereby consent to the collection, processing, use and the transfer of personal data to third parties (within or outside Nigeria), for the performance of this contract and any other data processing activities which may arise therefrom between myself and Rex Insurance Limited (Rex Insurance). I affirm that I am aware and take cognizance of my rights under the relevant Data Protection Laws in Nigeria and other terms detailed in the Data Protection and Privacy Policy of Rex Insurance available on our policy.\nI authorize and consent that any person who may be in possession of, or hereafter acquire, any information pertaining to my records may disclose such information to Rex Insurance.',
                   style: TextStyle(
-                      fontSize: 10, color: Colors.grey[700], height: 1.4))),
+                      fontSize: 10,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFCBD5E1)
+                          : Colors.grey[700],
+                      height: 1.4))),
         ]),
         const SizedBox(height: 24),
         _btn(
@@ -1155,6 +1160,11 @@ class _ShopProtectionPurchaseScreenState
       if (cleaned.length < 10 || cleaned.length > 15)
         errorText = 'Enter a valid phone number';
     }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final hintColor = isDark ? const Color(0xFF94A3B8) : Colors.grey[400]!;
+    final accent = isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
     return TextField(
         controller: c,
         keyboardType: keyboardType,
@@ -1166,11 +1176,9 @@ class _ShopProtectionPurchaseScreenState
             color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
         decoration: InputDecoration(
             hintText: h,
-            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+            hintStyle: TextStyle(color: hintColor, fontSize: 13),
             filled: true,
-            fillColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1E1E1E)
-                : Colors.white,
+            fillColor: fieldColor,
             counterText: '',
             suffixIcon: suffixIcon,
             errorText: errorText,
@@ -1183,45 +1191,45 @@ class _ShopProtectionPurchaseScreenState
                 borderSide: const BorderSide(color: Colors.red, width: 2)),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[700]!
-                        : Colors.grey[300]!)),
+                borderSide: BorderSide(color: borderColor)),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[700]!
-                        : Colors.grey[300]!)),
+                borderSide: BorderSide(color: borderColor)),
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide:
-                    const BorderSide(color: AppTheme.primaryNavy, width: 2)),
+                borderSide: BorderSide(color: accent, width: 2)),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 12)));
   }
 
   Widget _dd(String h, String? v, List<String> items,
-          ValueChanged<String?> onChanged) =>
-      Container(
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!)),
-          child: DropdownButtonFormField<String>(
-              initialValue: v,
-              hint: Text(h,
-                  style: TextStyle(color: Colors.grey[400], fontSize: 13)),
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
-              decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
-              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
-              items: items
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                  .toList(),
-              onChanged: onChanged));
+      ValueChanged<String?> onChanged) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final hintColor = isDark ? const Color(0xFF94A3B8) : Colors.grey[400]!;
+    final iconColor = isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+    return Container(
+        decoration: BoxDecoration(
+            color: fieldColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: borderColor)),
+        child: DropdownButtonFormField<String>(
+            initialValue: v,
+            hint: Text(h, style: TextStyle(color: hintColor, fontSize: 13)),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
+            dropdownColor: isDark ? const Color(0xFF111827) : Colors.white,
+            decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
+            icon: Icon(Icons.keyboard_arrow_down, color: iconColor),
+            items: items
+                .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                .toList(),
+            onChanged: onChanged));
+  }
 
   Widget _btn(String t, VoidCallback? onPressed, {bool loading = false}) => SizedBox(
       width: double.infinity,

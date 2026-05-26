@@ -1,4 +1,8 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 import '../utils/app_theme.dart';
 import '../services/payment_service.dart';
 import '../widgets/paystack_webview.dart';
@@ -66,42 +70,67 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
         builder: (_) => const Center(
             child: CircularProgressIndicator(color: Colors.white)));
 
+    final names =
+        '${personalInfo['firstName'] ?? ''} ${personalInfo['lastName'] ?? ''}'
+            .trim();
+    final email = personalInfo['email'] ?? 'customer@rexinsure.com';
+    final mobileno = personalInfo['phone'] ?? '';
+    final premium = _getBaseAmount().toInt();
+    final extraFields = {
+      'agent_code': agentCode,
+      'title': '',
+      'occupation': personalInfo['occupation'] ?? '',
+      'address': personalInfo['address'] ?? '',
+      'state': personalInfo['state'] ?? '',
+      'lga': personalInfo['lga'] ?? '',
+      'referral': '',
+      'policyno': '',
+      'endate': '',
+      'vehregno': vehicleData['registrationNo']?.toString() ?? '',
+      'vehchasisno': vehicleData['chassisNo']?.toString() ?? '',
+      'engnumb': vehicleData['vehicleEngineno']?.toString() ??
+          vehicleData['EngineNumber']?.toString() ??
+          '',
+      'engcap': vehicleData['vehicleEngineCapacity']?.toString() ?? '',
+      'vehmake': vehicleData['vehicleMake']?.toString() ??
+          vehicleData['VehicleMake']?.toString() ??
+          '',
+      'vehmodel': vehicleData['vehicleModel']?.toString() ??
+          vehicleData['VehicleModel']?.toString() ??
+          '',
+      'vehyear': vehicleData['Year']?.toString() ?? '',
+      'vehcolor': vehicleData['vehicleColor']?.toString() ??
+          vehicleData['VehicleColor']?.toString() ??
+          '',
+      'vehtype': _getVehicleType(),
+    };
+
+    if (kDebugMode) {
+      final motorPayload = {
+        'IntCode': 'TESTCODE',
+        'Password': 'royal1234',
+        'product_code': _getProductCode(),
+        'names': names,
+        'email': email,
+        'mobileno': mobileno,
+        'premium': premium,
+        ...extraFields,
+      };
+      debugPrint('=== AGENT MOTOR PROPOSAL PAYLOAD ===');
+      const JsonEncoder.withIndent('  ')
+          .convert(motorPayload)
+          .split('\n')
+          .forEach(debugPrint);
+      debugPrint('====================================');
+    }
+
     final result = await PaymentService.initiatePurchase(
       productCode: _getProductCode(),
-      names:
-          '${personalInfo['firstName'] ?? ''} ${personalInfo['lastName'] ?? ''}'
-              .trim(),
-      email: personalInfo['email'] ?? 'customer@rexinsure.com',
-      mobileno: personalInfo['phone'] ?? '',
-      premium: _getBaseAmount().toInt(),
-      extraFields: {
-        'agent_code': agentCode,
-        'title': '',
-        'occupation': personalInfo['occupation'] ?? '',
-        'address': personalInfo['address'] ?? '',
-        'state': personalInfo['state'] ?? '',
-        'lga': personalInfo['lga'] ?? '',
-        'referral': '',
-        'policyno': '',
-        'endate': '',
-        'vehregno': vehicleData['registrationNo']?.toString() ?? '',
-        'vehchasisno': vehicleData['chassisNo']?.toString() ?? '',
-        'engnumb': vehicleData['vehicleEngineno']?.toString() ??
-            vehicleData['EngineNumber']?.toString() ??
-            '',
-        'engcap': vehicleData['vehicleEngineCapacity']?.toString() ?? '',
-        'vehmake': vehicleData['vehicleMake']?.toString() ??
-            vehicleData['VehicleMake']?.toString() ??
-            '',
-        'vehmodel': vehicleData['vehicleModel']?.toString() ??
-            vehicleData['VehicleModel']?.toString() ??
-            '',
-        'vehyear': vehicleData['Year']?.toString() ?? '',
-        'vehcolor': vehicleData['vehicleColor']?.toString() ??
-            vehicleData['VehicleColor']?.toString() ??
-            '',
-        'vehtype': _getVehicleType(),
-      },
+      names: names,
+      email: email,
+      mobileno: mobileno,
+      premium: premium,
+      extraFields: extraFields,
     );
 
     if (!context.mounted) return;

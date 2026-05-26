@@ -814,7 +814,11 @@ class _StudentProtectionPurchaseScreenState
               child: Text(
                   'I hereby consent to the collection, processing, use and the transfer of personal data to third parties (within or outside Nigeria), for the performance of this contract and any other data processing activities which may arise therefrom between myself and Rex Insurance Limited (Rex Insurance). I affirm that I am aware and take cognizance of my rights under the relevant Data Protection Laws in Nigeria and other terms detailed in the Data Protection and Privacy Policy of Rex Insurance available on our policy.\nI authorize and consent that any person who may be in possession of, or hereafter acquire, any information pertaining to my records may disclose such information to Rex Insurance.',
                   style: TextStyle(
-                      fontSize: 10, color: Colors.grey[700], height: 1.4))),
+                      fontSize: 10,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFCBD5E1)
+                          : Colors.grey[700],
+                      height: 1.4))),
         ]),
         SizedBox(height: 24),
         _btn(
@@ -965,6 +969,11 @@ class _StudentProtectionPurchaseScreenState
       int? maxLength,
       Widget? suffixIcon,
       List<String>? autofillHints}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final hintColor = isDark ? const Color(0xFF94A3B8) : Colors.grey[400]!;
+    final accent = isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
     String? errorText;
     if (keyboardType == TextInputType.emailAddress &&
         c.text.trim().isNotEmpty) {
@@ -989,61 +998,61 @@ class _StudentProtectionPurchaseScreenState
             color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
         decoration: InputDecoration(
             hintText: h,
-            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+            hintStyle: TextStyle(color: hintColor, fontSize: 13),
             filled: true,
-            fillColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1E1E1E)
-                : Colors.white,
+            fillColor: fieldColor,
             counterText: '',
             suffixIcon: suffixIcon,
             errorText: errorText,
-            errorStyle: TextStyle(fontSize: 11),
+            errorStyle: const TextStyle(fontSize: 11),
             errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.red, width: 1.5)),
+                borderSide: const BorderSide(color: Colors.red, width: 1.5)),
             focusedErrorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.red, width: 2)),
+                borderSide: const BorderSide(color: Colors.red, width: 2)),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[700]!
-                        : Colors.grey[300]!)),
+                borderSide: BorderSide(color: borderColor)),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[700]!
-                        : Colors.grey[300]!)),
+                borderSide: BorderSide(color: borderColor)),
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppTheme.primaryNavy, width: 2)),
+                borderSide: BorderSide(color: accent, width: 2)),
             contentPadding:
-                EdgeInsets.symmetric(horizontal: 14, vertical: 12)));
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12)));
   }
 
   Widget _dd(String h, String? v, List<String> items,
-          ValueChanged<String?> onChanged) =>
-      Container(
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!)),
-          child: DropdownButtonFormField<String>(
-              value: v,
-              hint: Text(h,
-                  style: TextStyle(color: Colors.grey[400], fontSize: 13)),
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
-              decoration: InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
-              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
-              items: items
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                  .toList(),
-              onChanged: onChanged));
+      ValueChanged<String?> onChanged) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final hintColor = isDark ? const Color(0xFF94A3B8) : Colors.grey[400]!;
+    final iconColor = isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+    return Container(
+        decoration: BoxDecoration(
+            color: fieldColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: borderColor)),
+        child: DropdownButtonFormField<String>(
+            initialValue: v,
+            dropdownColor: isDark ? const Color(0xFF111827) : Colors.white,
+            hint: Text(h, style: TextStyle(color: hintColor, fontSize: 13)),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
+            decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
+            icon: Icon(Icons.keyboard_arrow_down, color: iconColor),
+            items: items
+                .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                .toList(),
+            onChanged: onChanged));
+  }
+
   Widget _btn(String t, VoidCallback? onPressed, {bool loading = false}) => SizedBox(
       width: double.infinity,
       child: ElevatedButton(

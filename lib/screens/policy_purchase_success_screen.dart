@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../utils/app_theme.dart';
 import 'create_password_screen.dart';
 import 'customer_dashboard_screen.dart';
 import 'agent_dashboard_screen.dart';
 
-class PolicyPurchaseSuccessScreen extends StatelessWidget {
+class PolicyPurchaseSuccessScreen extends StatefulWidget {
   final bool isLoggedIn;
   final bool isAgent;
   final String? reference;
@@ -18,6 +20,127 @@ class PolicyPurchaseSuccessScreen extends StatelessWidget {
     this.message,
     this.accountData = const {},
   });
+
+  @override
+  State<PolicyPurchaseSuccessScreen> createState() =>
+      _PolicyPurchaseSuccessScreenState();
+}
+
+class _PolicyPurchaseSuccessScreenState
+    extends State<PolicyPurchaseSuccessScreen> {
+  bool _creatingCustomer = false;
+
+  String _value(String key, {String fallback = ''}) {
+    final value = widget.accountData[key]?.trim() ?? '';
+    return value.isNotEmpty ? value : fallback;
+  }
+
+  bool _isSuccessResponse(Map<String, dynamic> data) {
+    final status = (data['Status'] ?? data['status'])?.toString().toLowerCase();
+    final statusCode =
+        (data['StatusCode'] ?? data['Statuscode'] ?? data['statusCode'])
+            ?.toString();
+    return status == 'success' ||
+        status == 'true' ||
+        statusCode == '200' ||
+        statusCode == '201';
+  }
+
+  Future<void> _createCustomerThenOpenPassword() async {
+    final email = _value('email');
+    final phone = _value('phone');
+
+    if (email.isEmpty || phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Missing customer email or phone number'),
+          backgroundColor: Colors.red));
+      return;
+    }
+
+    setState(() => _creatingCustomer = true);
+
+    final requestBody = {
+      'cust_first_name': _value('firstName', fallback: 'Customer'),
+      'cust_middle_name': '',
+      'cust_last_name': _value('lastName', fallback: '.'),
+      'cust_type': 'Individual',
+      'cust_occupation': _value('occupation', fallback: 'Business'),
+      'cust_phone_no': phone,
+      'cust_email': email,
+      'cust_address': _value('address', fallback: '.'),
+      'cust_town': '',
+      'cust_nationality': 'Nigerian',
+      'cust_state': _value('state', fallback: 'Lagos'),
+      'cust_lga': _value('lga', fallback: 'Ikeja'),
+      'cust_dob': _value('dob', fallback: '1990-01-01'),
+      'cust_national_id_name': _value('idType', fallback: 'NIN'),
+      'cust_national_id_no': _value('nin'),
+    };
+
+    try {
+      debugPrint('=== CREATE CUSTOMER BEFORE PASSWORD SCREEN ===');
+      debugPrint('URL: https://eportaltest.rexinsure.com/api/createcustomer');
+      debugPrint('Request Body: ${json.encode(requestBody)}');
+
+      final response = await http
+          .post(
+            Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(requestBody),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response Body: ${response.body}');
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = json.decode(response.body);
+        final responseData =
+            data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+
+        if (_isSuccessResponse(responseData)) {
+          setState(() => _creatingCustomer = false);
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Customer created successfully'),
+              backgroundColor: Colors.green));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CreatePasswordScreen(
+                createLoginWithApi: true,
+                accountData: {
+                  ...widget.accountData,
+                  'reference': widget.reference ?? '',
+                },
+              ),
+            ),
+          );
+          return;
+        }
+
+        final message = responseData['Message']?.toString() ??
+            responseData['message']?.toString() ??
+            'Unable to create customer';
+        setState(() => _creatingCustomer = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
+      } else {
+        setState(() => _creatingCustomer = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Unable to create customer (${response.statusCode})'),
+          backgroundColor: Colors.red,
+        ));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _creatingCustomer = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +167,7 @@ class PolicyPurchaseSuccessScreen extends StatelessWidget {
                     border: Border.all(color: Colors.white, width: 3),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.check,
                     color: Colors.white,
                     size: 50,
@@ -52,7 +175,7 @@ class PolicyPurchaseSuccessScreen extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
 
               // Success message
               Text(
@@ -78,7 +201,9 @@ class PolicyPurchaseSuccessScreen extends StatelessWidget {
                   children: [
                     const TextSpan(text: 'Reference ID: '),
                     TextSpan(
-                      text: reference != null ? '#$reference' : '#REX-000000',
+                      text: widget.reference != null
+                          ? '#${widget.reference}'
+                          : '#REX-000000',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.onSurface,
@@ -91,9 +216,9 @@ class PolicyPurchaseSuccessScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               // Backend message
-              if (message != null)
+              if (widget.message != null)
                 Text(
-                  message!,
+                  widget.message!,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontSize: 14,
@@ -141,8 +266,8 @@ class PolicyPurchaseSuccessScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    if (isLoggedIn) {
-                      if (isAgent) {
+                    if (widget.isLoggedIn) {
+                      if (widget.isAgent) {
                         Navigator.pushAndRemoveUntil(
                             context,
                             MaterialPageRoute(
@@ -185,24 +310,13 @@ class PolicyPurchaseSuccessScreen extends StatelessWidget {
               const SizedBox(height: 12),
 
               // Create Account button (only for non-logged-in users)
-              if (!isLoggedIn)
+              if (!widget.isLoggedIn)
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CreatePasswordScreen(
-                            createLoginWithApi: true,
-                            accountData: {
-                              ...accountData,
-                              'reference': reference ?? '',
-                            },
-                          ),
-                        ),
-                      );
-                    },
+                    onPressed: _creatingCustomer
+                        ? null
+                        : _createCustomerThenOpenPassword,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.primaryNavy,
                       side: const BorderSide(
@@ -212,13 +326,19 @@ class PolicyPurchaseSuccessScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      'Do you want to create an account?',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: _creatingCustomer
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text(
+                            'Do you want to create an account?',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
 

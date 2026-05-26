@@ -126,6 +126,12 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final hintColor = isDark ? const Color(0xFF94A3B8) : Colors.grey[400]!;
+    final accent = isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -199,30 +205,19 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
                         fontSize: 14),
                     decoration: InputDecoration(
                       hintText: 'Enter your NIN',
-                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      hintStyle: TextStyle(color: hintColor),
                       filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF1E1E1E)
-                          : Colors.white,
+                      fillColor: fieldColor,
                       counterText: '',
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                              color: Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? Colors.grey[700]!
-                                  : Colors.grey[300]!)),
+                          borderSide: BorderSide(color: borderColor)),
                       enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                              color: Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? Colors.grey[700]!
-                                  : Colors.grey[300]!)),
+                          borderSide: BorderSide(color: borderColor)),
                       focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(
-                              color: AppTheme.primaryNavy, width: 2)),
+                          borderSide: BorderSide(color: accent, width: 2)),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 14),
                     ),

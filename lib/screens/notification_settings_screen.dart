@@ -24,9 +24,9 @@ class NotificationSettingsScreen extends StatefulWidget {
 
 class _NotificationSettingsScreenState
     extends State<NotificationSettingsScreen> {
-  bool _pushNotifications = false;
-  bool _emailNotifications = false;
-  bool _smsNotifications = false;
+  final bool _pushNotifications = true;
+  final bool _emailNotifications = true;
+  final bool _smsNotifications = true;
 
   Color get _actionColor => Theme.of(context).brightness == Brightness.dark
       ? AppTheme.accentOrange

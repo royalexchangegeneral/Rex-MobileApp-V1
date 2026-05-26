@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import '../utils/theme_helper.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
@@ -60,6 +61,7 @@ class ClaimsProcessScreen extends StatelessWidget {
 
             // Step 1
             _buildStep(
+              context: context,
               stepNumber: '1',
               title: 'Report the Incident',
               description:
@@ -70,6 +72,7 @@ class ClaimsProcessScreen extends StatelessWidget {
             ),
             // Step 2
             _buildStep(
+              context: context,
               stepNumber: '2',
               title: 'Submit Your Claim',
               description:
@@ -80,6 +83,7 @@ class ClaimsProcessScreen extends StatelessWidget {
             ),
             // Step 3
             _buildStep(
+              context: context,
               stepNumber: '3',
               title: 'Claim Assessment',
               description:
@@ -90,6 +94,7 @@ class ClaimsProcessScreen extends StatelessWidget {
             ),
             // Step 4
             _buildStep(
+              context: context,
               stepNumber: '4',
               title: 'Receive Your Payout',
               description:
@@ -105,19 +110,22 @@ class ClaimsProcessScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F8FF),
+                color: ThemeHelper.getCardColor(context),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ThemeHelper.getBorderColor(context)),
               ),
               child: Column(
                 children: [
-                  const Text('Ready to file a claim?',
+                  Text('Ready to file a claim?',
                       style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryNavy)),
+                          color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 6),
                   Text('Our team is here to guide you every step of the way.',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: ThemeHelper.getSecondaryTextColor(context)),
                       textAlign: TextAlign.center),
                   const SizedBox(height: 14),
                   SizedBox(
@@ -202,6 +210,7 @@ class ClaimsProcessScreen extends StatelessWidget {
   }
 
   Widget _buildStep({
+    required BuildContext context,
     required String stepNumber,
     required String title,
     required String description,
@@ -222,14 +231,15 @@ class ClaimsProcessScreen extends StatelessWidget {
                 decoration: BoxDecoration(color: color, shape: BoxShape.circle),
                 child: Center(
                     child: Text(stepNumber,
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
                             fontWeight: FontWeight.bold))),
               ),
               if (!isLast)
                 Expanded(
-                  child: Container(width: 2, color: Colors.grey[300]),
+                  child: Container(
+                      width: 2, color: ThemeHelper.getBorderColor(context)),
                 ),
             ],
           ),
@@ -241,9 +251,10 @@ class ClaimsProcessScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: ThemeHelper.getCardColor(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border:
+                      Border.all(color: ThemeHelper.getBorderColor(context)),
                 ),
                 child: Row(
                   children: [
@@ -255,7 +266,7 @@ class ClaimsProcessScreen extends StatelessWidget {
                       ),
                       child: Icon(icon, color: color, size: 22),
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,12 +275,14 @@ class ClaimsProcessScreen extends StatelessWidget {
                               style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87)),
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface)),
                           const SizedBox(height: 4),
                           Text(description,
                               style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey[600],
+                                  color: ThemeHelper.getSecondaryTextColor(
+                                      context),
                                   height: 1.4)),
                         ],
                       ),

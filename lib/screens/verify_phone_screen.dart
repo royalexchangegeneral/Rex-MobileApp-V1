@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../utils/app_theme.dart';
 
 class VerifyPhoneScreen extends StatefulWidget {
@@ -105,27 +107,69 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
 
   bool _isSendingOtp = false;
 
+  Future<bool> _sendOtp(String phone) async {
+    final payload = {'mobileNo': phone};
+
+    debugPrint('=== SEND PHONE OTP REQUEST ===');
+    debugPrint('URL: https://eportartaltest.rexinsure.com/api/send-otp');
+    debugPrint('Payload: ${json.encode(payload)}');
+
+    final response = await http
+        .post(
+          Uri.parse('https://eportartaltest.rexinsure.com/api/send-otp'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(payload),
+        )
+        .timeout(const Duration(seconds: 30));
+
+    debugPrint('=== SEND PHONE OTP RESPONSE ===');
+    debugPrint('Status Code: ${response.statusCode}');
+    debugPrint('Response Body: ${response.body}');
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      String message = 'Failed to send OTP';
+      try {
+        final data = json.decode(response.body);
+        message = data['message']?.toString() ??
+            data['Message']?.toString() ??
+            message;
+      } catch (_) {}
+      throw Exception(message);
+    }
+
+    return true;
+  }
+
   Future<void> _submitPhone() async {
     if (_phoneController.text.isEmpty) return;
     var phone = _phoneController.text.trim();
     if (phone.startsWith('0')) phone = phone.substring(1);
     final fullPhone = '$_selectedCountryCode$phone';
     setState(() => _isSendingOtp = true);
-    await Future.delayed(const Duration(milliseconds: 700));
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('signup_phone', fullPhone);
-    if ((prefs.getString('signup_email') ?? '').isEmpty &&
-        widget.email.trim().isNotEmpty) {
-      await prefs.setString('signup_email', widget.email.trim());
+
+    try {
+      await _sendOtp(fullPhone);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('signup_phone', fullPhone);
+      if ((prefs.getString('signup_email') ?? '').isEmpty &&
+          widget.email.trim().isNotEmpty) {
+        await prefs.setString('signup_email', widget.email.trim());
+      }
+      TextInput.finishAutofillContext(shouldSave: false);
+      if (!mounted) return;
+      setState(() {
+        _isSendingOtp = false;
+        _isSubmitted = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('OTP sent successfully'),
+          backgroundColor: Colors.green));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSendingOtp = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
     }
-    TextInput.finishAutofillContext(shouldSave: false);
-    if (!mounted) return;
-    setState(() {
-      _isSendingOtp = false;
-      _isSubmitted = true;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('OTP sent successfully'), backgroundColor: Colors.green));
   }
 
   void _onCodeChanged(int index, String value) {
@@ -198,10 +242,23 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
   }
 
   Future<void> _resendCode() async {
-    await Future.delayed(const Duration(milliseconds: 400));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Code resent'), backgroundColor: Colors.green));
+    var phone = _phoneController.text.trim();
+    if (phone.startsWith('0')) phone = phone.substring(1);
+    final fullPhone = '$_selectedCountryCode$phone';
+
+    setState(() => _isSendingOtp = true);
+    try {
+      await _sendOtp(fullPhone);
+      if (!mounted) return;
+      setState(() => _isSendingOtp = false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Code resent'), backgroundColor: Colors.green));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSendingOtp = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+    }
   }
 
   @override

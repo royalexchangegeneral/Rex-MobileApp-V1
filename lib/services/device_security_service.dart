@@ -32,11 +32,13 @@ class DeviceSecurityService {
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Row(children: [
             Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
             SizedBox(width: 8),
-            Text('Security Warning', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text('Security Warning',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ]),
           content: const Text(
             'This device appears to be rooted or jailbroken. '
@@ -46,7 +48,8 @@ class DeviceSecurityService {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('I Understand', style: TextStyle(fontWeight: FontWeight.w600)),
+              child: const Text('I Understand',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -56,8 +59,12 @@ class DeviceSecurityService {
 
   /// Enable FLAG_SECURE via native MethodChannel (Android only).
   static Future<void> enableSecureScreen() async {
+    if (defaultTargetPlatform != TargetPlatform.android) return;
+
     try {
       await _channel.invokeMethod('enableSecureScreen');
+    } on MissingPluginException {
+      // Native screenshot protection is only registered on supported builds.
     } catch (e) {
       if (kDebugMode) print('Enable secure screen error: $e');
     }
@@ -65,8 +72,12 @@ class DeviceSecurityService {
 
   /// Disable FLAG_SECURE via native MethodChannel (Android only).
   static Future<void> disableSecureScreen() async {
+    if (defaultTargetPlatform != TargetPlatform.android) return;
+
     try {
       await _channel.invokeMethod('disableSecureScreen');
+    } on MissingPluginException {
+      // Native screenshot protection is only registered on supported builds.
     } catch (e) {
       if (kDebugMode) print('Disable secure screen error: $e');
     }

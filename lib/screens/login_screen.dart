@@ -47,11 +47,13 @@ class _LoginScreenState extends State<LoginScreen> {
     final available = await BiometricService.isAvailable();
     final enabled = await BiometricService.isEnabled();
     final hasCreds = await BiometricService.hasStoredCredentials();
-    if (mounted)
+    if (mounted) {
       setState(() => _biometricAvailable = available && enabled && hasCreds);
+    }
   }
 
   Future<void> _handleBiometricLogin() async {
+    final authProvider = context.read<AuthProvider>();
     final authenticated = await BiometricService.authenticate();
     if (!authenticated) return;
 
@@ -59,12 +61,12 @@ class _LoginScreenState extends State<LoginScreen> {
     if (creds == null) return;
 
     setState(() => _isLoading = true);
-    final authProvider = context.read<AuthProvider>();
     final result =
         await authProvider.login(creds['email']!, creds['password']!);
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
-    if (result.success && mounted) {
+    if (result.success) {
       if (authProvider.isAgent()) {
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder: (_) => const AgentDashboardScreen()));
@@ -72,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()));
       }
-    } else if (mounted) {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(result.message ??
               'Biometric login failed. Please login manually.'),
@@ -101,13 +103,14 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       final result = await authProvider.login(
-        _emailController.text,
+        _emailController.text.trim(),
         _passwordController.text,
       );
 
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
-      if (result.success && mounted) {
+      if (result.success) {
         // Notify the platform to save credentials to Keychain / password manager
         TextInput.finishAutofillContext();
 
@@ -132,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 builder: (context) => const CustomerDashboardScreen()),
           );
         }
-      } else if (mounted) {
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result.message ??
@@ -223,9 +226,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   SizedBox(height: 40),
 
-                  // Email Address Field
+                  // User ID / Email Field
                   Text(
-                    'Email Address',
+                    widget.isAgentLogin
+                        ? 'Agent ID or Email'
+                        : 'Email or User ID',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -235,13 +240,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(height: 8),
                   TextFormField(
                     controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    autofillHints: const [AutofillHints.email],
+                    keyboardType: widget.isAgentLogin
+                        ? TextInputType.text
+                        : TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.username],
                     style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 14),
                     decoration: InputDecoration(
-                      hintText: 'Your email',
+                      hintText: widget.isAgentLogin
+                          ? 'Your agent ID or email'
+                          : 'Your email or user ID',
                       hintStyle: TextStyle(color: Colors.grey[400]),
                       filled: true,
                       fillColor: Theme.of(context).brightness == Brightness.dark
@@ -272,11 +281,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           horizontal: 16, vertical: 16),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Please enter a valid email';
+                      if (value == null || value.trim().isEmpty) {
+                        return widget.isAgentLogin
+                            ? 'Please enter your agent ID or email'
+                            : 'Please enter your email or user ID';
                       }
                       return null;
                     },
@@ -346,9 +354,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your password';
-                      }
-                      if (value.length < 8) {
-                        return 'Password must be at least 8 characters';
                       }
                       return null;
                     },

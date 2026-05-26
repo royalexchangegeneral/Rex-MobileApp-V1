@@ -900,7 +900,9 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
         Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF111827)
+                    : Colors.grey[50],
                 borderRadius: BorderRadius.circular(12)),
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -914,7 +916,11 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
               Text(
                   '• Take pictures in daylight for better clarity and good lighting\n• Avoid glare or shadows covering details\n• Make sure vehicle is clean and plates readable\n• Required Photo Angles: Front View (Make sure the number plate is clearly visible), Left and Right side View, Back View (Ensure the rear of the car is fully visible) Dashboard View (Take a clear photo of the dashboard)',
                   style: TextStyle(
-                      fontSize: 11, color: Colors.grey[700], height: 1.5)),
+                      fontSize: 11,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFCBD5E1)
+                          : Colors.grey[700],
+                      height: 1.5)),
             ])),
         const SizedBox(height: 20),
         const Text('Upload a file (max file 2MB)',
@@ -1138,6 +1144,11 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
       if (cleaned.length < 10 || cleaned.length > 15)
         errorText = 'Enter a valid phone number';
     }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final hintColor = isDark ? const Color(0xFF94A3B8) : Colors.grey[400]!;
+    final accent = isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
     return TextField(
         controller: c,
         keyboardType: keyboardType,
@@ -1149,60 +1160,60 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
             color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
         decoration: InputDecoration(
             hintText: h,
-            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+            hintStyle: TextStyle(color: hintColor, fontSize: 13),
             filled: true,
-            fillColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1E1E1E)
-                : Colors.white,
+            fillColor: fieldColor,
             counterText: '',
             errorText: errorText,
-            errorStyle: TextStyle(fontSize: 11),
+            errorStyle: const TextStyle(fontSize: 11),
             errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.red, width: 1.5)),
+                borderSide: const BorderSide(color: Colors.red, width: 1.5)),
             focusedErrorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.red, width: 2)),
+                borderSide: const BorderSide(color: Colors.red, width: 2)),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[700]!
-                        : Colors.grey[300]!)),
+                borderSide: BorderSide(color: borderColor)),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[700]!
-                        : Colors.grey[300]!)),
+                borderSide: BorderSide(color: borderColor)),
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppTheme.primaryNavy, width: 2)),
+                borderSide: BorderSide(color: accent, width: 2)),
             contentPadding:
-                EdgeInsets.symmetric(horizontal: 14, vertical: 12)));
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12)));
   }
 
   Widget _dd(String h, String? v, List<String> items,
-          ValueChanged<String?> onChanged) =>
-      Container(
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!)),
-          child: DropdownButtonFormField<String>(
-              value: v,
-              hint: Text(h,
-                  style: TextStyle(color: Colors.grey[400], fontSize: 13)),
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
-              decoration: InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
-              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
-              items: items
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                  .toList(),
-              onChanged: onChanged));
+      ValueChanged<String?> onChanged) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final hintColor = isDark ? const Color(0xFF94A3B8) : Colors.grey[400]!;
+    final iconColor = isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+    return Container(
+        decoration: BoxDecoration(
+            color: fieldColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: borderColor)),
+        child: DropdownButtonFormField<String>(
+            initialValue: v,
+            dropdownColor: isDark ? const Color(0xFF111827) : Colors.white,
+            hint: Text(h, style: TextStyle(color: hintColor, fontSize: 13)),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
+            decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
+            icon: Icon(Icons.keyboard_arrow_down, color: iconColor),
+            items: items
+                .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                .toList(),
+            onChanged: onChanged));
+  }
+
   Widget _btn(String t, VoidCallback? onPressed, {bool loading = false}) => SizedBox(
       width: double.infinity,
       child: ElevatedButton(

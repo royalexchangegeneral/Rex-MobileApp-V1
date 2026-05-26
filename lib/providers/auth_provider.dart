@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'dart:async';
 import 'dart:convert';
 
 class AuthProvider with ChangeNotifier {
@@ -87,8 +88,9 @@ class AuthProvider with ChangeNotifier {
     }
 
     try {
+      final userId = email.trim();
       final requestBody = {
-        'userid': email,
+        'userid': userId,
         'password': password,
       };
 
@@ -104,7 +106,7 @@ class AuthProvider with ChangeNotifier {
             headers: {'Content-Type': 'application/json'},
             body: json.encode(requestBody),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 30));
 
       if (kDebugMode) {
         print('=== LOGIN API RESPONSE ===');
@@ -113,15 +115,33 @@ class AuthProvider with ChangeNotifier {
       }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = json.decode(response.body);
+        final decoded = json.decode(response.body);
+        final data = decoded is Map
+            ? Map<String, dynamic>.from(decoded)
+            : <String, dynamic>{};
+        final userData = _asMap(_read(data, 'Data') ?? _read(data, 'data'));
 
-        final statusCode = data['Statuscode']?.toString() ?? '';
-        final status = data['Status']?.toString() ?? '';
+        final statusCode = _read(data, 'Statuscode')?.toString() ??
+            _read(data, 'StatusCode')?.toString() ??
+            '';
+        final status = (_read(data, 'Status')?.toString() ?? '').toLowerCase();
+        final userStatus =
+            (_read(userData, 'Status')?.toString() ?? '').toLowerCase();
+        final hasSuccessCode =
+            statusCode == '201' || statusCode == '200' || statusCode.isEmpty;
+        final hasSuccessStatus = status.isEmpty ||
+            status == 'active' ||
+            status == 'success' ||
+            status == 'successful' ||
+            status.contains('success');
+        final hasActiveUser =
+            userStatus.isEmpty || userStatus == 'active' || userStatus == '1';
 
-        if ((statusCode == '201' || statusCode == '200') &&
-            status == 'Active') {
-          final userData = data['Data'];
-          final userTypeCode = userData['UserType']?.toString() ?? '';
+        if (hasSuccessCode &&
+            hasSuccessStatus &&
+            hasActiveUser &&
+            userData.isNotEmpty) {
+          final userTypeCode = _read(userData, 'UserType')?.toString() ?? '';
 
           // Determine user type: 009 = customer, 007/008/010 = agent
           final userType = userTypeCode == '009' ? 'customer' : 'agent';
@@ -129,28 +149,29 @@ class AuthProvider with ChangeNotifier {
           // Save to SharedPreferences
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('isAuthenticated', true);
-          await prefs.setString('userId', data['Userid']?.toString() ?? '');
           await prefs.setString(
-              'userName', userData['FirstName']?.toString() ?? '');
+              'userId', _read(data, 'Userid')?.toString() ?? '');
           await prefs.setString(
-              'userEmail', userData['Email']?.toString() ?? '');
-          await prefs.setString('loginEmail', email);
+              'userName', _read(userData, 'FirstName')?.toString() ?? '');
+          await prefs.setString(
+              'userEmail', _read(userData, 'Email')?.toString() ?? '');
+          await prefs.setString('loginEmail', userId);
           await prefs.setString('userType', userType);
           await prefs.setString(
-              'userCode', userData['Usercode']?.toString() ?? '');
-          await prefs.setString(
-              'profilePhoto', userData['ProfilePhoto']?.toString() ?? '');
+              'userCode', _read(userData, 'Usercode')?.toString() ?? '');
+          await prefs.setString('profilePhoto',
+              _read(userData, 'ProfilePhoto')?.toString() ?? '');
           await prefs.setString('userData', json.encode(userData));
 
           // Update state
           _isAuthenticated = true;
-          _userId = data['Userid']?.toString();
-          _userName = userData['FirstName']?.toString();
-          _userEmail = userData['Email']?.toString();
-          _loginEmail = email;
+          _userId = _read(data, 'Userid')?.toString();
+          _userName = _read(userData, 'FirstName')?.toString();
+          _userEmail = _read(userData, 'Email')?.toString();
+          _loginEmail = userId;
           _userType = userType;
-          _userCode = userData['Usercode']?.toString();
-          _profilePhoto = userData['ProfilePhoto'];
+          _userCode = _read(userData, 'Usercode')?.toString();
+          _profilePhoto = _read(userData, 'ProfilePhoto')?.toString();
           _userData = userData;
 
           // Reset brute force counters on success
@@ -161,21 +182,25 @@ class AuthProvider with ChangeNotifier {
           return LoginResult(success: true);
         } else {
           _recordFailedAttempt();
+          final apiMessage = _read(data, 'Message')?.toString() ??
+              _read(data, 'StatusMessage')?.toString();
           return LoginResult(
             success: false,
             message: _failedLoginAttempts >= _maxAttempts
                 ? 'Account locked for ${_lockoutDuration.inSeconds} seconds due to too many failed attempts.'
-                : 'Invalid credentials. $remainingAttempts attempts remaining.',
+                : '${apiMessage == null || apiMessage.isEmpty ? 'Invalid credentials.' : apiMessage} $remainingAttempts attempts remaining.',
           );
         }
       } else {
-        _recordFailedAttempt();
         return LoginResult(
           success: false,
-          message:
-              'Server error (${response.statusCode}). $remainingAttempts attempts remaining.',
+          message: 'Server error (${response.statusCode}). Please try again.',
         );
       }
+    } on TimeoutException {
+      return LoginResult(
+          success: false,
+          message: 'Login request timed out. Please try again.');
     } catch (e) {
       debugPrint('Login error: $e');
       return LoginResult(
@@ -190,6 +215,21 @@ class AuthProvider with ChangeNotifier {
       _lockoutUntil = DateTime.now().add(_lockoutDuration);
     }
     notifyListeners();
+  }
+
+  dynamic _read(Map<String, dynamic> map, String key) {
+    if (map.containsKey(key)) return map[key];
+    final lowerKey = key.toLowerCase();
+    for (final entry in map.entries) {
+      if (entry.key.toLowerCase() == lowerKey) return entry.value;
+    }
+    return null;
+  }
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return <String, dynamic>{};
   }
 
   // Mock signup used while live registration APIs are disabled.

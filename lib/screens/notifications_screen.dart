@@ -176,34 +176,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _card(Map<String, dynamic> n, NotificationsProvider notifProvider) {
-    final id = n['id'] ?? notifProvider.notifications.indexOf(n);
+    final id = _notificationId(n, notifProvider);
     final unread = !notifProvider.readIds.contains(id);
-    final title = n['title']?.toString() ??
-        n['Title']?.toString() ??
-        n['subject']?.toString() ??
-        n['Subject']?.toString() ??
-        '';
-    final msg = n['message']?.toString() ??
-        n['Message']?.toString() ??
-        n['body']?.toString() ??
-        n['Body']?.toString() ??
-        n['description']?.toString() ??
-        n['Description']?.toString() ??
-        n['content']?.toString() ??
-        '';
-    final time = n['time']?.toString() ??
-        n['created_at']?.toString() ??
-        n['CreatedAt']?.toString() ??
-        n['date']?.toString() ??
-        n['Date']?.toString() ??
-        n['timestamp']?.toString() ??
-        '';
+    final title = _notificationTitle(n);
+    final msg = _notificationMessage(n);
+    final time = _notificationTime(n);
 
     return Padding(
         padding: const EdgeInsets.only(bottom: 12),
-        child: GestureDetector(
-            onTap: () {
-              if (unread) notifProvider.markAsRead(context, id);
+        child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () async {
+              if (unread) {
+                await notifProvider.markAsRead(context, id);
+              }
+              if (!mounted) return;
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => NotificationDetailsScreen(
+                            notification: n,
+                            isAgentFlow: _isAgent,
+                          )));
             },
             child: Container(
                 padding: const EdgeInsets.all(14),
@@ -239,6 +233,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             if (msg.isNotEmpty) ...[
                               const SizedBox(height: 4),
                               Text(msg,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                       fontSize: 12,
                                       color: ThemeHelper.getSecondaryTextColor(
@@ -262,6 +258,40 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 shape: BoxShape.circle)),
                     ]))));
   }
+
+  int _notificationId(
+      Map<String, dynamic> n, NotificationsProvider notifProvider) {
+    final rawId = n['id'] ?? n['Id'] ?? n['ID'] ?? n['notificationId'];
+    if (rawId is int) return rawId;
+    return int.tryParse(rawId?.toString() ?? '') ??
+        notifProvider.notifications.indexOf(n);
+  }
+
+  String _notificationTitle(Map<String, dynamic> n) =>
+      n['title']?.toString() ??
+      n['Title']?.toString() ??
+      n['subject']?.toString() ??
+      n['Subject']?.toString() ??
+      'Notification';
+
+  String _notificationMessage(Map<String, dynamic> n) =>
+      n['message']?.toString() ??
+      n['Message']?.toString() ??
+      n['body']?.toString() ??
+      n['Body']?.toString() ??
+      n['description']?.toString() ??
+      n['Description']?.toString() ??
+      n['content']?.toString() ??
+      '';
+
+  String _notificationTime(Map<String, dynamic> n) =>
+      n['time']?.toString() ??
+      n['created_at']?.toString() ??
+      n['CreatedAt']?.toString() ??
+      n['date']?.toString() ??
+      n['Date']?.toString() ??
+      n['timestamp']?.toString() ??
+      '';
 
   IconData _iconFor(String t) {
     final l = t.toLowerCase();
@@ -287,4 +317,141 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ? AppTheme.bottomNavSelectedColor(context)
                     : AppTheme.bottomNavUnselectedColor(context)))
       ]));
+}
+
+class NotificationDetailsScreen extends StatelessWidget {
+  final Map<String, dynamic> notification;
+  final bool isAgentFlow;
+
+  const NotificationDetailsScreen({
+    super.key,
+    required this.notification,
+    this.isAgentFlow = false,
+  });
+
+  String _title() =>
+      notification['title']?.toString() ??
+      notification['Title']?.toString() ??
+      notification['subject']?.toString() ??
+      notification['Subject']?.toString() ??
+      'Notification';
+
+  String _message() =>
+      notification['message']?.toString() ??
+      notification['Message']?.toString() ??
+      notification['body']?.toString() ??
+      notification['Body']?.toString() ??
+      notification['description']?.toString() ??
+      notification['Description']?.toString() ??
+      notification['content']?.toString() ??
+      '';
+
+  String _time() =>
+      notification['time']?.toString() ??
+      notification['created_at']?.toString() ??
+      notification['CreatedAt']?.toString() ??
+      notification['date']?.toString() ??
+      notification['Date']?.toString() ??
+      notification['timestamp']?.toString() ??
+      '';
+
+  IconData _iconFor(String title) {
+    final value = title.toLowerCase();
+    if (value.contains('payment')) return Icons.payment_outlined;
+    if (value.contains('claim')) return Icons.check_circle_outline;
+    if (value.contains('renew')) return Icons.autorenew;
+    if (value.contains('offer')) return Icons.local_offer_outlined;
+    return Icons.notifications_outlined;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final title = _title();
+    final message = _message();
+    final time = _time();
+    final accent = AppTheme.bottomNavSelectedColor(context);
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Notification Details',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      bottomNavigationBar:
+          isAgentFlow ? buildAgentBottomNav(context, currentIndex: 0) : null,
+      body: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: ThemeHelper.getCardColor(context),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ThemeHelper.getBorderColor(context)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.14),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(_iconFor(title), color: accent, size: 22),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  if (time.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      time,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: ThemeHelper.getSecondaryTextColor(context),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 18),
+                  Text(
+                    message.isNotEmpty ? message : 'No details available.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.5,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

@@ -31,17 +31,19 @@ class AgentPolicyProvider with ChangeNotifier {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final agencyCode = auth.userCode?.toString() ?? '';
 
-      print('=== AGENT POLICY REQUEST ===');
-      print('AgencyCode: $agencyCode');
+      debugPrint('=== AGENT POLICY REQUEST ===');
+      debugPrint('AgencyCode: $agencyCode');
 
-      final url = 'https://eportaltest.rexinsure.com/api/getcustomerpolicytest?IntCode=TESTCODE&Password=royal1234&AgencyCode=$agencyCode';
+      final url =
+          'https://eportaltest.rexinsure.com/api/getcustomerpolicytest?IntCode=TESTCODE&Password=royal1234&AgencyCode=$agencyCode';
       final r = await http.get(
         Uri.parse(url),
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 20));
 
-      print('=== AGENT POLICY RESPONSE: ${r.statusCode} ===');
-      print(r.body.length > 500 ? '${r.body.substring(0, 500)}...' : r.body);
+      debugPrint('=== AGENT POLICY RESPONSE: ${r.statusCode} ===');
+      debugPrint(
+          r.body.length > 500 ? '${r.body.substring(0, 500)}...' : r.body);
 
       if (r.statusCode == 200 || r.statusCode == 201) {
         final d = json.decode(r.body);
@@ -58,7 +60,9 @@ class AgentPolicyProvider with ChangeNotifier {
               seenCustomerIds.add(customerId);
               allCustomers.add({
                 'customerId': customerId,
-                'name': '${customer['Firstname'] ?? ''} ${customer['Surname'] ?? ''}'.trim(),
+                'name':
+                    '${customer['Firstname'] ?? ''} ${customer['Surname'] ?? ''}'
+                        .trim(),
                 'email': customer['Email']?.toString() ?? '',
                 'state': customer['State']?.toString() ?? '',
                 'clientType': customer['ClientType']?.toString() ?? '',
@@ -71,16 +75,24 @@ class AgentPolicyProvider with ChangeNotifier {
                 final policyId = p['PolicyID']?.toString() ?? '';
                 if (policyId.isNotEmpty && !seenPolicyIds.contains(policyId)) {
                   seenPolicyIds.add(policyId);
+                  final policyClass = p['PolicyClass']?.toString() ?? '';
                   allPolicies.add({
                     'policyId': policyId,
                     'premium': p['Premium']?.toString() ?? '',
-                    'policyClass': p['PolicyClass']?.toString() ?? '',
+                    'policyClass': policyClass,
+                    'category': p['Category']?.toString() ??
+                        p['PolicyCategory']?.toString() ??
+                        p['ProductCategory']?.toString() ??
+                        p['ProductClass']?.toString() ??
+                        policyClass,
                     'status': _getPolicyStatus(p['PolicyEndDate']?.toString()),
                     'startDate': p['PolicyStartDate']?.toString() ?? '',
                     'endDate': p['PolicyEndDate']?.toString() ?? '',
                     'insured': p['Insured']?.toString() ?? '',
                     'sumInsured': p['SumInsured']?.toString() ?? '',
-                    'customerName': '${customer['Firstname'] ?? ''} ${customer['Surname'] ?? ''}'.trim(),
+                    'customerName':
+                        '${customer['Firstname'] ?? ''} ${customer['Surname'] ?? ''}'
+                            .trim(),
                   });
                 }
               }
@@ -89,10 +101,13 @@ class AgentPolicyProvider with ChangeNotifier {
 
           _policies = allPolicies;
           _customers = allCustomers;
-          _activePolicies = allPolicies.where((p) => p['status'] == 'Active').length;
+          _activePolicies =
+              allPolicies.where((p) => p['status'] == 'Active').length;
         }
       }
-    } catch (e) { print('Fetch agent policies error: $e'); }
+    } catch (e) {
+      debugPrint('Fetch agent policies error: $e');
+    }
 
     _loading = false;
     notifyListeners();
@@ -102,22 +117,31 @@ class AgentPolicyProvider with ChangeNotifier {
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final agentCode = auth.userCode?.toString() ?? '';
-      final r = await http.post(
-        Uri.parse('https://eportaltest.rexinsure.com/api/agent/customers'),
-        headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
-        body: json.encode({'agent_code': agentCode}),
-      ).timeout(const Duration(seconds: 15));
+      final r = await http
+          .post(
+            Uri.parse('https://eportaltest.rexinsure.com/api/agent/customers'),
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: json.encode({'agent_code': agentCode}),
+          )
+          .timeout(const Duration(seconds: 15));
       if (r.statusCode == 200 || r.statusCode == 201) {
         final d = json.decode(r.body);
         if (d['status'] == 'success') {
-          _totalClients = d['total_customers'] ?? (d['data'] is List ? (d['data'] as List).length : 0);
+          _totalClients = d['total_customers'] ??
+              (d['data'] is List ? (d['data'] as List).length : 0);
           notifyListeners();
         }
       }
-    } catch (e) { print('Fetch customer count error: $e'); }
+    } catch (e) {
+      debugPrint('Fetch customer count error: $e');
+    }
   }
 
-  Future<void> fetchCommission(BuildContext context, {String period = 'this_month'}) async {
+  Future<void> fetchCommission(BuildContext context,
+      {String period = 'this_month'}) async {
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final agentCode = auth.userCode?.toString() ?? '';
@@ -126,7 +150,8 @@ class AgentPolicyProvider with ChangeNotifier {
       final now = DateTime.now();
       String startDate;
       String endDate;
-      final fmt = (DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+      String fmt(DateTime d) =>
+          '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
       if (period == 'today') {
         startDate = fmt(now);
@@ -144,25 +169,33 @@ class AgentPolicyProvider with ChangeNotifier {
         endDate = fmt(monthEnd);
       }
 
-      print('=== FETCH COMMISSION ===');
-      print('agentcode: $agentCode, period: $period, startdate: $startDate, enddate: $endDate');
+      debugPrint('=== FETCH COMMISSION ===');
+      debugPrint(
+          'agentcode: $agentCode, period: $period, startdate: $startDate, enddate: $endDate');
 
       final r = await http.get(
-        Uri.parse('https://eportaltest.rexinsure.com/api/get-commission?agentcode=$agentCode&period=$period&startdate=$startDate&enddate=$endDate'),
+        Uri.parse(
+            'https://eportaltest.rexinsure.com/api/get-commission?agentcode=$agentCode&period=$period&startdate=$startDate&enddate=$endDate'),
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 15));
 
-      print('=== COMMISSION RESPONSE: ${r.statusCode} ===');
-      print(r.body.length > 500 ? '${r.body.substring(0, 500)}...' : r.body);
+      debugPrint('=== COMMISSION RESPONSE: ${r.statusCode} ===');
+      debugPrint(
+          r.body.length > 500 ? '${r.body.substring(0, 500)}...' : r.body);
 
       if (r.statusCode == 200 || r.statusCode == 201) {
         final d = json.decode(r.body);
         _commissionData = d;
-        _commission = d['total_commission']?.toString() ?? d['commission']?.toString() ?? '0';
-        _totalPremium = d['total_premium']?.toString() ?? d['premium']?.toString() ?? '0';
+        _commission = d['total_commission']?.toString() ??
+            d['commission']?.toString() ??
+            '0';
+        _totalPremium =
+            d['total_premium']?.toString() ?? d['premium']?.toString() ?? '0';
         notifyListeners();
       }
-    } catch (e) { print('Fetch commission error: $e'); }
+    } catch (e) {
+      debugPrint('Fetch commission error: $e');
+    }
   }
 
   String _getPolicyStatus(String? endDate) {
@@ -191,12 +224,26 @@ class AgentPolicyProvider with ChangeNotifier {
   Map<String, int> getPolicyCountsByMonth() {
     final now = DateTime.now();
     final months = <String, int>{};
-    final monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
 
     // Initialize last 6 months with 0
     for (int i = 5; i >= 0; i--) {
       final date = DateTime(now.year, now.month - i, 1);
-      final key = '${monthNames[date.month - 1]} ${date.year.toString().substring(2)}';
+      final key =
+          '${monthNames[date.month - 1]} ${date.year.toString().substring(2)}';
       months[key] = 0;
     }
 
@@ -205,7 +252,8 @@ class AgentPolicyProvider with ChangeNotifier {
       if (startDate.isEmpty) continue;
       try {
         final date = DateTime.parse(startDate);
-        final key = '${monthNames[date.month - 1]} ${date.year.toString().substring(2)}';
+        final key =
+            '${monthNames[date.month - 1]} ${date.year.toString().substring(2)}';
         if (months.containsKey(key)) {
           months[key] = (months[key] ?? 0) + 1;
         }
