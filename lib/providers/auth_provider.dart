@@ -75,6 +75,54 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Restore a biometric-protected local session without storing the password.
+  Future<bool> restoreBiometricSession(Map<String, dynamic> session) async {
+    final loginEmail = session['loginEmail']?.toString() ?? '';
+    final userType = session['userType']?.toString() ?? '';
+    final userDataString = session['userData']?.toString() ?? '';
+
+    if (loginEmail.isEmpty || userType.isEmpty || userDataString.isEmpty) {
+      return false;
+    }
+
+    Map<String, dynamic> userData;
+    try {
+      final decoded = json.decode(userDataString);
+      userData = decoded is Map
+          ? Map<String, dynamic>.from(decoded)
+          : <String, dynamic>{};
+    } catch (_) {
+      return false;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isAuthenticated', true);
+    await prefs.setString('userId', session['userId']?.toString() ?? '');
+    await prefs.setString('userName', session['userName']?.toString() ?? '');
+    await prefs.setString('userEmail', session['userEmail']?.toString() ?? '');
+    await prefs.setString('loginEmail', loginEmail);
+    await prefs.setString('userType', userType);
+    await prefs.setString('userCode', session['userCode']?.toString() ?? '');
+    await prefs.setString(
+        'profilePhoto', session['profilePhoto']?.toString() ?? '');
+    await prefs.setString('userData', userDataString);
+
+    _isAuthenticated = true;
+    _userId = session['userId']?.toString();
+    _userName = session['userName']?.toString();
+    _userEmail = session['userEmail']?.toString();
+    _loginEmail = loginEmail;
+    _userType = userType;
+    _userCode = session['userCode']?.toString();
+    _profilePhoto = session['profilePhoto']?.toString();
+    _userData = userData;
+    _failedLoginAttempts = 0;
+    _lockoutUntil = null;
+
+    notifyListeners();
+    return true;
+  }
+
   /// API login with brute force protection.
   /// Returns a LoginResult with success status and optional error message.
   Future<LoginResult> login(String email, String password) async {

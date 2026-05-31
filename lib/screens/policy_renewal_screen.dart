@@ -78,6 +78,19 @@ class PolicyRenewalScreen extends StatelessWidget {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final userData = auth.userData;
     final email = userData?['Email']?.toString() ?? 'customer@rexinsure.com';
+    final lastName = userData?['LastName']?.toString() ??
+        userData?['Lastname']?.toString() ??
+        userData?['Surname']?.toString() ??
+        userData?['Last_Name']?.toString() ??
+        '-';
+    final phone = userData?['Phone']?.toString() ??
+        userData?['PhoneNo']?.toString() ??
+        userData?['Phoneno']?.toString() ??
+        userData?['MobileNo']?.toString() ??
+        userData?['Mobile']?.toString() ??
+        userData?['PhoneNumber']?.toString() ??
+        userData?['Telephone']?.toString() ??
+        '-';
 
     return Scaffold(
       appBar: AppBar(
@@ -198,17 +211,10 @@ class PolicyRenewalScreen extends StatelessWidget {
                           _buildInfoRow(
                               context,
                               'Last Name',
-                              userData?['LastName']?.toString() ??
-                                  userData?['Lastname']?.toString() ??
-                                  '-'),
+                              lastName),
                           _buildInfoRow(context, 'Email',
                               userData?['Email']?.toString() ?? '-'),
-                          _buildInfoRow(
-                              context,
-                              'Phone Number',
-                              userData?['Phone']?.toString() ??
-                                  userData?['PhoneNo']?.toString() ??
-                                  '-'),
+                          _buildInfoRow(context, 'Phone Number', phone),
                           _buildInfoRow(context, 'Occupation',
                               userData?['Occupation']?.toString() ?? '-'),
                           _buildInfoRow(context, 'State',

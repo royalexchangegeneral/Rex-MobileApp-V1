@@ -46,9 +46,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _checkBiometric() async {
     final available = await BiometricService.isAvailable();
     final enabled = await BiometricService.isEnabled();
-    final hasCreds = await BiometricService.hasStoredCredentials();
+    final hasLogin = await BiometricService.hasStoredLogin();
     if (mounted) {
-      setState(() => _biometricAvailable = available && enabled && hasCreds);
+      setState(() => _biometricAvailable = available && enabled && hasLogin);
     }
   }
 
@@ -57,28 +57,32 @@ class _LoginScreenState extends State<LoginScreen> {
     final authenticated = await BiometricService.authenticate();
     if (!authenticated) return;
 
-    final creds = await BiometricService.getCredentials();
-    if (creds == null) return;
+    final email = await BiometricService.getStoredEmail();
+    if (email == null) return;
 
-    setState(() => _isLoading = true);
-    final result =
-        await authProvider.login(creds['email']!, creds['password']!);
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (result.success) {
-      if (authProvider.isAgent()) {
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (_) => const AgentDashboardScreen()));
-      } else {
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (_) => const CustomerDashboardScreen()));
+    final session = await BiometricService.getStoredSession();
+    if (session != null) {
+      final restored = await authProvider.restoreBiometricSession(session);
+      if (!mounted) return;
+      if (restored) {
+        _navigateAfterLogin(authProvider);
+        return;
       }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(result.message ??
-              'Biometric login failed. Please login manually.'),
-          backgroundColor: Colors.red));
+    }
+
+    await authProvider.checkAuthStatus();
+    if (!mounted) return;
+
+    if (authProvider.isAuthenticated && authProvider.loginEmail == email) {
+      _navigateAfterLogin(authProvider);
+      return;
+    }
+
+    if (mounted) {
+      _emailController.text = email;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Biometric verified. Enter your password to continue.'),
+          backgroundColor: Colors.green));
     }
   }
 
@@ -117,24 +121,16 @@ class _LoginScreenState extends State<LoginScreen> {
         // Check if biometric is available but not yet enabled — prompt user
         final bioAvailable = await BiometricService.isAvailable();
         final bioEnabled = await BiometricService.isEnabled();
-        if (bioAvailable && !bioEnabled && mounted) {
-          await _promptBiometricSetup();
+        if (bioAvailable) {
+          if (bioEnabled) {
+            await BiometricService.enable(_emailController.text.trim());
+          } else if (mounted) {
+            await _promptBiometricSetup();
+          }
         }
         if (!mounted) return;
         // Route based on user type
-        if (authProvider.isAgent()) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const AgentDashboardScreen()),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const CustomerDashboardScreen()),
-          );
-        }
+        _navigateAfterLogin(authProvider);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -144,6 +140,21 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       }
+    }
+  }
+
+  void _navigateAfterLogin(AuthProvider authProvider) {
+    if (authProvider.isAgent()) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const AgentDashboardScreen()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) => const CustomerDashboardScreen()),
+      );
     }
   }
 
@@ -171,8 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
     if (result == true) {
-      await BiometricService.enable(
-          _emailController.text, _passwordController.text);
+      await BiometricService.enable(_emailController.text.trim());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Biometric login enabled'),
@@ -461,7 +471,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               Icon(Icons.fingerprint,
                                   color: AppTheme.primaryBlue, size: 28),
                               const SizedBox(width: 10),
-                              Text('Login with Biometrics',
+                              Text('Verify with Biometrics',
                                   style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,

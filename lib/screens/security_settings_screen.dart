@@ -48,23 +48,29 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
 
   Future<void> _toggleBiometric(bool value) async {
     if (value) {
-      // Need stored credentials to enable — check if they exist
-      final hasCreds = await BiometricService.hasStoredCredentials();
-      if (!hasCreds) {
+      final auth = context.read<AuthProvider>();
+      final hasLogin = await BiometricService.hasStoredLogin();
+      if (!hasLogin) {
+        if (auth.isAuthenticated && (auth.loginEmail?.isNotEmpty ?? false)) {
+          await BiometricService.enable(auth.loginEmail!);
+          if (!mounted) return;
+          setState(() => _biometricLogin = true);
+          return;
+        }
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text(
-                  'Please login with your password first to enable biometric login'),
+                  'Please login with your password first to enable biometric verification'),
               backgroundColor: Colors.orange));
         }
         return;
       }
       final authenticated = await BiometricService.authenticate();
       if (authenticated) {
-        // Re-enable with existing stored creds
-        final creds = await BiometricService.getCredentials();
-        if (creds != null) {
-          await BiometricService.enable(creds['email']!, creds['password']!);
+        final email = await BiometricService.getStoredEmail();
+        if (email != null) {
+          await BiometricService.enable(email);
           setState(() => _biometricLogin = true);
         }
       }
@@ -167,7 +173,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
               title: 'Biometric Login',
               subtitle: _biometricLogin
                   ? 'Enabled - Fingerprint / Face ID'
-                  : 'Use fingerprint and Face ID to login',
+                  : 'Use fingerprint and Face ID to verify login',
               hasToggle: true,
               toggleValue: _biometricLogin,
               onToggleChanged: _biometricAvailable
