@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
+import '../utils/renewal_guard.dart';
 import '../utils/theme_helper.dart';
 import '../providers/auth_provider.dart';
 import '../services/payment_service.dart';
@@ -208,10 +209,7 @@ class PolicyRenewalScreen extends StatelessWidget {
                         ] else ...[
                           _buildInfoRow(context, 'First Name',
                               userData?['FirstName']?.toString() ?? '-'),
-                          _buildInfoRow(
-                              context,
-                              'Last Name',
-                              lastName),
+                          _buildInfoRow(context, 'Last Name', lastName),
                           _buildInfoRow(context, 'Email',
                               userData?['Email']?.toString() ?? '-'),
                           _buildInfoRow(context, 'Phone Number', phone),
@@ -272,6 +270,11 @@ class PolicyRenewalScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
+                  if (!RenewalGuard.canRenew(policyData)) {
+                    RenewalGuard.showNotRenewableDialog(context);
+                    return;
+                  }
+
                   showModalBottomSheet(
                     context: context,
                     backgroundColor: Theme.of(context).scaffoldBackgroundColor,

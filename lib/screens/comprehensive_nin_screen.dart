@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'dart:io';
+import '../providers/auth_provider.dart';
 import '../utils/app_theme.dart';
+import '../utils/customer_details.dart';
 import 'comprehensive_summary_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -36,12 +39,32 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
   bool _isVerifying = false;
   bool _ninVerified = false;
   bool _ninFailed = false;
+  bool _isCustomerNinLocked = false;
   String _firstName = '';
   String _lastName = '';
   String _email = '';
   String _phone = '';
   String _dob = '';
   String _gender = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _prefillCustomerNin();
+  }
+
+  Future<void> _prefillCustomerNin() async {
+    if (!widget.isLoggedIn || widget.isAgent) return;
+
+    final authProvider = context.read<AuthProvider>();
+    final nin = await CustomerDetails.ninFromAuth(authProvider);
+    if (!mounted || nin.isEmpty) return;
+
+    setState(() {
+      _ninController.text = nin;
+      _isCustomerNinLocked = true;
+    });
+  }
 
   @override
   void dispose() {
@@ -198,6 +221,7 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
                   SizedBox(height: 8),
                   TextField(
                     controller: _ninController,
+                    readOnly: _isCustomerNinLocked,
                     keyboardType: TextInputType.number,
                     maxLength: 11,
                     style: TextStyle(

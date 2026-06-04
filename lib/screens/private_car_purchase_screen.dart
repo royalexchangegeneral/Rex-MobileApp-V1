@@ -47,6 +47,9 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
   List<Map<String, dynamic>> _lgaList = [];
   bool _isLoadingLgas = false;
 
+  bool get _lockCustomerContactFields =>
+      widget.isLoggedIn && !widget.isAgent && widget.clientData == null;
+
   final Map<String, int> _stateIdMap = {
     'Abia': 1,
     'Adamawa': 2,
@@ -299,12 +302,14 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
                     _buildTextField('Email Address*',
                         'enter your email address', _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        autofillHints: [AutofillHints.email]),
+                        autofillHints: [AutofillHints.email],
+                        readOnly: _lockCustomerContactFields),
                     const SizedBox(height: 14),
                     _buildTextField('Phone Number*', 'enter your phone number',
                         _phoneController,
                         keyboardType: TextInputType.phone,
-                        autofillHints: [AutofillHints.telephoneNumber]),
+                        autofillHints: [AutofillHints.telephoneNumber],
+                        readOnly: _lockCustomerContactFields),
                     const SizedBox(height: 14),
                     Text('Occupation',
                         style: TextStyle(
@@ -449,7 +454,8 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
       String label, String hint, TextEditingController controller,
       {TextInputType? keyboardType,
       int maxLines = 1,
-      List<String>? autofillHints}) {
+      List<String>? autofillHints,
+      bool readOnly = false}) {
     final isRequired = label.contains('*');
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
@@ -463,6 +469,7 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
         const SizedBox(height: 6),
         TextFormField(
           controller: controller,
+          readOnly: readOnly,
           keyboardType: keyboardType,
           maxLines: maxLines,
           autofillHints: autofillHints,

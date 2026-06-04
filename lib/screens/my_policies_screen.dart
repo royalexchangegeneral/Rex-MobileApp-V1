@@ -24,18 +24,27 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
   List<Map<String, dynamic>> get _policies {
     final pp = Provider.of<PolicyProvider>(context, listen: false);
     return pp.policies.map((p) {
-      final isActive = p['status'] == 'Active';
-      final isExpired = p['status'] == 'Expired';
+      final rawStatus = p['status']?.toString() ?? 'Unknown';
+      final isDueForRenewal = _isDueForRenewal(p);
+      final isExpired = _isExpired(p);
+      final displayStatus = isExpired
+          ? 'Expired'
+          : isDueForRenewal
+              ? 'Renewal Due'
+              : rawStatus;
+      final isActive = displayStatus == 'Active';
       return {
         'title': p['policyClass'] ?? '',
         'vehicle': p['insured'] ?? '',
         'policyNo': 'Policy #${p['policyId'] ?? ''}',
-        'status': p['status'] ?? 'Unknown',
+        'status': displayStatus,
         'statusColor': isActive
             ? Colors.green
             : isExpired
-                ? Colors.grey
-                : Colors.red,
+                ? Colors.red
+                : AppTheme.accentOrange,
+        'isDueForRenewal': isDueForRenewal,
+        'isExpired': isExpired,
         'renewalLabel': isExpired ? 'Expired on' : 'Renewal',
         'renewalDate': p['endDate'] ?? '',
         'premium': '₦${p['premium'] ?? '0'} / yearly',
@@ -50,7 +59,7 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
 
     // Filter by tab
     if (_selectedFilter == 1) {
-      policies = policies.where((p) => p['status'] == 'Expired').toList();
+      policies = policies.where((p) => p['isDueForRenewal'] == true).toList();
     } else if (_selectedFilter == 2) {
       policies = policies.where((p) => p['status'] == 'Active').toList();
     } else if (_selectedFilter == 3) {
@@ -77,9 +86,9 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
   @override
   Widget build(BuildContext context) {
     final policies = _filteredPolicies;
-    final activeCount = _policies.where((p) => p['status'] == 'Active').length;
+    final totalPolicyCount = _policies.length;
     final renewalCount =
-        _policies.where((p) => p['status'] == 'Renewal Due').length;
+        _policies.where((p) => p['isDueForRenewal'] == true).length;
     final expiredCount =
         _policies.where((p) => p['status'] == 'Expired').length;
 
@@ -107,8 +116,8 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
             // Summary cards
             Row(
               children: [
-                _buildSummaryCard('$activeCount', 'Active',
-                    Icons.description_outlined, Colors.green),
+                _buildSummaryCard('$totalPolicyCount', 'Total Policies',
+                    Icons.description_outlined, AppTheme.accentOrange),
                 const SizedBox(width: 10),
                 _buildSummaryCard('$renewalCount', 'Due for Renewal',
                     Icons.access_time, AppTheme.accentOrange),
@@ -287,7 +296,7 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
   }
 
   Widget _buildPolicyCard(Map<String, dynamic> policy) {
-    final isRenewal = policy['status'] == 'Renewal Due';
+    final isRenewal = policy['isDueForRenewal'] == true;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -446,5 +455,56 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
         ],
       ),
     );
+  }
+
+  bool _isDueForRenewal(Map<String, dynamic> policy) {
+    final expiryDate = _policyEndDate(policy);
+    if (expiryDate == null) return false;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final expiry = DateTime(expiryDate.year, expiryDate.month, expiryDate.day);
+    final daysToExpiry = expiry.difference(today).inDays;
+
+    return daysToExpiry <= 14;
+  }
+
+  bool _isExpired(Map<String, dynamic> policy) {
+    final expiryDate = _policyEndDate(policy);
+    if (expiryDate == null) {
+      return policy['status']?.toString().toLowerCase() == 'expired';
+    }
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final expiry = DateTime(expiryDate.year, expiryDate.month, expiryDate.day);
+    return expiry.isBefore(today);
+  }
+
+  DateTime? _policyEndDate(Map<String, dynamic> policy) {
+    return _parsePolicyDate(policy['endDate']) ??
+        _parsePolicyDate(policy['EndDate']) ??
+        _parsePolicyDate(policy['PolicyEndDate']) ??
+        _parsePolicyDate(policy['policyEndDate']);
+  }
+
+  DateTime? _parsePolicyDate(dynamic value) {
+    final text = value?.toString().trim() ?? '';
+    if (text.isEmpty) return null;
+
+    final parsed = DateTime.tryParse(text);
+    if (parsed != null) return parsed;
+
+    final slashParts = text.split('/');
+    if (slashParts.length == 3) {
+      final day = int.tryParse(slashParts[0]);
+      final month = int.tryParse(slashParts[1]);
+      final year = int.tryParse(slashParts[2]);
+      if (day != null && month != null && year != null) {
+        return DateTime(year, month, day);
+      }
+    }
+
+    return null;
   }
 }

@@ -13,8 +13,14 @@ import 'student_protection_plan_screen.dart';
 
 class ProtectionPlansScreen extends StatelessWidget {
   final bool isAgent;
+  final bool isFromNewPolicy;
+  final bool isCustomerFlow;
 
-  const ProtectionPlansScreen({super.key, this.isAgent = false});
+  const ProtectionPlansScreen(
+      {super.key,
+      this.isAgent = false,
+      this.isFromNewPolicy = false,
+      this.isCustomerFlow = false});
 
   bool _isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
@@ -68,8 +74,9 @@ class ProtectionPlansScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const HomeProtectionPlanScreen(
-                          isFromNewPolicy: true))),
+                      builder: (_) => HomeProtectionPlanScreen(
+                          isFromNewPolicy: isFromNewPolicy,
+                          isCustomerFlow: isCustomerFlow))),
             ),
             const SizedBox(height: 12),
             _buildProtectionCard(
@@ -82,8 +89,9 @@ class ProtectionPlansScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const ShopProtectionPlanScreen(
-                          isFromNewPolicy: true))),
+                      builder: (_) => ShopProtectionPlanScreen(
+                          isFromNewPolicy: isFromNewPolicy,
+                          isCustomerFlow: isCustomerFlow))),
             ),
             const SizedBox(height: 12),
             _buildProtectionCard(
@@ -96,8 +104,9 @@ class ProtectionPlansScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const ParcelProtectionPlanScreen(
-                          isFromNewPolicy: true))),
+                      builder: (_) => ParcelProtectionPlanScreen(
+                          isFromNewPolicy: isFromNewPolicy,
+                          isCustomerFlow: isCustomerFlow))),
             ),
             const SizedBox(height: 12),
             _buildProtectionCard(
@@ -110,8 +119,9 @@ class ProtectionPlansScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const DriversRidersProtectionScreen(
-                          isFromNewPolicy: true))),
+                      builder: (_) => DriversRidersProtectionScreen(
+                          isFromNewPolicy: isFromNewPolicy,
+                          isCustomerFlow: isCustomerFlow))),
             ),
             const SizedBox(height: 12),
             _buildProtectionCard(
@@ -124,8 +134,9 @@ class ProtectionPlansScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const StudentProtectionPlanScreen(
-                          isFromNewPolicy: true))),
+                      builder: (_) => StudentProtectionPlanScreen(
+                          isFromNewPolicy: isFromNewPolicy,
+                          isCustomerFlow: isCustomerFlow))),
             ),
             const SizedBox(height: 20),
           ],

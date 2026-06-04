@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/user_portal_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/forgot_password_screen.dart';
@@ -84,7 +85,7 @@ class MyApp extends StatelessWidget {
             },
             initialRoute: '/',
             routes: {
-              '/': (context) => const OnboardingScreen(),
+              '/': (context) => const SplashScreen(),
               '/onboarding': (context) => const OnboardingScreen(),
               '/user-portal': (context) => const UserPortalScreen(),
               '/login': (context) => const LoginScreen(),

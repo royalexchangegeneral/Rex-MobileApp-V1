@@ -12,11 +12,17 @@ import 'royal_auto_purchase_screen.dart';
 
 class CustomerMotorInsuranceScreen extends StatelessWidget {
   final bool isAgent;
+  final bool isFromNewPolicy;
   final Map<String, dynamic>? clientData;
   final String agentCode;
 
-  const CustomerMotorInsuranceScreen(
-      {super.key, this.isAgent = false, this.clientData, this.agentCode = ''});
+  const CustomerMotorInsuranceScreen({
+    super.key,
+    this.isAgent = false,
+    this.isFromNewPolicy = false,
+    this.clientData,
+    this.agentCode = '',
+  });
 
   bool _isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
@@ -194,9 +200,10 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               onBuyNow: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const RoyalAutoPurchaseScreen(
+                      builder: (_) => RoyalAutoPurchaseScreen(
                           productName: 'Royal Auto Bronze',
-                          price: 'Premium – 3% + N15,000/m'))),
+                          price: 'Premium – 3% + N15,000/m',
+                          isCustomerFlow: !isAgent))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -211,9 +218,10 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               onBuyNow: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const RoyalAutoPurchaseScreen(
+                      builder: (_) => RoyalAutoPurchaseScreen(
                           productName: 'Royal Auto Silver',
-                          price: 'Premium – 3% + N15,000/m'))),
+                          price: 'Premium – 3% + N15,000/m',
+                          isCustomerFlow: !isAgent))),
             ),
             const SizedBox(height: 12),
             _buildGetQuoteCard(
@@ -418,23 +426,25 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
                                     Theme.of(context).colorScheme.onSurface)),
                       ],
                     ),
-                    OutlinedButton(
-                      onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const CustomerRenewalScreen())),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _buttonColor(context),
-                        side: BorderSide(color: _buttonColor(context)),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
+                    if (!isFromNewPolicy)
+                      OutlinedButton(
+                        onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => CustomerRenewalScreen(
+                                    isAgentFlow: isAgent))),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _buttonColor(context),
+                          side: BorderSide(color: _buttonColor(context)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text('Renew Now',
+                            style: TextStyle(
+                                fontSize: 11, fontWeight: FontWeight.w600)),
                       ),
-                      child: const Text('Renew Now',
-                          style: TextStyle(
-                              fontSize: 11, fontWeight: FontWeight.w600)),
-                    ),
                   ],
                 ),
               ],

@@ -6,7 +6,9 @@ import 'customer_renewal_screen.dart';
 
 class ParcelProtectionPlanScreen extends StatelessWidget {
   final bool isFromNewPolicy;
-  const ParcelProtectionPlanScreen({super.key, this.isFromNewPolicy = false});
+  final bool isCustomerFlow;
+  const ParcelProtectionPlanScreen(
+      {super.key, this.isFromNewPolicy = false, this.isCustomerFlow = false});
 
   final List<String> _cardImages = const [
     'assets/images/e9.png',
@@ -138,7 +140,9 @@ class ParcelProtectionPlanScreen extends StatelessWidget {
                                                     ParcelProtectionPurchaseScreen(
                                                         optionTitle:
                                                             d['title']!,
-                                                        price: d['price']!))),
+                                                        price: d['price']!,
+                                                        isCustomerFlow:
+                                                            isCustomerFlow))),
                                         style: ElevatedButton.styleFrom(
                                             backgroundColor:
                                                 _actionColor(context),
@@ -175,26 +179,30 @@ class ParcelProtectionPlanScreen extends StatelessWidget {
                                                       .colorScheme
                                                       .onSurface))
                                         ]),
-                                    OutlinedButton(
-                                        onPressed: () => Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (_) =>
-                                                    const CustomerRenewalScreen())),
-                                        style: OutlinedButton.styleFrom(
-                                            foregroundColor:
-                                                _actionColor(context),
-                                            side: BorderSide(
-                                                color: _actionColor(context)),
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 12, vertical: 6),
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8))),
-                                        child: Text('Renew Now',
-                                            style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600)))
+                                    if (!isFromNewPolicy)
+                                      OutlinedButton(
+                                          onPressed: () => Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      const CustomerRenewalScreen())),
+                                          style: OutlinedButton.styleFrom(
+                                              foregroundColor:
+                                                  _actionColor(context),
+                                              side: BorderSide(
+                                                  color: _actionColor(context)),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 6),
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          8))),
+                                          child: Text('Renew Now',
+                                              style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600)))
                                   ]),
                             ])),
                   ));
@@ -329,7 +337,8 @@ class ParcelProtectionPlanScreen extends StatelessWidget {
                           MaterialPageRoute(
                               builder: (_) => ParcelProtectionPurchaseScreen(
                                   optionTitle: data['title']!,
-                                  price: data['price']!))),
+                                  price: data['price']!,
+                                  isCustomerFlow: isCustomerFlow))),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.accentOrange,
                           foregroundColor: Colors.white,

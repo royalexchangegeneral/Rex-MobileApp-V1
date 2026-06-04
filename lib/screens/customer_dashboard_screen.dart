@@ -217,7 +217,8 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                       child: Center(
                           child: Text('No policies found',
                               style: TextStyle(color: Colors.grey[500]))));
-                final displayPolicies = pp.policies.take(3).toList();
+                final displayPolicies =
+                    _sortedDashboardPolicies(pp.policies).take(3).toList();
                 return Column(
                     children: displayPolicies.map((p) {
                   final isActive = p['status'] == 'Active';
@@ -526,6 +527,49 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
     );
   }
 
+  List<Map<String, dynamic>> _sortedDashboardPolicies(
+      List<Map<String, dynamic>> policies) {
+    final sorted = List<Map<String, dynamic>>.from(policies);
+    sorted.sort((a, b) {
+      final activeCompare =
+          _policyActiveRank(a).compareTo(_policyActiveRank(b));
+      if (activeCompare != 0) return activeCompare;
+
+      return _policyRecentDate(b).compareTo(_policyRecentDate(a));
+    });
+    return sorted;
+  }
+
+  int _policyActiveRank(Map<String, dynamic> policy) {
+    return policy['status']?.toString().toLowerCase() == 'active' ? 0 : 1;
+  }
+
+  DateTime _policyRecentDate(Map<String, dynamic> policy) {
+    return _parsePolicyDate(policy['startDate']) ??
+        _parsePolicyDate(policy['endDate']) ??
+        DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  DateTime? _parsePolicyDate(dynamic value) {
+    final text = value?.toString().trim() ?? '';
+    if (text.isEmpty) return null;
+
+    final parsed = DateTime.tryParse(text);
+    if (parsed != null) return parsed;
+
+    final slashParts = text.split('/');
+    if (slashParts.length == 3) {
+      final day = int.tryParse(slashParts[0]);
+      final month = int.tryParse(slashParts[1]);
+      final year = int.tryParse(slashParts[2]);
+      if (day != null && month != null && year != null) {
+        return DateTime(year, month, day);
+      }
+    }
+
+    return null;
+  }
+
   Widget _buildClaimCard(String title, String claimNumber, IconData icon,
       Color iconColor, String status, Color statusColor) {
     return Container(
@@ -674,8 +718,11 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     final userName = authProvider.userName ?? 'User';
     final userEmail = authProvider.userEmail ?? 'user@example.com';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final drawerColor = isDark ? const Color(0xFF0F172A) : Colors.white;
 
     return Drawer(
+      backgroundColor: drawerColor,
       child: Column(
         children: [
           // Header with user info
@@ -743,11 +790,19 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
   Widget _buildDrawerItem(IconData icon, String title, int index,
       {bool isLogout = false}) {
     final isSelected = _drawerSelectedIndex == index;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final normalColor = isDark ? const Color(0xFFE5E7EB) : AppTheme.primaryNavy;
+    final selectedBackground =
+        isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+    final logoutColor = isDark ? const Color(0xFFFCA5A5) : Colors.red;
+    final chevronColor =
+        isDark ? const Color(0xFF94A3B8) : (Colors.grey[400] ?? Colors.grey);
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
       decoration: BoxDecoration(
         color:
-            isSelected && !isLogout ? AppTheme.primaryNavy : Colors.transparent,
+            isSelected && !isLogout ? selectedBackground : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
@@ -757,27 +812,27 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
         leading: Icon(
           icon,
           color: isLogout
-              ? Colors.red
+              ? logoutColor
               : isSelected
                   ? Colors.white
-                  : AppTheme.primaryNavy,
+                  : normalColor,
           size: 22,
         ),
         title: Text(
           title,
           style: TextStyle(
             color: isLogout
-                ? Colors.red
+                ? logoutColor
                 : isSelected
                     ? Colors.white
-                    : AppTheme.primaryNavy,
+                    : normalColor,
             fontWeight: FontWeight.w500,
             fontSize: 13,
           ),
         ),
         trailing: isSelected || isLogout
             ? null
-            : Icon(Icons.chevron_right, color: Colors.grey[400]),
+            : Icon(Icons.chevron_right, color: chevronColor),
         onTap: () {
           if (isLogout) {
             Navigator.pushAndRemoveUntil(

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../providers/auth_provider.dart';
 import '../services/payment_service.dart';
 import '../utils/app_theme.dart';
+import '../utils/customer_details.dart';
 import '../utils/occupations.dart';
 import '../widgets/paystack_webview.dart';
 import '../widgets/searchable_dropdown.dart';
@@ -13,11 +16,13 @@ class PersonalCarePurchaseScreen extends StatefulWidget {
   final String optionTitle;
   final String price;
   final String productName;
+  final bool isCustomerFlow;
   const PersonalCarePurchaseScreen(
       {super.key,
       required this.optionTitle,
       required this.price,
-      this.productName = 'Royal Personal Care'});
+      this.productName = 'Royal Personal Care',
+      this.isCustomerFlow = false});
   @override
   State<PersonalCarePurchaseScreen> createState() =>
       _PersonalCarePurchaseScreenState();
@@ -34,6 +39,7 @@ class _PersonalCarePurchaseScreenState
   bool _isPayingNow = false;
   bool _ninFailed = false;
   bool _ninVerified = false;
+  bool _isCustomerNinLocked = false;
   // Personal info (populated after NIN verify)
   String _firstName = '';
   String _lastName = '';
@@ -148,6 +154,20 @@ class _PersonalCarePurchaseScreenState
   @override
   void initState() {
     super.initState();
+    _prefillCustomerNin();
+  }
+
+  Future<void> _prefillCustomerNin() async {
+    if (!widget.isCustomerFlow) return;
+
+    final authProvider = context.read<AuthProvider>();
+    final nin = await CustomerDetails.ninFromAuth(authProvider);
+    if (!mounted || nin.isEmpty) return;
+
+    setState(() {
+      _ninController.text = nin;
+      _isCustomerNinLocked = true;
+    });
   }
 
   @override
@@ -470,6 +490,7 @@ class _PersonalCarePurchaseScreenState
         SizedBox(height: 10),
         TextField(
           controller: _ninController,
+          readOnly: _isCustomerNinLocked,
           keyboardType: TextInputType.number,
           maxLength: 11,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],

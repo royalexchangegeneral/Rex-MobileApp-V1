@@ -11,8 +11,14 @@ import 'royal_family_care_screen.dart';
 
 class RoyalCareScreen extends StatelessWidget {
   final bool isAgent;
+  final bool isFromNewPolicy;
+  final bool isCustomerFlow;
 
-  const RoyalCareScreen({super.key, this.isAgent = false});
+  const RoyalCareScreen(
+      {super.key,
+      this.isAgent = false,
+      this.isFromNewPolicy = false,
+      this.isCustomerFlow = false});
 
   bool _isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
@@ -65,8 +71,9 @@ class RoyalCareScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const RoyalPersonalCareScreen(
-                          isFromNewPolicy: true))),
+                      builder: (_) => RoyalPersonalCareScreen(
+                          isFromNewPolicy: isFromNewPolicy,
+                          isCustomerFlow: isCustomerFlow))),
             ),
             const SizedBox(height: 12),
             _buildRoyalCareCard(
@@ -79,8 +86,8 @@ class RoyalCareScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) =>
-                          const RoyalGroupCareScreen(isFromNewPolicy: true))),
+                      builder: (_) => RoyalGroupCareScreen(
+                          isFromNewPolicy: isFromNewPolicy))),
             ),
             const SizedBox(height: 12),
             _buildRoyalCareCard(
@@ -93,8 +100,9 @@ class RoyalCareScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) =>
-                          const RoyalFamilyCareScreen(isFromNewPolicy: true))),
+                      builder: (_) => RoyalFamilyCareScreen(
+                          isFromNewPolicy: isFromNewPolicy,
+                          isCustomerFlow: isCustomerFlow))),
             ),
             const SizedBox(height: 20),
           ],

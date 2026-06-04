@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../providers/auth_provider.dart';
 import '../services/payment_service.dart';
 import '../utils/app_theme.dart';
+import '../utils/customer_details.dart';
 import '../utils/occupations.dart';
 import '../widgets/paystack_webview.dart';
 import '../widgets/searchable_dropdown.dart';
@@ -12,8 +15,12 @@ import 'policy_purchase_success_screen.dart';
 class StudentProtectionPurchaseScreen extends StatefulWidget {
   final String optionTitle;
   final String price;
+  final bool isCustomerFlow;
   const StudentProtectionPurchaseScreen(
-      {super.key, required this.optionTitle, required this.price});
+      {super.key,
+      required this.optionTitle,
+      required this.price,
+      this.isCustomerFlow = false});
   @override
   State<StudentProtectionPurchaseScreen> createState() =>
       _StudentProtectionPurchaseScreenState();
@@ -25,6 +32,7 @@ class _StudentProtectionPurchaseScreenState
   bool _isVerifying = false, _isPayingNow = false;
   bool _ninFailed = false;
   bool _ninVerified = false;
+  bool _isCustomerNinLocked = false;
 
   final _ninController = TextEditingController();
   String _firstName = '',
@@ -129,6 +137,25 @@ class _StudentProtectionPurchaseScreenState
   final List<Map<String, String>> _beneficiaries = [];
   bool _consentChecked = false;
   final List<String> _genders = const ['Male', 'Female'];
+
+  @override
+  void initState() {
+    super.initState();
+    _prefillCustomerNin();
+  }
+
+  Future<void> _prefillCustomerNin() async {
+    if (!widget.isCustomerFlow) return;
+
+    final authProvider = context.read<AuthProvider>();
+    final nin = await CustomerDetails.ninFromAuth(authProvider);
+    if (!mounted || nin.isEmpty) return;
+
+    setState(() {
+      _ninController.text = nin;
+      _isCustomerNinLocked = true;
+    });
+  }
 
   @override
   void dispose() {
@@ -439,7 +466,9 @@ class _StudentProtectionPurchaseScreenState
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
         const SizedBox(height: 10),
         _tf('Enter your NIN (11 digits)', _ninController,
-            keyboardType: TextInputType.number, maxLength: 11),
+            keyboardType: TextInputType.number,
+            maxLength: 11,
+            readOnly: _isCustomerNinLocked),
         if (!_ninFailed && !_ninVerified) ...[
           const SizedBox(height: 40),
           _btn(
@@ -968,7 +997,8 @@ class _StudentProtectionPurchaseScreenState
       int maxLines = 1,
       int? maxLength,
       Widget? suffixIcon,
-      List<String>? autofillHints}) {
+      List<String>? autofillHints,
+      bool readOnly = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
     final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
@@ -989,6 +1019,7 @@ class _StudentProtectionPurchaseScreenState
     }
     return TextField(
         controller: c,
+        readOnly: readOnly,
         keyboardType: keyboardType,
         maxLines: maxLines,
         maxLength: maxLength,

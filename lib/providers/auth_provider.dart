@@ -162,11 +162,10 @@ class AuthProvider with ChangeNotifier {
         print('==========================');
       }
 
+      final data = _decodeResponseBody(response.body);
+      final apiMessage = _messageFrom(data);
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final decoded = json.decode(response.body);
-        final data = decoded is Map
-            ? Map<String, dynamic>.from(decoded)
-            : <String, dynamic>{};
         final userData = _asMap(_read(data, 'Data') ?? _read(data, 'data'));
 
         final statusCode = _read(data, 'Statuscode')?.toString() ??
@@ -230,19 +229,19 @@ class AuthProvider with ChangeNotifier {
           return LoginResult(success: true);
         } else {
           _recordFailedAttempt();
-          final apiMessage = _read(data, 'Message')?.toString() ??
-              _read(data, 'StatusMessage')?.toString();
           return LoginResult(
             success: false,
             message: _failedLoginAttempts >= _maxAttempts
                 ? 'Account locked for ${_lockoutDuration.inSeconds} seconds due to too many failed attempts.'
-                : '${apiMessage == null || apiMessage.isEmpty ? 'Invalid credentials.' : apiMessage} $remainingAttempts attempts remaining.',
+                : (apiMessage.isEmpty ? 'Invalid credentials.' : apiMessage),
           );
         }
       } else {
         return LoginResult(
           success: false,
-          message: 'Server error (${response.statusCode}). Please try again.',
+          message: apiMessage.isEmpty
+              ? 'Server error (${response.statusCode}). Please try again.'
+              : apiMessage,
         );
       }
     } on TimeoutException {
@@ -278,6 +277,25 @@ class AuthProvider with ChangeNotifier {
     if (value is Map<String, dynamic>) return value;
     if (value is Map) return Map<String, dynamic>.from(value);
     return <String, dynamic>{};
+  }
+
+  Map<String, dynamic> _decodeResponseBody(String body) {
+    try {
+      final decoded = json.decode(body);
+      return decoded is Map ? Map<String, dynamic>.from(decoded) : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  String _messageFrom(Map<String, dynamic> data) {
+    final message = _read(data, 'message') ??
+        _read(data, 'Message') ??
+        _read(data, 'StatusMessage') ??
+        _read(data, 'statusMessage') ??
+        _read(data, 'error') ??
+        _read(data, 'Error');
+    return message?.toString().trim() ?? '';
   }
 
   // Mock signup used while live registration APIs are disabled.

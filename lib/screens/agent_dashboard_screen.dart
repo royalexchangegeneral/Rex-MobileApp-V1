@@ -804,8 +804,11 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     final userName = authProvider.userName ?? 'User';
     final userEmail = authProvider.userEmail ?? 'user@example.com';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final drawerColor = isDark ? const Color(0xFF0F172A) : Colors.white;
 
     return Drawer(
+      backgroundColor: drawerColor,
       child: Column(
         children: [
           // Header with user info
@@ -959,11 +962,16 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
     bool isLogout = false,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final normalColor =
+        isDark ? const Color(0xFFE5E7EB) : const Color(0xFF1E2D64);
+    final selectedBackground =
+        isDark ? AppTheme.accentOrange : const Color(0xFF1E2D64);
+    final logoutColor = isDark ? const Color(0xFFFCA5A5) : Colors.red;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF1E2D64) : Colors.transparent,
+        color: isSelected ? selectedBackground : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
@@ -973,10 +981,10 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
         leading: Icon(
           icon,
           color: isLogout
-              ? Colors.red
+              ? logoutColor
               : isSelected
                   ? Colors.white
-                  : (isDark ? Colors.white : const Color(0xFF1E2D64)),
+                  : normalColor,
           size: 22,
         ),
         title: Text(
@@ -985,10 +993,10 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             color: isLogout
-                ? Colors.red
+                ? logoutColor
                 : isSelected
                     ? Colors.white
-                    : (isDark ? Colors.white : const Color(0xFF1E2D64)),
+                    : normalColor,
           ),
         ),
         onTap: onTap,

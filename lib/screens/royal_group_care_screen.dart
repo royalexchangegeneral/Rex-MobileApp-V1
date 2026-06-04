@@ -190,26 +190,30 @@ class RoyalGroupCareScreen extends StatelessWidget {
                                                       .colorScheme
                                                       .onSurface))
                                         ]),
-                                    OutlinedButton(
-                                        onPressed: () => Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (_) =>
-                                                    const CustomerRenewalScreen())),
-                                        style: OutlinedButton.styleFrom(
-                                            foregroundColor:
-                                                _actionColor(context),
-                                            side: BorderSide(
-                                                color: _actionColor(context)),
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 12, vertical: 6),
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8))),
-                                        child: const Text('Renew Now',
-                                            style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600)))
+                                    if (!isFromNewPolicy)
+                                      OutlinedButton(
+                                          onPressed: () => Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      const CustomerRenewalScreen())),
+                                          style: OutlinedButton.styleFrom(
+                                              foregroundColor:
+                                                  _actionColor(context),
+                                              side: BorderSide(
+                                                  color: _actionColor(context)),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 6),
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          8))),
+                                          child: const Text('Renew Now',
+                                              style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600)))
                                   ]),
                             ])),
                   ));

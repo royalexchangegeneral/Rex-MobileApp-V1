@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/agent_policy_provider.dart';
+import '../providers/policy_provider.dart';
 import '../utils/app_theme.dart';
+import '../utils/renewal_guard.dart';
 import '../utils/theme_helper.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
@@ -8,7 +12,9 @@ import 'new_policy_screen.dart';
 import 'policy_renewal_screen.dart';
 
 class CustomerRenewalScreen extends StatefulWidget {
-  const CustomerRenewalScreen({super.key});
+  final bool isAgentFlow;
+
+  const CustomerRenewalScreen({super.key, this.isAgentFlow = false});
 
   @override
   State<CustomerRenewalScreen> createState() => _CustomerRenewalScreenState();
@@ -41,7 +47,7 @@ class _CustomerRenewalScreenState extends State<CustomerRenewalScreen> {
       ),
       body: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -50,7 +56,7 @@ class _CustomerRenewalScreenState extends State<CustomerRenewalScreen> {
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface)),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             TextField(
               controller: _policyController,
               style: TextStyle(
@@ -90,12 +96,32 @@ class _CustomerRenewalScreenState extends State<CustomerRenewalScreen> {
                             'Please enter a policy number or reg number')));
                     return;
                   }
+                  final policyData = _findPolicy(value);
+                  if (widget.isAgentFlow && policyData == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text(
+                            'Policy not found. Please enter a valid policy number or reg number.')));
+                    return;
+                  }
+
+                  if (!RenewalGuard.canRenew(policyData)) {
+                    RenewalGuard.showNotRenewableDialog(context);
+                    return;
+                  }
+
                   Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (_) => PolicyRenewalScreen(
-                              policyType: 'Motor Insurance',
-                              policyNumber: value)));
+                              policyType:
+                                  policyData?['policyClass']?.toString() ??
+                                      'Motor Insurance',
+                              policyNumber:
+                                  policyData?['policyId']?.toString() ?? value,
+                              premium:
+                                  policyData?['premium']?.toString() ?? '0',
+                              isAgentFlow: widget.isAgentFlow,
+                              policyData: policyData)));
                 },
                 style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryNavy,
@@ -178,5 +204,22 @@ class _CustomerRenewalScreenState extends State<CustomerRenewalScreen> {
                     : ThemeHelper.getSecondaryTextColor(context))),
       ]),
     );
+  }
+
+  Map<String, dynamic>? _findPolicy(String value) {
+    final query = value.toLowerCase().trim();
+    if (query.isEmpty) return null;
+
+    final policies = widget.isAgentFlow
+        ? context.read<AgentPolicyProvider>().policies
+        : context.read<PolicyProvider>().policies;
+    for (final policy in policies) {
+      final policyId = policy['policyId']?.toString().toLowerCase().trim();
+      final insured = policy['insured']?.toString().toLowerCase().trim();
+      if (policyId == query || insured == query) {
+        return policy;
+      }
+    }
+    return null;
   }
 }

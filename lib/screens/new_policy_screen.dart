@@ -280,7 +280,9 @@ class NewPolicyScreen extends StatelessWidget {
           context,
           MaterialPageRoute(
               builder: (_) => CustomerMotorInsuranceScreen(
-                  isAgent: isAgent, clientData: clientData))),
+                  isAgent: isAgent,
+                  isFromNewPolicy: true,
+                  clientData: clientData))),
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
@@ -355,7 +357,10 @@ class NewPolicyScreen extends StatelessWidget {
       onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (_) => ProtectionPlansScreen(isAgent: isAgent))),
+              builder: (_) => ProtectionPlansScreen(
+                  isAgent: isAgent,
+                  isFromNewPolicy: true,
+                  isCustomerFlow: !isAgent))),
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
@@ -427,8 +432,13 @@ class NewPolicyScreen extends StatelessWidget {
 
   Widget _buildRoyalCareCard(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.push(context,
-          MaterialPageRoute(builder: (_) => RoyalCareScreen(isAgent: isAgent))),
+      onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => RoyalCareScreen(
+                  isAgent: isAgent,
+                  isFromNewPolicy: true,
+                  isCustomerFlow: !isAgent))),
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(

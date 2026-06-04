@@ -230,32 +230,17 @@ class _PolicyPurchaseSuccessScreenState
               const SizedBox(height: 24),
 
               // Info text
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: Text(
+                  'Certificate document sent to your email.\nView, download, or share it later from Policy Details.',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 11,
                     color: Colors.grey[600],
-                    height: 1.5,
+                    height: 1.35,
+                    fontWeight: FontWeight.w400,
                   ),
-                  children: const [
-                    TextSpan(
-                      text:
-                          'A copy of your certificate has been emailed to you.\nYou can also click ',
-                    ),
-                    TextSpan(
-                      text: 'here',
-                      style: TextStyle(
-                        color: AppTheme.primaryNavy,
-                        fontWeight: FontWeight.w600,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                    TextSpan(
-                      text:
-                          ' to download it.\nYou can also view, download, or share it later from\nthe Policy Details page.',
-                    ),
-                  ],
                 ),
               ),
 

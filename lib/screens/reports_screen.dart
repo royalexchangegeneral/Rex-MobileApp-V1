@@ -45,6 +45,27 @@ class _ReportsScreenState extends State<ReportsScreen> {
     'custom'
   ];
 
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  Color _surfaceColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF111827) : Colors.grey[100]!;
+
+  Color _fieldColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF0F172A) : Colors.white;
+
+  Color _borderColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF334155) : Colors.grey[300]!;
+
+  Color _primaryTextColor(BuildContext context) =>
+      Theme.of(context).colorScheme.onSurface;
+
+  Color _secondaryTextColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFFCBD5E1) : Colors.grey[700]!;
+
+  Color _hintTextColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF94A3B8) : Colors.grey[400]!;
+
   String _fmt(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
@@ -297,6 +318,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final fieldColor = _fieldColor(context);
+    final surfaceColor = _surfaceColor(context);
+    final borderColor = _borderColor(context);
+    final primaryText = _primaryTextColor(context);
+    final secondaryText = _secondaryTextColor(context);
+    final hintText = _hintTextColor(context);
+
     return Scaffold(
       appBar: AppBar(
           elevation: 0,
@@ -325,19 +353,19 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Container(
                 padding: EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(10)),
+                    color: fieldColor,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: borderColor)),
                 child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                   value: _selectedReportType,
                   isExpanded: true,
                   hint: Text('select report type',
-                      style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+                      style: TextStyle(color: hintText, fontSize: 12)),
                   icon: Icon(Icons.keyboard_arrow_down,
-                      color: Colors.grey[600], size: 18),
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurface),
+                      color: secondaryText, size: 18),
+                  dropdownColor: fieldColor,
+                  style: TextStyle(fontSize: 12, color: primaryText),
                   items: _reportTypes
                       .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                       .toList(),
@@ -347,8 +375,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Container(
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12)),
+                    color: surfaceColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: borderColor)),
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -373,21 +402,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                         decoration: BoxDecoration(
                                             color: sel
                                                 ? const Color(0xFFE8923E)
-                                                : Colors.white,
+                                                : fieldColor,
                                             borderRadius:
                                                 BorderRadius.circular(18),
                                             border: Border.all(
                                                 color: sel
                                                     ? const Color(0xFFD4A574)
-                                                    : Colors.grey[300]!)),
+                                                    : borderColor)),
                                         child: Center(
                                             child: Text(_dateRanges[i],
                                                 style: TextStyle(
                                                     fontSize: 9,
                                                     fontWeight: FontWeight.w500,
-                                                    color: sel
-                                                        ? Colors.white
-                                                        : Colors.black)))))));
+                                                    color:
+                                                        sel ? Colors.white : primaryText)))))));
                       })),
                       if (_selectedDateRange == 3) ...[
                         SizedBox(height: 14),
@@ -423,27 +451,25 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                     decoration: InputDecoration(
                                         hintText: 'dd/mm/yyyy',
                                         hintStyle: TextStyle(
-                                            color: Colors.grey[400],
-                                            fontSize: 12),
+                                            color: hintText, fontSize: 12),
                                         filled: true,
-                                        fillColor: Theme.of(context).brightness ==
-                                                Brightness.dark
-                                            ? const Color(0xFF1E1E1E)
-                                            : Colors.white,
+                                        fillColor: fieldColor,
                                         border: OutlineInputBorder(
                                             borderRadius:
                                                 BorderRadius.circular(10),
-                                            borderSide: BorderSide(
-                                                color: Theme.of(context)
-                                                            .brightness ==
-                                                        Brightness.dark
-                                                    ? Colors.grey[700]!
-                                                    : Colors.grey[300]!)),
+                                            borderSide:
+                                                BorderSide(color: borderColor)),
                                         enabledBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                                        suffixIcon: Icon(Icons.calendar_today_outlined, color: Colors.grey[500], size: 18))))),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide:
+                                                BorderSide(color: borderColor)),
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 14, vertical: 14),
+                                        suffixIcon: Icon(
+                                            Icons.calendar_today_outlined,
+                                            color: hintText,
+                                            size: 18))))),
                         SizedBox(height: 12),
                         Text('To Date',
                             style: TextStyle(
@@ -477,27 +503,25 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                     decoration: InputDecoration(
                                         hintText: 'dd/mm/yyyy',
                                         hintStyle: TextStyle(
-                                            color: Colors.grey[400],
-                                            fontSize: 12),
+                                            color: hintText, fontSize: 12),
                                         filled: true,
-                                        fillColor: Theme.of(context).brightness ==
-                                                Brightness.dark
-                                            ? const Color(0xFF1E1E1E)
-                                            : Colors.white,
+                                        fillColor: fieldColor,
                                         border: OutlineInputBorder(
                                             borderRadius:
                                                 BorderRadius.circular(10),
-                                            borderSide: BorderSide(
-                                                color: Theme.of(context)
-                                                            .brightness ==
-                                                        Brightness.dark
-                                                    ? Colors.grey[700]!
-                                                    : Colors.grey[300]!)),
+                                            borderSide:
+                                                BorderSide(color: borderColor)),
                                         enabledBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!)),
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                                        suffixIcon: Icon(Icons.calendar_today_outlined, color: Colors.grey[500], size: 18))))),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide:
+                                                BorderSide(color: borderColor)),
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 14, vertical: 14),
+                                        suffixIcon: Icon(
+                                            Icons.calendar_today_outlined,
+                                            color: hintText,
+                                            size: 18))))),
                       ],
                       SizedBox(height: 16),
                       Text('Download Format',
@@ -593,22 +617,26 @@ class _ReportsScreenState extends State<ReportsScreen> {
   Widget _buildFormatCard(
       int index, IconData icon, String label, Color iconColor, Color bgColor) {
     final sel = _selectedFormat == index;
+    final cardColor = _fieldColor(context);
+    final borderColor = sel ? iconColor : _borderColor(context);
+    final iconBackground =
+        _isDark(context) ? iconColor.withValues(alpha: 0.18) : bgColor;
+
     return Expanded(
         child: GestureDetector(
             onTap: () => setState(() => _selectedFormat = index),
             child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardColor,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: sel ? iconColor : Colors.grey[300]!,
-                        width: sel ? 1.5 : 1)),
+                    border:
+                        Border.all(color: borderColor, width: sel ? 1.5 : 1)),
                 child: Column(children: [
                   Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                          color: bgColor,
+                          color: iconBackground,
                           borderRadius: BorderRadius.circular(8)),
                       child: Icon(icon, color: iconColor, size: 20)),
                   const SizedBox(height: 6),
@@ -616,7 +644,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Colors.grey[700])),
+                          color: _secondaryTextColor(context))),
                 ]))));
   }
 }

@@ -4,9 +4,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:io';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import '../utils/app_theme.dart';
+import '../utils/renewal_guard.dart';
 import '../utils/theme_helper.dart';
 import '../widgets/agent_bottom_nav.dart';
 import 'new_claims_screen.dart';
@@ -180,19 +179,24 @@ class PolicyDetailsScreen extends StatelessWidget {
                         Icons.refresh,
                         'Renew Policy',
                         const Color(0xFFE8F4FD),
-                        const Color(0xFF4A90D9),
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => PolicyRenewalScreen(
-                                    policyType: policyType,
-                                    policyNumber: policyNumber,
-                                    premium: policyData?['premium']
-                                            ?.toString() ??
-                                        policyData?['Premium']?.toString() ??
-                                        '0',
-                                    isAgentFlow: isAgentFlow,
-                                    policyData: policyData))))),
+                        const Color(0xFF4A90D9), onTap: () {
+                  if (!RenewalGuard.canRenew(policyData)) {
+                    RenewalGuard.showNotRenewableDialog(context);
+                    return;
+                  }
+
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => PolicyRenewalScreen(
+                              policyType: policyType,
+                              policyNumber: policyNumber,
+                              premium: policyData?['premium']?.toString() ??
+                                  policyData?['Premium']?.toString() ??
+                                  '0',
+                              isAgentFlow: isAgentFlow,
+                              policyData: policyData)));
+                })),
                 Expanded(
                     child: _buildQuickAction(
                         context,
@@ -286,7 +290,7 @@ class PolicyDetailsScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildDocumentItem(context, 'Policy Document',
+                  _buildDocumentItem(context, 'Policy Certificate',
                       Icons.picture_as_pdf, Colors.red),
                 ],
               ),
@@ -388,9 +392,7 @@ class PolicyDetailsScreen extends StatelessWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () {
-                  final certType = _getCertType();
-                  final certUrl =
-                      'https://eportaltest.rexinsure.com/$certType?policy=$policyNumber';
+                  final certUrl = _certificateUri().toString();
                   Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -581,7 +583,7 @@ class PolicyDetailsScreen extends StatelessWidget {
   Widget _buildDocumentItem(
       BuildContext context, String title, IconData icon, Color iconColor) {
     return GestureDetector(
-      onTap: () => _downloadPolicyDocument(context),
+      onTap: () => _downloadPolicyCertificate(context),
       child: Row(
         children: [
           Icon(icon, color: iconColor, size: 18),
@@ -594,6 +596,14 @@ class PolicyDetailsScreen extends StatelessWidget {
           const Icon(Icons.download, color: AppTheme.accentOrange, size: 18),
         ],
       ),
+    );
+  }
+
+  Uri _certificateUri() {
+    return Uri.https(
+      'eportaltest.rexinsure.com',
+      _getCertType(),
+      {'policy': policyNumber},
     );
   }
 
@@ -619,75 +629,66 @@ class PolicyDetailsScreen extends StatelessWidget {
     return 'tpcert'; // default: third party motor
   }
 
-  Future<void> _downloadPolicyDocument(BuildContext ctx) async {
+  Future<void> _downloadPolicyCertificate(BuildContext ctx) async {
+    final messenger = ScaffoldMessenger.of(ctx);
     try {
-      final pdf = pw.Document();
-      final data = policyData ?? {};
-      pdf.addPage(pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        build: (pw.Context pdfCtx) => pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text('Policy Document',
-                  style: pw.TextStyle(
-                      fontSize: 24, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 20),
-              pw.Text('Policy Number: $policyNumber',
-                  style: const pw.TextStyle(fontSize: 14)),
-              pw.Text('Policy Type: $policyType',
-                  style: const pw.TextStyle(fontSize: 14)),
-              pw.SizedBox(height: 16),
-              _pdfRow('Insured', data['Insured']?.toString() ?? '-'),
-              _pdfRow(
-                  'Product Class',
-                  data['policyClass']?.toString() ??
-                      data['ProductClass']?.toString() ??
-                      '-'),
-              _pdfRow('Premium',
-                  'N${data['Premium']?.toString() ?? data['premium']?.toString() ?? '0'}'),
-              _pdfRow('Sum Insured',
-                  'N${data['SumAssured']?.toString() ?? data['sumInsured']?.toString() ?? '0'}'),
-              _pdfRow(
-                  'Start Date',
-                  data['StartDate']?.toString() ??
-                      data['startDate']?.toString() ??
-                      '-'),
-              _pdfRow(
-                  'End Date',
-                  data['EndDate']?.toString() ??
-                      data['endDate']?.toString() ??
-                      '-'),
-              _pdfRow('Status', data['status']?.toString() ?? '-'),
-            ]),
-      ));
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Downloading policy certificate...')),
+      );
+
+      final uri = _certificateUri();
+      final client = HttpClient();
+      final request = await client.getUrl(uri);
+      final response = await request.close();
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        client.close(force: true);
+        throw HttpException(
+          'Certificate download failed (${response.statusCode})',
+          uri: uri,
+        );
+      }
+
+      final contentType = response.headers.contentType?.mimeType ?? '';
+      final extension = _certificateExtension(contentType);
       final dir = await getApplicationDocumentsDirectory();
-      final file =
-          File('${dir.path}/Policy_${policyNumber.replaceAll('/', '_')}.pdf');
-      await file.writeAsBytes(await pdf.save());
+      final safePolicyNumber = policyNumber.replaceAll(RegExp(r'[^\w-]+'), '_');
+      final file = File('${dir.path}/Certificate_$safePolicyNumber$extension');
+      final sink = file.openWrite();
+      await response.pipe(sink);
+      client.close();
+
+      if (!ctx.mounted) return;
 
       final box = ctx.findRenderObject() as RenderBox?;
       final origin = box != null
           ? box.localToGlobal(Offset.zero) & box.size
           : const Rect.fromLTWH(0, 0, 100, 100);
       await Share.shareXFiles([XFile(file.path)],
-          subject: 'Policy Document - $policyNumber',
+          subject: 'Policy Certificate - $policyNumber',
           sharePositionOrigin: origin);
+
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Policy certificate downloaded')),
+      );
     } catch (e) {
-      debugPrint('Error generating PDF: $e');
+      debugPrint('Error downloading certificate: $e');
+      if (!ctx.mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Unable to download policy certificate')),
+      );
     }
   }
 
-  pw.Widget _pdfRow(String label, String value) => pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 8),
-      child: pw.Row(children: [
-        pw.SizedBox(
-            width: 120,
-            child: pw.Text(label, style: const pw.TextStyle(fontSize: 12))),
-        pw.Expanded(
-            child: pw.Text(value,
-                style: pw.TextStyle(
-                    fontSize: 12, fontWeight: pw.FontWeight.bold))),
-      ]));
+  String _certificateExtension(String contentType) {
+    if (contentType.contains('pdf')) return '.pdf';
+    if (contentType.contains('html')) return '.html';
+    if (contentType.contains('png')) return '.png';
+    if (contentType.contains('jpeg') || contentType.contains('jpg')) {
+      return '.jpg';
+    }
+    return '.pdf';
+  }
 
   Widget _buildNavItem(
       BuildContext context, IconData icon, String label, bool isSelected,

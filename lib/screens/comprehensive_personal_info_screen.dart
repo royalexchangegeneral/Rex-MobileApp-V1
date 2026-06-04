@@ -38,6 +38,8 @@ class _ComprehensivePersonalInfoScreenState
   List<Map<String, dynamic>> _lgaList = [];
   bool _isLoadingLgas = false;
 
+  bool get _lockCustomerContactFields => widget.isLoggedIn && !widget.isAgent;
+
   final Map<String, int> _stateIdMap = {
     'Abia': 1,
     'Adamawa': 2,
@@ -275,12 +277,14 @@ class _ComprehensivePersonalInfoScreenState
                     _buildTextField('Email Address', _emailController,
                         'enter your email address',
                         keyboardType: TextInputType.emailAddress,
-                        autofillHints: [AutofillHints.email]),
+                        autofillHints: [AutofillHints.email],
+                        readOnly: _lockCustomerContactFields),
                     const SizedBox(height: 16),
                     _buildTextField('Phone Number', _phoneController,
                         'enter your phone number',
                         keyboardType: TextInputType.phone,
-                        autofillHints: [AutofillHints.telephoneNumber]),
+                        autofillHints: [AutofillHints.telephoneNumber],
+                        readOnly: _lockCustomerContactFields),
                     const SizedBox(height: 16),
                     Text('Occupation',
                         style: TextStyle(
@@ -411,7 +415,8 @@ class _ComprehensivePersonalInfoScreenState
       String label, TextEditingController controller, String hint,
       {TextInputType? keyboardType,
       int maxLines = 1,
-      List<String>? autofillHints}) {
+      List<String>? autofillHints,
+      bool readOnly = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
     final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
@@ -429,6 +434,7 @@ class _ComprehensivePersonalInfoScreenState
         SizedBox(height: 8),
         TextFormField(
           controller: controller,
+          readOnly: readOnly,
           keyboardType: keyboardType,
           maxLines: maxLines,
           autofillHints: autofillHints,

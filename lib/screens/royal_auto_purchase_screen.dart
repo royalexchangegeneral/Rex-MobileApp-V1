@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'dart:io';
+import '../providers/auth_provider.dart';
 import '../utils/app_theme.dart';
+import '../utils/customer_details.dart';
 import '../services/payment_service.dart';
 import '../widgets/paystack_webview.dart';
 import '../widgets/searchable_dropdown.dart';
@@ -12,8 +15,12 @@ import 'policy_purchase_success_screen.dart';
 class RoyalAutoPurchaseScreen extends StatefulWidget {
   final String productName; // Royal Auto Bronze or Royal Auto Silver
   final String price;
+  final bool isCustomerFlow;
   const RoyalAutoPurchaseScreen(
-      {super.key, required this.productName, required this.price});
+      {super.key,
+      required this.productName,
+      required this.price,
+      this.isCustomerFlow = false});
   @override
   State<RoyalAutoPurchaseScreen> createState() =>
       _RoyalAutoPurchaseScreenState();
@@ -26,6 +33,7 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
   // Step 0: NIN
   String? _selectedIdType;
   final _ninController = TextEditingController();
+  bool _isCustomerNinLocked = false;
   String _firstName = '',
       _lastName = '',
       _email = '',
@@ -151,7 +159,22 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
   @override
   void initState() {
     super.initState();
+    _prefillCustomerNin();
     _fetchVehicleList();
+  }
+
+  Future<void> _prefillCustomerNin() async {
+    if (!widget.isCustomerFlow) return;
+
+    final authProvider = context.read<AuthProvider>();
+    final nin = await CustomerDetails.ninFromAuth(authProvider);
+    if (!mounted || nin.isEmpty) return;
+
+    setState(() {
+      _selectedIdType = 'NIN';
+      _ninController.text = nin;
+      _isCustomerNinLocked = true;
+    });
   }
 
   Future<void> _fetchVehicleList() async {
@@ -553,7 +576,9 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
           const SizedBox(height: 8),
           _tf('enter your NIN', _ninController,
-              keyboardType: TextInputType.number, maxLength: 11)
+              keyboardType: TextInputType.number,
+              maxLength: 11,
+              readOnly: _isCustomerNinLocked)
         ],
         if (!_ninFailed) ...[
           const SizedBox(height: 40),
@@ -1130,7 +1155,8 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
       {TextInputType? keyboardType,
       int maxLines = 1,
       int? maxLength,
-      List<String>? autofillHints}) {
+      List<String>? autofillHints,
+      bool readOnly = false}) {
     String? errorText;
     if (keyboardType == TextInputType.emailAddress &&
         c.text.trim().isNotEmpty) {
@@ -1151,6 +1177,7 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
     final accent = isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
     return TextField(
         controller: c,
+        readOnly: readOnly,
         keyboardType: keyboardType,
         maxLines: maxLines,
         maxLength: maxLength,
