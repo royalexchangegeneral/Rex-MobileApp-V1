@@ -83,9 +83,10 @@ class _ComprehensiveImageUploadScreenState
         });
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 
@@ -106,6 +107,16 @@ class _ComprehensiveImageUploadScreenState
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final infoColor =
+        isDark ? const Color(0xFF0F172A) : const Color(0xFFF3F8FF);
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final inactiveTrackColor =
+        isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final secondaryTextColor =
+        isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -153,7 +164,7 @@ class _ComprehensiveImageUploadScreenState
                                   decoration: BoxDecoration(
                                       color: i < 3
                                           ? AppTheme.primaryNavy
-                                          : Colors.grey[300],
+                                          : inactiveTrackColor,
                                       borderRadius:
                                           BorderRadius.circular(2)))))),
                 ],
@@ -165,17 +176,18 @@ class _ComprehensiveImageUploadScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                        color: const Color(0xFFF3F8FF),
-                        borderRadius: BorderRadius.circular(8)),
+                        color: infoColor,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: borderColor)),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(children: [
-                          Icon(Icons.lightbulb_outline,
+                          const Icon(Icons.lightbulb_outline,
                               color: AppTheme.primaryNavy, size: 16),
-                          SizedBox(width: 6),
+                          const SizedBox(width: 6),
                           Text('Upload Tips:',
                               style: TextStyle(
                                   fontSize: 12,
@@ -188,15 +200,15 @@ class _ComprehensiveImageUploadScreenState
                             'Take pictures in daylight for better clarity'),
                         const SizedBox(height: 4),
                         _buildTip('Avoid glare or shadows covering details'),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         _buildTip(
                             'Make sure vehicle is clean and plates readable'),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         _buildTip('Max file size: 2.5MB per image (JPEG/PNG)'),
                       ],
                     ),
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   Text('Pre-loss Photos (5 required)',
                       style: TextStyle(
                           fontSize: 14,
@@ -204,19 +216,34 @@ class _ComprehensiveImageUploadScreenState
                           color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 12),
                   _uploadRow(
-                      'Front View *', _preLoss1, () => _pickFor('preLoss1')),
+                      'Front View *', _preLoss1, () => _pickFor('preLoss1'),
+                      cardColor: cardColor,
+                      borderColor: borderColor,
+                      labelColor: secondaryTextColor),
                   const SizedBox(height: 10),
                   _uploadRow('Right Side View *', _preLoss2,
-                      () => _pickFor('preLoss2')),
-                  const SizedBox(height: 10),
-                  _uploadRow('Left Side View *', _preLoss3,
-                      () => _pickFor('preLoss3')),
+                      () => _pickFor('preLoss2'),
+                      cardColor: cardColor,
+                      borderColor: borderColor,
+                      labelColor: secondaryTextColor),
                   const SizedBox(height: 10),
                   _uploadRow(
-                      'Back View *', _preLoss4, () => _pickFor('preLoss4')),
+                      'Left Side View *', _preLoss3, () => _pickFor('preLoss3'),
+                      cardColor: cardColor,
+                      borderColor: borderColor,
+                      labelColor: secondaryTextColor),
                   const SizedBox(height: 10),
-                  _uploadRow('Dashboard View *', _preLoss5,
-                      () => _pickFor('preLoss5')),
+                  _uploadRow(
+                      'Back View *', _preLoss4, () => _pickFor('preLoss4'),
+                      cardColor: cardColor,
+                      borderColor: borderColor,
+                      labelColor: secondaryTextColor),
+                  const SizedBox(height: 10),
+                  _uploadRow(
+                      'Dashboard View *', _preLoss5, () => _pickFor('preLoss5'),
+                      cardColor: cardColor,
+                      borderColor: borderColor,
+                      labelColor: secondaryTextColor),
                 ],
               ),
             ),
@@ -292,30 +319,49 @@ class _ComprehensiveImageUploadScreenState
     );
   }
 
-  Widget _uploadRow(String label, File? file, VoidCallback onTap) {
+  Widget _uploadRow(
+    String label,
+    File? file,
+    VoidCallback onTap, {
+    required Color cardColor,
+    required Color borderColor,
+    required Color labelColor,
+  }) {
+    final isUploaded = file != null;
+    final uploadedBackground = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF052E16)
+        : Colors.green[50]!;
+    final uploadedBorder = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF22C55E)
+        : Colors.green;
+    final uploadedText = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF86EFAC)
+        : Colors.green[800]!;
+
     return Row(children: [
       Expanded(
           child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-                color: file != null ? Colors.green : Colors.grey[300]!),
-            color: file != null ? Colors.green[50] : Colors.white),
-        child: Text(file != null ? '✓ $label' : label,
+            border:
+                Border.all(color: isUploaded ? uploadedBorder : borderColor),
+            color: isUploaded ? uploadedBackground : cardColor),
+        child: Text(isUploaded ? '✓ $label' : label,
             style: TextStyle(
-                fontSize: 12,
-                color: file != null ? Colors.green[800] : Colors.grey[400])),
+                fontSize: 12, color: isUploaded ? uploadedText : labelColor)),
       )),
-      SizedBox(width: 8),
+      const SizedBox(width: 8),
       GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: EdgeInsets.all(14),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-                color: AppTheme.primaryNavy,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppTheme.accentOrange
+                    : AppTheme.primaryNavy,
                 borderRadius: BorderRadius.circular(8)),
-            child: Icon(Icons.upload_file, color: Colors.white, size: 20),
+            child: const Icon(Icons.upload_file, color: Colors.white, size: 20),
           )),
     ]);
   }

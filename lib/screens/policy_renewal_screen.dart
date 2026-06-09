@@ -28,9 +28,16 @@ class PolicyRenewalScreen extends StatelessWidget {
       this.isAgentFlow = false,
       this.policyData});
 
-  Future<void> _initiatePayment(BuildContext context, String email) async {
+  Future<void> _initiatePayment(
+    BuildContext context, {
+    required String email,
+    required String names,
+    required String phone,
+  }) async {
     final cleaned = premium.replaceAll(RegExp(r'[^0-9.]'), '');
     final amount = double.tryParse(cleaned) ?? 0;
+    final productCode = _renewalProductCode();
+    final endDate = _renewalEndDate();
 
     showDialog(
         context: context,
@@ -42,6 +49,10 @@ class PolicyRenewalScreen extends StatelessWidget {
       email: email,
       premium: amount.toInt(),
       policyNumber: policyNumber,
+      names: names,
+      mobileno: phone,
+      productCode: productCode,
+      endDate: endDate,
     );
 
     if (!context.mounted) return;
@@ -74,16 +85,84 @@ class PolicyRenewalScreen extends StatelessWidget {
     }
   }
 
+  String _renewalProductCode() {
+    final directCode = policyData?['product_code'] ??
+        policyData?['productCode'] ??
+        policyData?['ProductCode'] ??
+        policyData?['ProdCode'] ??
+        policyData?['prodCode'];
+    final code = directCode?.toString().trim() ?? '';
+    if (code.isNotEmpty) return code;
+
+    final source = [
+      policyType,
+      policyData?['policyClass']?.toString() ?? '',
+      policyData?['ProductClass']?.toString() ?? '',
+      policyData?['ProductCover']?.toString() ?? '',
+    ].join(' ').toLowerCase();
+
+    if (source.contains('third') || source.contains('tp')) return 'TP';
+    if (source.contains('comprehensive') || source.contains('cp')) return 'CP';
+    if (source.contains('auto')) return 'TP';
+    return policyType.trim().isNotEmpty ? policyType.trim() : 'TP';
+  }
+
+  String _renewalEndDate() {
+    final currentEndDate = _parsePolicyDate(policyData?['endDate']) ??
+        _parsePolicyDate(policyData?['EndDate']) ??
+        _parsePolicyDate(policyData?['PolicyEndDate']) ??
+        _parsePolicyDate(policyData?['policyEndDate']);
+
+    final baseDate = currentEndDate ?? DateTime.now();
+    return _formatApiDate(
+        DateTime(baseDate.year + 1, baseDate.month, baseDate.day));
+  }
+
+  DateTime? _parsePolicyDate(dynamic value) {
+    final text = value?.toString().trim() ?? '';
+    if (text.isEmpty) return null;
+
+    final parsed = DateTime.tryParse(text);
+    if (parsed != null) return parsed;
+
+    final slashParts = text.split('/');
+    if (slashParts.length == 3) {
+      final day = int.tryParse(slashParts[0]);
+      final month = int.tryParse(slashParts[1]);
+      final year = int.tryParse(slashParts[2]);
+      if (day != null && month != null && year != null) {
+        return DateTime(year, month, day);
+      }
+    }
+
+    return null;
+  }
+
+  String _formatApiDate(DateTime date) {
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final userData = auth.userData;
     final email = userData?['Email']?.toString() ?? 'customer@rexinsure.com';
+    final firstName = userData?['FirstName']?.toString() ??
+        userData?['Firstname']?.toString() ??
+        userData?['First_Name']?.toString() ??
+        '';
     final lastName = userData?['LastName']?.toString() ??
         userData?['Lastname']?.toString() ??
         userData?['Surname']?.toString() ??
         userData?['Last_Name']?.toString() ??
-        '-';
+        '';
+    final names = [
+      firstName,
+      lastName,
+    ].where((part) => part.trim().isNotEmpty).join(' ').trim();
     final phone = userData?['Phone']?.toString() ??
         userData?['PhoneNo']?.toString() ??
         userData?['Phoneno']?.toString() ??
@@ -91,7 +170,7 @@ class PolicyRenewalScreen extends StatelessWidget {
         userData?['Mobile']?.toString() ??
         userData?['PhoneNumber']?.toString() ??
         userData?['Telephone']?.toString() ??
-        '-';
+        '';
 
     return Scaffold(
       appBar: AppBar(
@@ -111,13 +190,13 @@ class PolicyRenewalScreen extends StatelessWidget {
         children: [
           // Step indicator
           Padding(
-            padding: EdgeInsets.fromLTRB(24, 8, 24, 0),
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('',
+                    const Text('',
                         style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -150,7 +229,7 @@ class PolicyRenewalScreen extends StatelessWidget {
                   // Policy Information
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                         color: ThemeHelper.getSecondaryCardColor(context),
                         borderRadius: BorderRadius.circular(12)),
@@ -177,7 +256,7 @@ class PolicyRenewalScreen extends StatelessWidget {
                   // Personal Information
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                         color: ThemeHelper.getSecondaryCardColor(context),
                         borderRadius: BorderRadius.circular(12)),
@@ -209,7 +288,8 @@ class PolicyRenewalScreen extends StatelessWidget {
                         ] else ...[
                           _buildInfoRow(context, 'First Name',
                               userData?['FirstName']?.toString() ?? '-'),
-                          _buildInfoRow(context, 'Last Name', lastName),
+                          _buildInfoRow(context, 'Last Name',
+                              lastName.isNotEmpty ? lastName : '-'),
                           _buildInfoRow(context, 'Email',
                               userData?['Email']?.toString() ?? '-'),
                           _buildInfoRow(context, 'Phone Number', phone),
@@ -230,7 +310,7 @@ class PolicyRenewalScreen extends StatelessWidget {
                   // Vehicle Information
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                         color: ThemeHelper.getSecondaryCardColor(context),
                         borderRadius: BorderRadius.circular(12)),
@@ -292,14 +372,22 @@ class PolicyRenewalScreen extends StatelessWidget {
                               decoration: BoxDecoration(
                                   color: ThemeHelper.getBorderColor(context),
                                   borderRadius: BorderRadius.circular(2))),
-                          SizedBox(height: 24),
+                          const SizedBox(height: 24),
                           InkWell(
                             onTap: () {
                               Navigator.pop(ctx);
-                              _initiatePayment(context, email);
+                              _initiatePayment(
+                                context,
+                                email: email,
+                                names: names.isNotEmpty
+                                    ? names
+                                    : policyData?['customerName']?.toString() ??
+                                        'Customer Name',
+                                phone: phone,
+                              );
                             },
                             child: Container(
-                              padding: EdgeInsets.all(16),
+                              padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
                                   border: Border.all(
                                       color:
@@ -312,7 +400,7 @@ class PolicyRenewalScreen extends StatelessWidget {
                                     decoration: BoxDecoration(
                                         color: ThemeHelper.isDarkMode(context)
                                             ? Colors.cyan[700]!
-                                                .withOpacity(0.16)
+                                                .withValues(alpha: 0.16)
                                             : Colors.cyan[50],
                                         borderRadius: BorderRadius.circular(8)),
                                     child: Icon(Icons.payment,
@@ -320,7 +408,7 @@ class PolicyRenewalScreen extends StatelessWidget {
                                             ? Colors.cyan[200]
                                             : Colors.cyan[600],
                                         size: 24)),
-                                SizedBox(width: 16),
+                                const SizedBox(width: 16),
                                 Text('Pay with Paystack',
                                     style: TextStyle(
                                         fontSize: 16,
@@ -329,7 +417,7 @@ class PolicyRenewalScreen extends StatelessWidget {
                                             .colorScheme
                                             .onSurface)),
                                 const Spacer(),
-                                Icon(Icons.radio_button_checked,
+                                const Icon(Icons.radio_button_checked,
                                     color: AppTheme.primaryNavy, size: 22),
                               ]),
                             ),
@@ -415,7 +503,7 @@ class PolicyRenewalScreen extends StatelessWidget {
 
   Widget _buildInfoRow(BuildContext context, String label, String value) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

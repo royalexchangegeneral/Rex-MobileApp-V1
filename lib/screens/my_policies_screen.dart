@@ -27,12 +27,12 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
       final rawStatus = p['status']?.toString() ?? 'Unknown';
       final isDueForRenewal = _isDueForRenewal(p);
       final isExpired = _isExpired(p);
+      final isActive = _isActive(p);
       final displayStatus = isExpired
           ? 'Expired'
           : isDueForRenewal
               ? 'Renewal Due'
               : rawStatus;
-      final isActive = displayStatus == 'Active';
       return {
         'title': p['policyClass'] ?? '',
         'vehicle': p['insured'] ?? '',
@@ -43,6 +43,7 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
             : isExpired
                 ? Colors.red
                 : AppTheme.accentOrange,
+        'isActive': isActive,
         'isDueForRenewal': isDueForRenewal,
         'isExpired': isExpired,
         'renewalLabel': isExpired ? 'Expired on' : 'Renewal',
@@ -61,7 +62,7 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
     if (_selectedFilter == 1) {
       policies = policies.where((p) => p['isDueForRenewal'] == true).toList();
     } else if (_selectedFilter == 2) {
-      policies = policies.where((p) => p['status'] == 'Active').toList();
+      policies = policies.where((p) => p['isActive'] == true).toList();
     } else if (_selectedFilter == 3) {
       policies = policies.where((p) => p['status'] == 'Expired').toList();
     }
@@ -86,11 +87,12 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
   @override
   Widget build(BuildContext context) {
     final policies = _filteredPolicies;
-    final totalPolicyCount = _policies.length;
+    final activeCount = _policies.where((p) => p['isActive'] == true).length;
     final renewalCount =
         _policies.where((p) => p['isDueForRenewal'] == true).length;
     final expiredCount =
         _policies.where((p) => p['status'] == 'Expired').length;
+    final totalPolicyCount = activeCount + expiredCount;
 
     return Scaffold(
       appBar: AppBar(
@@ -126,7 +128,7 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
                     Icons.error_outline, Colors.red),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Search bar
             TextField(
@@ -316,10 +318,10 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
                   color: AppTheme.primaryNavy.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.description_outlined,
+                child: const Icon(Icons.description_outlined,
                     color: AppTheme.primaryNavy, size: 18),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,7 +392,7 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
                         style: TextStyle(
                             fontSize: 10,
                             color: ThemeHelper.getSecondaryTextColor(context))),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(policy['premium'],
                         style: TextStyle(
                             fontSize: 12,
@@ -458,6 +460,8 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
   }
 
   bool _isDueForRenewal(Map<String, dynamic> policy) {
+    if (_isExpired(policy)) return true;
+
     final expiryDate = _policyEndDate(policy);
     if (expiryDate == null) return false;
 
@@ -466,7 +470,7 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
     final expiry = DateTime(expiryDate.year, expiryDate.month, expiryDate.day);
     final daysToExpiry = expiry.difference(today).inDays;
 
-    return daysToExpiry <= 14;
+    return daysToExpiry >= 0 && daysToExpiry <= 14;
   }
 
   bool _isExpired(Map<String, dynamic> policy) {
@@ -479,6 +483,18 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
     final today = DateTime(now.year, now.month, now.day);
     final expiry = DateTime(expiryDate.year, expiryDate.month, expiryDate.day);
     return expiry.isBefore(today);
+  }
+
+  bool _isActive(Map<String, dynamic> policy) {
+    final expiryDate = _policyEndDate(policy);
+    if (expiryDate == null) {
+      return policy['status']?.toString().toLowerCase() == 'active';
+    }
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final expiry = DateTime(expiryDate.year, expiryDate.month, expiryDate.day);
+    return !expiry.isBefore(today);
   }
 
   DateTime? _policyEndDate(Map<String, dynamic> policy) {

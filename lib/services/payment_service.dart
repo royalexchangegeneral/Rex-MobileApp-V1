@@ -8,8 +8,10 @@ import 'dart:convert';
 class PaymentService {
   PaymentService._();
 
-  static const String _proposalUrl = 'https://eportaltest.rexinsure.com/api/submit-product-proposal';
-  static const String _purchaseUrl = 'https://eportaltest.rexinsure.com/api/mobile/initiate-purchase';
+  static const String _proposalUrl =
+      'https://eportaltest.rexinsure.com/api/submit-product-proposal';
+  static const String _purchaseUrl =
+      'https://eportaltest.rexinsure.com/api/mobile/initiate-purchase';
 
   /// Calculate Paystack charge: 1.5% + ₦100, capped at ₦2,000.
   static int calculatePaystackCharge(int premium) {
@@ -49,11 +51,13 @@ class PaymentService {
         print('================================');
       }
 
-      final proposalResponse = await http.post(
-        Uri.parse(_proposalUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(proposalPayload),
-      ).timeout(const Duration(seconds: 20));
+      final proposalResponse = await http
+          .post(
+            Uri.parse(_proposalUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(proposalPayload),
+          )
+          .timeout(const Duration(seconds: 20));
 
       if (kDebugMode) {
         print('=== PROPOSAL RESPONSE ===');
@@ -62,19 +66,27 @@ class PaymentService {
         print('=========================');
       }
 
-      if (proposalResponse.statusCode != 200 && proposalResponse.statusCode != 201) {
-        return PaymentResult(success: false, message: 'Failed to submit proposal (${proposalResponse.statusCode})');
+      if (proposalResponse.statusCode != 200 &&
+          proposalResponse.statusCode != 201) {
+        return PaymentResult(
+            success: false,
+            message:
+                'Failed to submit proposal (${proposalResponse.statusCode})');
       }
 
       final proposalData = json.decode(proposalResponse.body);
       if (proposalData['status'] != true) {
-        return PaymentResult(success: false, message: proposalData['message']?.toString() ?? 'Proposal submission failed');
+        return PaymentResult(
+            success: false,
+            message: proposalData['message']?.toString() ??
+                'Proposal submission failed');
       }
 
       // Extract reference from proposal response
       final proposalRef = proposalData['data']?['reference']?.toString() ?? '';
       if (proposalRef.isEmpty) {
-        return PaymentResult(success: false, message: 'No reference returned from proposal');
+        return PaymentResult(
+            success: false, message: 'No reference returned from proposal');
       }
 
       // Step 2: Initiate purchase with the proposal reference
@@ -97,11 +109,13 @@ class PaymentService {
         print('=================================');
       }
 
-      final purchaseResponse = await http.post(
-        Uri.parse(_purchaseUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(purchasePayload),
-      ).timeout(const Duration(seconds: 20));
+      final purchaseResponse = await http
+          .post(
+            Uri.parse(_purchaseUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(purchasePayload),
+          )
+          .timeout(const Duration(seconds: 20));
 
       if (kDebugMode) {
         print('=== PURCHASE RESPONSE ===');
@@ -110,25 +124,38 @@ class PaymentService {
         print('=========================');
       }
 
-      if (purchaseResponse.statusCode == 200 || purchaseResponse.statusCode == 201) {
+      if (purchaseResponse.statusCode == 200 ||
+          purchaseResponse.statusCode == 201) {
         final data = json.decode(purchaseResponse.body);
         if (data['status'] == true) {
-          final authUrl = data['authorization_url']?.toString() ?? data['data']?['authorization_url']?.toString();
-          final respRef = data['reference']?.toString() ?? data['data']?['reference']?.toString() ?? proposalRef;
+          final authUrl = data['authorization_url']?.toString() ??
+              data['data']?['authorization_url']?.toString();
+          final respRef = data['reference']?.toString() ??
+              data['data']?['reference']?.toString() ??
+              proposalRef;
           if (authUrl != null && authUrl.isNotEmpty) {
-            return PaymentResult(success: true, authorizationUrl: authUrl, reference: respRef);
+            return PaymentResult(
+                success: true, authorizationUrl: authUrl, reference: respRef);
           } else {
-            return PaymentResult(success: false, message: 'No payment URL returned from server');
+            return PaymentResult(
+                success: false, message: 'No payment URL returned from server');
           }
         } else {
-          return PaymentResult(success: false, message: data['message']?.toString() ?? 'Purchase initialization failed');
+          return PaymentResult(
+              success: false,
+              message: data['message']?.toString() ??
+                  'Purchase initialization failed');
         }
       } else {
-        return PaymentResult(success: false, message: 'Server error (${purchaseResponse.statusCode})');
+        return PaymentResult(
+            success: false,
+            message: 'Server error (${purchaseResponse.statusCode})');
       }
     } catch (e) {
       if (kDebugMode) print('Payment error: $e');
-      return PaymentResult(success: false, message: 'Connection error. Please check your internet.');
+      return PaymentResult(
+          success: false,
+          message: 'Connection error. Please check your internet.');
     }
   }
 
@@ -137,19 +164,28 @@ class PaymentService {
     required String email,
     required int premium,
     required String policyNumber,
+    required String names,
+    required String mobileno,
+    required String productCode,
+    required String endDate,
   }) async {
     try {
-      final charge = calculatePaystackCharge(premium);
-      final totalAmount = premium + charge;
-      final ref = 'RENEW_${policyNumber}_${DateTime.now().millisecondsSinceEpoch}';
+      final ref =
+          'RENEW_${policyNumber}_${DateTime.now().millisecondsSinceEpoch}';
 
       final payload = {
-        'product_code': 'RENEWAL',
-        'names': '',
-        'email': email,
-        'mobileno': '',
-        'premium': totalAmount,
         'reference': ref,
+        'product_code': productCode,
+        'names': names,
+        'email': email,
+        'mobileno': mobileno,
+        'premium': premium,
+        'PolicyNo': policyNumber,
+        'ProdCode': productCode,
+        'PmtAmt': premium.toString(),
+        'EndDate': endDate,
+        'PmtChannel': 'Paystack',
+        'RefNo': ref,
       };
 
       if (kDebugMode) {
@@ -159,11 +195,13 @@ class PaymentService {
         print('========================');
       }
 
-      final response = await http.post(
-        Uri.parse(_purchaseUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(payload),
-      ).timeout(const Duration(seconds: 20));
+      final response = await http
+          .post(
+            Uri.parse(_purchaseUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(payload),
+          )
+          .timeout(const Duration(seconds: 20));
 
       if (kDebugMode) {
         print('=== RENEWAL RESPONSE ===');
@@ -175,22 +213,32 @@ class PaymentService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
         if (data['status'] == true) {
-          final authUrl = data['authorization_url']?.toString() ?? data['data']?['authorization_url']?.toString();
-          final respRef = data['reference']?.toString() ?? data['data']?['reference']?.toString() ?? ref;
+          final authUrl = data['authorization_url']?.toString() ??
+              data['data']?['authorization_url']?.toString();
+          final respRef = data['reference']?.toString() ??
+              data['data']?['reference']?.toString() ??
+              ref;
           if (authUrl != null && authUrl.isNotEmpty) {
-            return PaymentResult(success: true, authorizationUrl: authUrl, reference: respRef);
+            return PaymentResult(
+                success: true, authorizationUrl: authUrl, reference: respRef);
           } else {
-            return PaymentResult(success: false, message: 'No payment URL returned');
+            return PaymentResult(
+                success: false, message: 'No payment URL returned');
           }
         } else {
-          return PaymentResult(success: false, message: data['message']?.toString() ?? 'Renewal failed');
+          return PaymentResult(
+              success: false,
+              message: data['message']?.toString() ?? 'Renewal failed');
         }
       } else {
-        return PaymentResult(success: false, message: 'Server error (${response.statusCode})');
+        return PaymentResult(
+            success: false, message: 'Server error (${response.statusCode})');
       }
     } catch (e) {
       if (kDebugMode) print('Renewal error: $e');
-      return PaymentResult(success: false, message: 'Connection error. Please check your internet.');
+      return PaymentResult(
+          success: false,
+          message: 'Connection error. Please check your internet.');
     }
   }
 
@@ -218,12 +266,15 @@ class PaymentService {
       // For idtype and idtypeb (Customer ID & Vehicle License), reuse the first photo as placeholder
       final fileKeys = ['idtypec', 'idtyped', 'idtypee', 'idtypef', 'idtypeg'];
       for (int i = 0; i < imagePaths.length && i < fileKeys.length; i++) {
-        request.files.add(await http.MultipartFile.fromPath(fileKeys[i], imagePaths[i]));
+        request.files
+            .add(await http.MultipartFile.fromPath(fileKeys[i], imagePaths[i]));
       }
       // Send first photo as placeholder for idtype and idtypeb (required by API)
       if (imagePaths.isNotEmpty) {
-        request.files.add(await http.MultipartFile.fromPath('idtype', imagePaths[0]));
-        request.files.add(await http.MultipartFile.fromPath('idtypeb', imagePaths[0]));
+        request.files
+            .add(await http.MultipartFile.fromPath('idtype', imagePaths[0]));
+        request.files
+            .add(await http.MultipartFile.fromPath('idtypeb', imagePaths[0]));
       }
 
       if (kDebugMode) {
@@ -234,7 +285,8 @@ class PaymentService {
         print('================================================');
       }
 
-      final proposalStreamResponse = await request.send().timeout(const Duration(seconds: 45));
+      final proposalStreamResponse =
+          await request.send().timeout(const Duration(seconds: 45));
       final proposalBody = await proposalStreamResponse.stream.bytesToString();
 
       if (kDebugMode) {
@@ -244,20 +296,27 @@ class PaymentService {
         print('============================');
       }
 
-      if (proposalStreamResponse.statusCode != 200 && proposalStreamResponse.statusCode != 201) {
+      if (proposalStreamResponse.statusCode != 200 &&
+          proposalStreamResponse.statusCode != 201) {
         String errorMsg = 'Failed to submit proposal';
-        try { final d = json.decode(proposalBody); errorMsg = d['message']?.toString() ?? errorMsg; } catch (_) {}
+        try {
+          final d = json.decode(proposalBody);
+          errorMsg = d['message']?.toString() ?? errorMsg;
+        } catch (_) {}
         return PaymentResult(success: false, message: errorMsg);
       }
 
       final proposalData = json.decode(proposalBody);
       if (proposalData['status'] != true) {
-        return PaymentResult(success: false, message: proposalData['message']?.toString() ?? 'Proposal failed');
+        return PaymentResult(
+            success: false,
+            message: proposalData['message']?.toString() ?? 'Proposal failed');
       }
 
       final proposalRef = proposalData['data']?['reference']?.toString() ?? '';
       if (proposalRef.isEmpty) {
-        return PaymentResult(success: false, message: 'No reference returned from proposal');
+        return PaymentResult(
+            success: false, message: 'No reference returned from proposal');
       }
 
       // Step 2: Initiate purchase with the proposal reference
@@ -280,11 +339,13 @@ class PaymentService {
         print('====================================');
       }
 
-      final purchaseResponse = await http.post(
-        Uri.parse(_purchaseUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(purchasePayload),
-      ).timeout(const Duration(seconds: 20));
+      final purchaseResponse = await http
+          .post(
+            Uri.parse(_purchaseUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(purchasePayload),
+          )
+          .timeout(const Duration(seconds: 20));
 
       if (kDebugMode) {
         print('=== CP PURCHASE RESPONSE ===');
@@ -293,25 +354,37 @@ class PaymentService {
         print('============================');
       }
 
-      if (purchaseResponse.statusCode == 200 || purchaseResponse.statusCode == 201) {
+      if (purchaseResponse.statusCode == 200 ||
+          purchaseResponse.statusCode == 201) {
         final data = json.decode(purchaseResponse.body);
         if (data['status'] == true) {
-          final authUrl = data['authorization_url']?.toString() ?? data['data']?['authorization_url']?.toString();
-          final respRef = data['reference']?.toString() ?? data['data']?['reference']?.toString() ?? proposalRef;
+          final authUrl = data['authorization_url']?.toString() ??
+              data['data']?['authorization_url']?.toString();
+          final respRef = data['reference']?.toString() ??
+              data['data']?['reference']?.toString() ??
+              proposalRef;
           if (authUrl != null && authUrl.isNotEmpty) {
-            return PaymentResult(success: true, authorizationUrl: authUrl, reference: respRef);
+            return PaymentResult(
+                success: true, authorizationUrl: authUrl, reference: respRef);
           } else {
-            return PaymentResult(success: false, message: 'No payment URL returned');
+            return PaymentResult(
+                success: false, message: 'No payment URL returned');
           }
         } else {
-          return PaymentResult(success: false, message: data['message']?.toString() ?? 'Purchase failed');
+          return PaymentResult(
+              success: false,
+              message: data['message']?.toString() ?? 'Purchase failed');
         }
       } else {
-        return PaymentResult(success: false, message: 'Server error (${purchaseResponse.statusCode})');
+        return PaymentResult(
+            success: false,
+            message: 'Server error (${purchaseResponse.statusCode})');
       }
     } catch (e) {
       if (kDebugMode) print('CP payment error: $e');
-      return PaymentResult(success: false, message: 'Connection error. Please check your internet.');
+      return PaymentResult(
+          success: false,
+          message: 'Connection error. Please check your internet.');
     }
   }
 }
@@ -323,5 +396,9 @@ class PaymentResult {
   final String? reference;
   final String? message;
 
-  PaymentResult({required this.success, this.authorizationUrl, this.reference, this.message});
+  PaymentResult(
+      {required this.success,
+      this.authorizationUrl,
+      this.reference,
+      this.message});
 }

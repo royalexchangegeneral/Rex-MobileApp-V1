@@ -4,6 +4,7 @@ import '../utils/theme_helper.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
+import 'my_policies_screen.dart';
 import 'new_policy_screen.dart';
 import 'category_articles_screen.dart';
 import 'video_player_screen.dart';
@@ -283,7 +284,13 @@ class DiscoverInsuranceScreen extends StatelessWidget {
                     (route) => false);
               }),
               _buildNavItem(
-                  context, Icons.description_outlined, 'Policies', false),
+                  context, Icons.description_outlined, 'Policies', false,
+                  onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const MyPoliciesScreen()));
+              }),
               const SizedBox(width: 48),
               _buildNavItem(context, Icons.assignment_outlined, 'Claims', false,
                   onTap: () {
