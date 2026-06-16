@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 import '../providers/auth_provider.dart';
 import 'customer_dashboard_screen.dart';
 
@@ -175,15 +176,18 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       } else {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Unable to create account (${response.statusCode})'),
+          content: Text(ErrorMessages.fromResponse(response,
+              fallback: 'Unable to create account')),
           backgroundColor: Colors.red,
         ));
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(ErrorMessages.fromException(e,
+              fallback: 'Unable to create account')),
+          backgroundColor: Colors.red));
     }
   }
 
@@ -330,8 +334,10 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(ErrorMessages.fromException(e,
+              fallback: 'Unable to create account')),
+          backgroundColor: Colors.red));
     }
   }
 
@@ -339,13 +345,8 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       {required String fallback}) async {
     if (!mounted) return;
     setState(() => _isLoading = false);
-    var message = fallback;
-    try {
-      final data = json.decode(body);
-      message = data['Message']?.toString() ??
-          data['message']?.toString() ??
-          fallback;
-    } catch (_) {}
+    final message = ErrorMessages.fromResponse(http.Response(body, 400),
+        fallback: fallback);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );

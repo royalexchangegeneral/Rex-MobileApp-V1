@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 import 'comprehensive_nin_screen.dart';
 
 class ComprehensiveImageUploadScreen extends StatefulWidget {
@@ -84,8 +85,8 @@ class _ComprehensiveImageUploadScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(ErrorMessages.fromException(e))));
       }
     }
   }

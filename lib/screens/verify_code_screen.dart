@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 
 class VerifyCodeScreen extends StatefulWidget {
   final String email;
@@ -106,8 +107,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to resend code. Please try again.'),
+            SnackBar(
+              content: Text(ErrorMessages.fromResponse(response,
+                  fallback: 'Failed to resend code. Please try again.')),
               backgroundColor: Colors.red,
             ),
           );
@@ -118,7 +120,8 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(ErrorMessages.fromException(e,
+                fallback: 'Failed to resend code. Please try again.')),
             backgroundColor: Colors.red,
           ),
         );

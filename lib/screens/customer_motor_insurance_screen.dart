@@ -203,7 +203,9 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
                       builder: (_) => RoyalAutoPurchaseScreen(
                           productName: 'Royal Auto Bronze',
                           price: 'Premium – 3% + N15,000/m',
-                          isCustomerFlow: !isAgent))),
+                          isCustomerFlow: !isAgent,
+                          isAgent: isAgent,
+                          clientData: clientData))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -221,7 +223,9 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
                       builder: (_) => RoyalAutoPurchaseScreen(
                           productName: 'Royal Auto Silver',
                           price: 'Premium – 3% + N15,000/m',
-                          isCustomerFlow: !isAgent))),
+                          isCustomerFlow: !isAgent,
+                          isAgent: isAgent,
+                          clientData: clientData))),
             ),
             const SizedBox(height: 12),
             _buildGetQuoteCard(

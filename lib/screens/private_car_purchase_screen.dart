@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 import '../utils/occupations.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/searchable_dropdown.dart';
@@ -219,13 +220,15 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
         setState(() => _isLoadingLgas = false);
         if (mounted)
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Failed to load LGAs: ${response.statusCode}')));
+              content: Text(ErrorMessages.fromResponse(response,
+                  fallback: 'Failed to load LGAs'))));
       }
     } catch (e) {
       setState(() => _isLoadingLgas = false);
       if (mounted)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error loading LGAs: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(ErrorMessages.fromException(e,
+                fallback: 'Failed to load LGAs'))));
     }
   }
 

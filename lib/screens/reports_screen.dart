@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 import 'agent_dashboard_screen.dart';
 import 'clients_list_screen.dart';
 import 'agent_profile_screen.dart';
@@ -198,11 +199,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
           _snack('Report generated successfully', isSuccess: true);
         }
       } else {
-        _snack('Failed to fetch report: ${r.statusCode}');
+        _snack(
+            ErrorMessages.fromResponse(r, fallback: 'Failed to fetch report'));
       }
     } catch (e) {
       print('Report error: $e');
-      _snack('Error generating report: $e');
+      _snack(ErrorMessages.fromException(e,
+          fallback: 'Unable to generate report'));
     }
     setState(() => _downloading = false);
   }

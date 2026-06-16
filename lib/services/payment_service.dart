@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../utils/error_messages.dart';
+
 /// Centralized payment service.
 /// Step 1: Call submit-product-proposal → get reference
 /// Step 2: Call initiate-purchase with that reference → get authorization_url
@@ -30,12 +32,15 @@ class PaymentService {
     required String mobileno,
     required int premium,
     Map<String, dynamic> extraFields = const {},
+    bool includeCredentials = true,
   }) async {
     try {
       // Step 1: Submit product proposal
       final proposalPayload = {
-        'IntCode': 'TESTCODE',
-        'Password': 'royal1234',
+        if (includeCredentials) ...{
+          'IntCode': 'TESTCODE',
+          'Password': 'royal1234',
+        },
         'product_code': productCode,
         'names': names,
         'email': email,
@@ -70,8 +75,8 @@ class PaymentService {
           proposalResponse.statusCode != 201) {
         return PaymentResult(
             success: false,
-            message:
-                'Failed to submit proposal (${proposalResponse.statusCode})');
+            message: ErrorMessages.fromResponse(proposalResponse,
+                fallback: 'Failed to submit proposal'));
       }
 
       final proposalData = json.decode(proposalResponse.body);
@@ -82,8 +87,16 @@ class PaymentService {
                 'Proposal submission failed');
       }
 
-      // Extract reference from proposal response
-      final proposalRef = proposalData['data']?['reference']?.toString() ?? '';
+      // Extract reference from proposal response. Some motor proposal responses
+      // return the debit note as the payable reference instead of "reference".
+      final proposalRef = proposalData['data']?['reference']?.toString() ??
+          proposalData['data']?['Reference']?.toString() ??
+          proposalData['data']?['debit_no']?.toString() ??
+          proposalData['data']?['debitNo']?.toString() ??
+          proposalData['data']?['DebitNo']?.toString() ??
+          proposalData['reference']?.toString() ??
+          proposalData['debit_no']?.toString() ??
+          '';
       if (proposalRef.isEmpty) {
         return PaymentResult(
             success: false, message: 'No reference returned from proposal');
@@ -149,7 +162,8 @@ class PaymentService {
       } else {
         return PaymentResult(
             success: false,
-            message: 'Server error (${purchaseResponse.statusCode})');
+            message: ErrorMessages.fromResponse(purchaseResponse,
+                fallback: 'Unable to initiate payment'));
       }
     } catch (e) {
       if (kDebugMode) print('Payment error: $e');
@@ -174,7 +188,6 @@ class PaymentService {
           'RENEW_${policyNumber}_${DateTime.now().millisecondsSinceEpoch}';
 
       final payload = {
-        'reference': ref,
         'product_code': productCode,
         'names': names,
         'email': email,
@@ -182,10 +195,7 @@ class PaymentService {
         'premium': premium,
         'PolicyNo': policyNumber,
         'ProdCode': productCode,
-        'PmtAmt': premium.toString(),
         'EndDate': endDate,
-        'PmtChannel': 'Paystack',
-        'RefNo': ref,
       };
 
       if (kDebugMode) {
@@ -232,7 +242,9 @@ class PaymentService {
         }
       } else {
         return PaymentResult(
-            success: false, message: 'Server error (${response.statusCode})');
+            success: false,
+            message: ErrorMessages.fromResponse(response,
+                fallback: 'Unable to initiate renewal'));
       }
     } catch (e) {
       if (kDebugMode) print('Renewal error: $e');
@@ -313,7 +325,14 @@ class PaymentService {
             message: proposalData['message']?.toString() ?? 'Proposal failed');
       }
 
-      final proposalRef = proposalData['data']?['reference']?.toString() ?? '';
+      final proposalRef = proposalData['data']?['reference']?.toString() ??
+          proposalData['data']?['Reference']?.toString() ??
+          proposalData['data']?['debit_no']?.toString() ??
+          proposalData['data']?['debitNo']?.toString() ??
+          proposalData['data']?['DebitNo']?.toString() ??
+          proposalData['reference']?.toString() ??
+          proposalData['debit_no']?.toString() ??
+          '';
       if (proposalRef.isEmpty) {
         return PaymentResult(
             success: false, message: 'No reference returned from proposal');
@@ -378,7 +397,8 @@ class PaymentService {
       } else {
         return PaymentResult(
             success: false,
-            message: 'Server error (${purchaseResponse.statusCode})');
+            message: ErrorMessages.fromResponse(purchaseResponse,
+                fallback: 'Unable to initiate payment'));
       }
     } catch (e) {
       if (kDebugMode) print('CP payment error: $e');

@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 import '../widgets/agent_bottom_nav.dart';
 import '../providers/auth_provider.dart';
 import 'customer_dashboard_screen.dart';
@@ -176,9 +177,8 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
                   builder: (_) =>
                       _ClaimSuccessScreen(isAgentFlow: widget.isAgentFlow)));
         } else {
-          final displayMessage = response.body.isNotEmpty
-              ? '${response.statusCode} ${response.reasonPhrase ?? ''} - ${response.body}'
-              : errorMessage;
+          final displayMessage = ErrorMessages.fromResponse(response,
+              fallback: 'Unable to submit claim');
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(displayMessage), backgroundColor: Colors.red));
         }
@@ -196,7 +196,8 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
       if (mounted) {
         final message = e is SocketException
             ? 'Network error. Please check your connection.'
-            : 'Error: $e';
+            : ErrorMessages.fromException(e,
+                fallback: 'Unable to submit claim');
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(message), backgroundColor: Colors.red));
       }
@@ -290,14 +291,16 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
       } else {
         if (mounted)
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Policy not found: ${r.statusCode}'),
+              content: Text(
+                  ErrorMessages.fromResponse(r, fallback: 'Policy not found')),
               backgroundColor: Colors.red));
       }
     } catch (e) {
       print('Verify policy error: $e');
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Error verifying policy: $e'),
+            content: Text(ErrorMessages.fromException(e,
+                fallback: 'Unable to verify policy')),
             backgroundColor: Colors.red));
     }
     setState(() => _verifying = false);
@@ -902,6 +905,16 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
 
   // STEP 4: Review & Confirm
   Widget _buildStep4() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final summaryCardColor =
+        isDark ? const Color(0xFF111827) : Colors.grey[50]!;
+    final summaryBorderColor =
+        isDark ? const Color(0xFF334155) : Colors.grey[200]!;
+    final mutedTextColor = isDark ? const Color(0xFF94A3B8) : Colors.grey[500]!;
+    final checkboxTextColor = isDark ? const Color(0xFFE5E7EB) : Colors.black87;
+    final checkboxColor =
+        isDark ? AppTheme.accentOrange : const Color(0xFF1E2D64);
+
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
@@ -912,8 +925,9 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           Container(
             padding: EdgeInsets.all(14),
             decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12)),
+                color: summaryCardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: summaryBorderColor)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -938,8 +952,9 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           Container(
             padding: EdgeInsets.all(14),
             decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12)),
+                color: summaryCardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: summaryBorderColor)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -963,8 +978,9 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           Container(
             padding: EdgeInsets.all(14),
             decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12)),
+                color: summaryCardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: summaryBorderColor)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -976,7 +992,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
                 const SizedBox(height: 12),
                 if (_photos.isEmpty)
                   Text('No attachments',
-                      style: TextStyle(fontSize: 11, color: Colors.grey[500]))
+                      style: TextStyle(fontSize: 11, color: mutedTextColor))
                 else
                   ..._photos.map((f) => Padding(
                         padding: const EdgeInsets.only(bottom: 8),
@@ -996,15 +1012,18 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
                   child: Checkbox(
                       value: _confirmAccuracy,
                       onChanged: (v) => setState(() => _confirmAccuracy = v!),
-                      activeColor: const Color(0xFF1E2D64),
+                      activeColor: checkboxColor,
+                      checkColor: isDark ? Colors.black : Colors.white,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4)))),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                   child: Text(
                       'I confirm that all information provided is accurate and complete. I understand that providing false information may result in denial of my claim',
                       style: TextStyle(
-                          fontSize: 11, color: Colors.black87, height: 1.4))),
+                          fontSize: 11,
+                          color: checkboxTextColor,
+                          height: 1.4))),
             ],
           ),
           const SizedBox(height: 12),
@@ -1017,15 +1036,18 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
                   child: Checkbox(
                       value: _agreePrivacy,
                       onChanged: (v) => setState(() => _agreePrivacy = v!),
-                      activeColor: const Color(0xFF1E2D64),
+                      activeColor: checkboxColor,
+                      checkColor: isDark ? Colors.black : Colors.white,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4)))),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                   child: Text(
                       'I agree to the processing of my personal data in accordance with the Privacy Policy and Terms of Service',
                       style: TextStyle(
-                          fontSize: 11, color: Colors.black87, height: 1.4))),
+                          fontSize: 11,
+                          color: checkboxTextColor,
+                          height: 1.4))),
             ],
           ),
           const SizedBox(height: 20),
@@ -1037,8 +1059,8 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
                   ? _nextStep
                   : null,
               style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E2D64),
-                  foregroundColor: Colors.white,
+                  backgroundColor: checkboxColor,
+                  foregroundColor: isDark ? Colors.black : Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                   elevation: 0),
@@ -1060,12 +1082,14 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
   }
 
   Widget _summaryRow(String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final labelColor = isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
     return Padding(
       padding: EdgeInsets.only(bottom: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+          Text(label, style: TextStyle(fontSize: 11, color: labelColor)),
           Flexible(
               child: Text(value.isNotEmpty ? value : '-',
                   style: TextStyle(
@@ -1079,13 +1103,16 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
   }
 
   Widget _attachmentRow(String name) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = isDark ? const Color(0xFF94A3B8) : Colors.grey[500]!;
+    final textColor = isDark ? const Color(0xFFE5E7EB) : Colors.grey[700]!;
     return Row(
       children: [
-        Icon(Icons.image_outlined, color: Colors.grey[500], size: 18),
+        Icon(Icons.image_outlined, color: iconColor, size: 18),
         const SizedBox(width: 8),
         Expanded(
-            child: Text(name,
-                style: TextStyle(fontSize: 11, color: Colors.grey[700]))),
+            child:
+                Text(name, style: TextStyle(fontSize: 11, color: textColor))),
         const Icon(Icons.check, color: Colors.green, size: 18),
       ],
     );
@@ -1119,6 +1146,13 @@ class _ClaimSuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final actionColor =
+        isDark ? AppTheme.accentOrange : const Color(0xFF1E2D64);
+    final onActionColor = isDark ? Colors.black : Colors.white;
+    final secondaryTextColor =
+        isDark ? const Color(0xFFCBD5E1) : Colors.grey[500]!;
+
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -1132,13 +1166,12 @@ class _ClaimSuccessScreen extends StatelessWidget {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E2D64),
+                    color: actionColor,
                     shape: BoxShape.circle,
                     border: Border.all(
-                        color: const Color(0xFF1E2D64).withValues(alpha: 0.3),
-                        width: 8),
+                        color: actionColor.withValues(alpha: 0.3), width: 8),
                   ),
-                  child: Icon(Icons.check, color: Colors.white, size: 44),
+                  child: Icon(Icons.check, color: onActionColor, size: 44),
                 ),
                 SizedBox(height: 28),
                 Text(
@@ -1152,8 +1185,10 @@ class _ClaimSuccessScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 16),
                 RichText(
-                  text: const TextSpan(
-                    style: TextStyle(fontSize: 13, color: Colors.black87),
+                  text: TextSpan(
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: Theme.of(context).colorScheme.onSurface),
                     children: [
                       TextSpan(text: 'Claim Number: '),
                       TextSpan(
@@ -1167,7 +1202,7 @@ class _ClaimSuccessScreen extends StatelessWidget {
                     'Thank you for trusting us, your coverage\nbegins immediately',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        fontSize: 11, color: Colors.grey[500], height: 1.4)),
+                        fontSize: 11, color: secondaryTextColor, height: 1.4)),
                 const SizedBox(height: 36),
                 SizedBox(
                   width: double.infinity,
@@ -1181,8 +1216,8 @@ class _ClaimSuccessScreen extends StatelessWidget {
                                 : const CustomerDashboardScreen()),
                         (r) => false),
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E2D64),
-                        foregroundColor: Colors.white,
+                        backgroundColor: actionColor,
+                        foregroundColor: onActionColor,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                         elevation: 0),
@@ -1201,14 +1236,14 @@ class _ClaimSuccessScreen extends StatelessWidget {
                         MaterialPageRoute(
                             builder: (_) => const MyClaimsScreen())),
                     style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF1E2D64)),
+                        side: BorderSide(color: actionColor),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10))),
-                    child: const Text('Track Claim',
+                    child: Text('Track Claim',
                         style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF1E2D64))),
+                            color: actionColor)),
                   ),
                 ),
               ],

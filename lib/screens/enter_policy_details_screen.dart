@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 import '../providers/auth_provider.dart';
 import 'customer_dashboard_screen.dart';
 
@@ -109,8 +110,10 @@ class _EnterPolicyDetailsScreenState extends State<EnterPolicyDetailsScreen> {
     } catch (e) {
       setState(() => _isVerifying = false);
       if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(ErrorMessages.fromException(e,
+                fallback: 'Unable to verify policy')),
+            backgroundColor: Colors.red));
     }
   }
 
@@ -281,8 +284,10 @@ class _EnterPolicyDetailsScreenState extends State<EnterPolicyDetailsScreen> {
     } catch (e) {
       setState(() => _isCreating = false);
       if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(ErrorMessages.fromException(e,
+                fallback: 'Unable to create account')),
+            backgroundColor: Colors.red));
     }
   }
 

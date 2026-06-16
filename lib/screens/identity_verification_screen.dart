@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 
 class IdentityVerificationScreen extends StatefulWidget {
   const IdentityVerificationScreen({super.key});
@@ -83,8 +84,8 @@ class _IdentityVerificationScreenState
     } catch (e) {
       setState(() => _isVerifying = false);
       if (mounted)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(ErrorMessages.fromException(e))));
     }
   }
 

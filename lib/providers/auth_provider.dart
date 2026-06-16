@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
 
+import '../utils/error_messages.dart';
+
 class AuthProvider with ChangeNotifier {
   bool _isAuthenticated = false;
   String? _userId;
@@ -240,7 +242,8 @@ class AuthProvider with ChangeNotifier {
         return LoginResult(
           success: false,
           message: apiMessage.isEmpty
-              ? 'Server error (${response.statusCode}). Please try again.'
+              ? ErrorMessages.fromResponse(response,
+                  fallback: 'Unable to log in. Please try again.')
               : apiMessage,
         );
       }

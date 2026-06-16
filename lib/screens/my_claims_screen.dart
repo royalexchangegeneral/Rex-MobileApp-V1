@@ -349,8 +349,6 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
         c['DateFiled']?.toString() ??
         c['CreatedDate']?.toString() ??
         '';
-    final policyNo =
-        c['PolicyNo']?.toString() ?? c['PolicyID']?.toString() ?? '';
     final insured =
         c['Insured']?.toString() ?? c['ClaimantName']?.toString() ?? '';
     final isCompleted = status.toLowerCase().contains('complet') ||
@@ -361,7 +359,7 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
       decoration: BoxDecoration(
         color: ThemeHelper.getCardColor(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: ThemeHelper.getBorderColor(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -417,59 +415,45 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
               ),
             ],
           ),
-          SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(claimAmount.isNotEmpty ? 'Claim Amount' : 'Policy No',
-                        style: TextStyle(
-                            fontSize: 9,
-                            color: ThemeHelper.getSecondaryTextColor(context))),
-                    SizedBox(height: 2),
-                    Text(claimAmount.isNotEmpty ? '₦$claimAmount' : policyNo,
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onSurface)),
-                  ],
+          const SizedBox(height: 14),
+          if (claimAmount.isNotEmpty) ...[
+            _claimMetaItem(
+              label: 'Claim Amount',
+              value: '₦$claimAmount',
+              valueWeight: FontWeight.bold,
+            ),
+            const SizedBox(height: 12),
+          ],
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF111827)
+                  : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: ThemeHelper.getBorderColor(context)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _claimMetaItem(
+                    label: 'Date Filed',
+                    value: dateFiled.isNotEmpty ? dateFiled : 'N/A',
+                  ),
                 ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Date Filed',
-                        style: TextStyle(
-                            fontSize: 9,
-                            color: ThemeHelper.getSecondaryTextColor(context))),
-                    SizedBox(height: 2),
-                    Text(dateFiled.isNotEmpty ? dateFiled : 'N/A',
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.onSurface)),
-                  ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _claimMetaItem(
+                    label: 'Status',
+                    value: isCompleted ? 'Completed' : status,
+                    valueColor: statusColor,
+                    valueWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('Status',
-                        style: TextStyle(fontSize: 9, color: Colors.grey[500])),
-                    const SizedBox(height: 2),
-                    Text(isCompleted ? 'Completed' : status,
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: statusColor)),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 14),
           SizedBox(
@@ -490,6 +474,33 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _claimMetaItem({
+    required String label,
+    required String value,
+    Color? valueColor,
+    FontWeight valueWeight = FontWeight.w600,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w500,
+                color: ThemeHelper.getSecondaryTextColor(context))),
+        const SizedBox(height: 3),
+        Text(value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+                fontSize: 11,
+                height: 1.25,
+                fontWeight: valueWeight,
+                color: valueColor ?? Theme.of(context).colorScheme.onSurface)),
+      ],
     );
   }
 

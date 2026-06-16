@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 import 'create_password_screen.dart';
 import 'customer_dashboard_screen.dart';
 import 'agent_dashboard_screen.dart';
@@ -130,15 +131,18 @@ class _PolicyPurchaseSuccessScreenState
       } else {
         setState(() => _creatingCustomer = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Unable to create customer (${response.statusCode})'),
+          content: Text(ErrorMessages.fromResponse(response,
+              fallback: 'Unable to create customer')),
           backgroundColor: Colors.red,
         ));
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _creatingCustomer = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(ErrorMessages.fromException(e,
+              fallback: 'Unable to create customer')),
+          backgroundColor: Colors.red));
     }
   }
 

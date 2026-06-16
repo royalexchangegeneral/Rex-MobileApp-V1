@@ -92,6 +92,13 @@ class PolicyRenewalScreen extends StatelessWidget {
         policyData?['ProdCode'] ??
         policyData?['prodCode'];
     final code = directCode?.toString().trim() ?? '';
+    final normalizedCode = code.toLowerCase();
+    if (normalizedCode == 'rab' || normalizedCode.contains('bronze')) {
+      return 'RAB';
+    }
+    if (normalizedCode == 'ras' || normalizedCode.contains('silver')) {
+      return 'RAS';
+    }
     if (code.isNotEmpty) return code;
 
     final source = [
@@ -101,8 +108,12 @@ class PolicyRenewalScreen extends StatelessWidget {
       policyData?['ProductCover']?.toString() ?? '',
     ].join(' ').toLowerCase();
 
+    if (source.contains('bronze')) return 'RAB';
+    if (source.contains('silver')) return 'RAS';
     if (source.contains('third') || source.contains('tp')) return 'TP';
     if (source.contains('comprehensive') || source.contains('cp')) return 'CP';
+    if (source.contains('royal auto') && source.contains('rab')) return 'RAB';
+    if (source.contains('royal auto') && source.contains('ras')) return 'RAS';
     if (source.contains('auto')) return 'TP';
     return policyType.trim().isNotEmpty ? policyType.trim() : 'TP';
   }

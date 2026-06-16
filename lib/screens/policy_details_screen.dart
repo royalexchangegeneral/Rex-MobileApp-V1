@@ -644,7 +644,7 @@ class PolicyDetailsScreen extends StatelessWidget {
       if (response.statusCode < 200 || response.statusCode >= 300) {
         client.close(force: true);
         throw HttpException(
-          'Certificate download failed (${response.statusCode})',
+          'Certificate download failed',
           uri: uri,
         );
       }

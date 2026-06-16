@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 import '../providers/auth_provider.dart';
 import 'quote_success_screen.dart';
 import 'customer_dashboard_screen.dart';
@@ -390,21 +391,27 @@ class _QuoteScreenState extends State<QuoteScreen> {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(data['Message'] ?? 'Request failed'),
+                content: Text(ErrorMessages.fromDecodedJson(data).isNotEmpty
+                    ? ErrorMessages.fromDecodedJson(data)
+                    : 'Request failed'),
                 backgroundColor: Colors.red),
           );
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Server error. Please try again.'),
+          SnackBar(
+              content: Text(ErrorMessages.fromResponse(response,
+                  fallback: 'Request failed. Please try again.')),
               backgroundColor: Colors.red),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text(
+                  ErrorMessages.fromException(e, fallback: 'Request failed')),
+              backgroundColor: Colors.red),
         );
       }
     } finally {

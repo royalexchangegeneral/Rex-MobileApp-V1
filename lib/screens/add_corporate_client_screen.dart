@@ -7,6 +7,7 @@ import 'agent_profile_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 
 class AddCorporateClientScreen extends StatefulWidget {
   const AddCorporateClientScreen({super.key});
@@ -181,7 +182,7 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  'Verification failed: ${response.statusCode}. Please enter details manually'),
+                  '${ErrorMessages.fromResponse(response, fallback: 'Verification failed')}. Please enter details manually'),
             ),
           );
         }
@@ -193,8 +194,8 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text('Error: ${e.toString()}. Please enter details manually'),
+            content: Text(
+                '${ErrorMessages.fromException(e, fallback: 'Verification failed')}. Please enter details manually'),
           ),
         );
       }

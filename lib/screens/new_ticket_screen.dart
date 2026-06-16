@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 import '../utils/theme_helper.dart';
 import '../widgets/agent_bottom_nav.dart';
 import '../providers/auth_provider.dart';
@@ -152,14 +153,17 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
             content: Text('Ticket submitted successfully'),
             backgroundColor: Colors.green));
       } else {
+        final errorResponse = http.Response(responseBody, response.statusCode);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Failed to submit ticket: ${response.statusCode}'),
+            content: Text(ErrorMessages.fromResponse(errorResponse,
+                fallback: 'Failed to submit ticket')),
             backgroundColor: Colors.red));
       }
     } catch (e) {
       print('Error submitting ticket: $e');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error submitting ticket: $e'),
+          content: Text(ErrorMessages.fromException(e,
+              fallback: 'Unable to submit ticket')),
           backgroundColor: Colors.red));
     } finally {
       setState(() => _isSubmitting = false);

@@ -7,6 +7,7 @@ import 'dart:io';
 import '../providers/auth_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/customer_details.dart';
+import '../utils/error_messages.dart';
 import '../services/payment_service.dart';
 import '../widgets/paystack_webview.dart';
 import '../widgets/searchable_dropdown.dart';
@@ -16,11 +17,16 @@ class RoyalAutoPurchaseScreen extends StatefulWidget {
   final String productName; // Royal Auto Bronze or Royal Auto Silver
   final String price;
   final bool isCustomerFlow;
-  const RoyalAutoPurchaseScreen(
-      {super.key,
-      required this.productName,
-      required this.price,
-      this.isCustomerFlow = false});
+  final bool isAgent;
+  final Map<String, dynamic>? clientData;
+  const RoyalAutoPurchaseScreen({
+    super.key,
+    required this.productName,
+    required this.price,
+    this.isCustomerFlow = false,
+    this.isAgent = false,
+    this.clientData,
+  });
   @override
   State<RoyalAutoPurchaseScreen> createState() =>
       _RoyalAutoPurchaseScreenState();
@@ -159,8 +165,46 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
   @override
   void initState() {
     super.initState();
+    _prefillAgentClientDetails();
     _prefillCustomerNin();
     _fetchVehicleList();
+  }
+
+  String get _productCode =>
+      widget.productName.toLowerCase().contains('bronze') ? 'RAB' : 'RAS';
+
+  String _clientValue(List<String> keys) {
+    final data = widget.clientData;
+    if (data == null) return '';
+    for (final key in keys) {
+      final value = data[key]?.toString().trim() ?? '';
+      if (value.isNotEmpty) return value;
+    }
+    return '';
+  }
+
+  void _prefillAgentClientDetails() {
+    if (!widget.isAgent || widget.clientData == null) return;
+
+    _ninController.text = _clientValue(
+      ['nin', 'NIN', 'cust_national_id_no', 'cust_national_id'],
+    );
+    _firstName = _clientValue(['firstName', 'cust_first_name']);
+    _lastName = _clientValue(['lastName', 'cust_last_name']);
+    _email = _clientValue(['email', 'cust_email']);
+    _phone = _clientValue(['phone', 'cust_phone', 'cust_phone_no']);
+    _dob = _clientValue(['dob', 'cust_dob']);
+    _state = _clientValue(['state', 'cust_state']);
+    _lga = _clientValue(['lga', 'cust_lga']);
+    _address = _clientValue(['address', 'cust_address']);
+    _manualFirstNameController.text = _firstName;
+    _manualLastNameController.text = _lastName;
+    _manualEmailController.text = _email;
+    _manualPhoneController.text = _phone;
+
+    if (_ninController.text.trim().length == 11) {
+      _selectedIdType = 'NIN';
+    }
   }
 
   Future<void> _prefillCustomerNin() async {
@@ -349,17 +393,17 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
         _vehicleData = null;
       });
       if (mounted)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(ErrorMessages.fromException(e))));
     }
   }
 
-  double _getBase() {
-    final m = RegExp(r'[\d,]+\.?\d*').firstMatch(widget.price);
-    return m != null
-        ? (double.tryParse(m.group(0)!.replaceAll(',', '')) ?? 0)
-        : 0;
-  }
+  int _getEstimatedValue() =>
+      int.tryParse(
+          _estimatedValueController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
+      0;
+
+  double _getBase() => (_getEstimatedValue() * 0.03) + 15000;
 
   double _getCharge() {
     double c = (_getBase() * 0.015) + 100;
@@ -375,12 +419,12 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
     final email = _email.isNotEmpty ? _email : 'customer@rexinsure.com';
 
     final result = await PaymentService.initiatePurchase(
-      productCode:
-          widget.productName.toLowerCase().contains('bronze') ? 'RAB' : 'RAS',
+      productCode: _productCode,
       names: '$_firstName $_lastName'.trim(),
       email: email,
       mobileno: _phone,
-      premium: _getBase().toInt(),
+      premium: _getBase().round(),
+      includeCredentials: false,
       extraFields: {
         'type': 'Individual',
         'vehregno': _regNumberController.text.trim(),
@@ -395,7 +439,7 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
         'engnumb': _vehicleData?['EngineNumber']?.toString() ??
             _engineNumberController.text.trim(),
         'vehyear': _vehicleData?['Year']?.toString() ?? _selectedYear ?? '',
-        'estimatedvalue': _estimatedValueController.text.trim(),
+        'estimatedvalue': _getEstimatedValue(),
         'vehiclepurpose': _selectedVehiclePurpose ?? '',
         'employment': _selectedEmployment ?? '',
       },
@@ -477,8 +521,8 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
       }
     } catch (e) {
       if (mounted)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(ErrorMessages.fromException(e))));
     }
   }
 
@@ -657,31 +701,6 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
         const SizedBox(height: 8),
         _dd('select type of employment', _selectedEmployment, _employmentTypes,
             (v) => setState(() => _selectedEmployment = v)),
-        if (_selectedEmployment != null) ...[
-          const SizedBox(height: 12),
-          ...(_employmentTypes.map((t) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                        color: _selectedEmployment == t
-                            ? AppTheme.primaryNavy
-                            : Colors.grey[300]!)),
-                child: Text(t,
-                    style: TextStyle(
-                        fontSize: 13,
-                        color: _selectedEmployment == t
-                            ? AppTheme.primaryNavy
-                            : Colors.black87,
-                        fontWeight: _selectedEmployment == t
-                            ? FontWeight.w600
-                            : FontWeight.normal)),
-              )))),
-        ],
         if (_selectedEmployment == 'Employed') ...[
           const SizedBox(height: 16),
           _label('Name of Employer *'),
@@ -980,28 +999,37 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
       ]));
 
   Widget _uploadRow(String label, File? file, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hasFile = file != null;
+    final borderColor = hasFile
+        ? (isDark ? const Color(0xFF22C55E) : Colors.green)
+        : (isDark ? const Color(0xFF334155) : Colors.grey[300]!);
+    final backgroundColor = hasFile
+        ? (isDark ? const Color(0xFF052E16) : Colors.green[50]!)
+        : (isDark ? const Color(0xFF111827) : Colors.white);
+    final textColor = hasFile
+        ? (isDark ? const Color(0xFF86EFAC) : Colors.green[800]!)
+        : (isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!);
+    final uploadButtonColor =
+        isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+
     return Row(children: [
       Expanded(
           child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                      color: file != null ? Colors.green : Colors.grey[300]!),
-                  color: file != null ? Colors.green[50] : Colors.white),
-              child: Text(file != null ? '✓ ${label}' : label,
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: file != null
-                          ? Colors.green[800]
-                          : Colors.grey[400])))),
+                  border: Border.all(color: borderColor),
+                  color: backgroundColor),
+              child: Text(hasFile ? '✓ $label' : label,
+                  style: TextStyle(fontSize: 12, color: textColor)))),
       const SizedBox(width: 8),
       GestureDetector(
           onTap: onTap,
           child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                  color: AppTheme.primaryNavy,
+                  color: uploadButtonColor,
                   borderRadius: BorderRadius.circular(8)),
               child: const Icon(Icons.upload_file,
                   color: Colors.white, size: 20))),
@@ -1015,6 +1043,7 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
         _sec('Payment Information', [
           _sRow('Product', widget.productName),
           _sRow('Price', widget.price),
+          _sRow('Premium', _fmtN(_getBase())),
           _sRow('Paystack Charges', _fmtN(_getCharge())),
           _sRow('Total', _fmtN(_getTotal()))
         ]),
@@ -1238,7 +1267,10 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
             items: items
                 .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                 .toList(),
-            onChanged: onChanged));
+            onChanged: (value) {
+              FocusManager.instance.primaryFocus?.unfocus();
+              onChanged(value);
+            }));
   }
 
   Widget _btn(String t, VoidCallback? onPressed, {bool loading = false}) => SizedBox(

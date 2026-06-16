@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 import '../widgets/searchable_dropdown.dart';
 import 'comprehensive_image_upload_screen.dart';
 
@@ -248,7 +249,8 @@ class _ComprehensiveVehicleInfoScreenState
           _manualEntry = true;
         });
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error: $e. Enter details manually.'),
+          content: Text(
+              '${ErrorMessages.fromException(e, fallback: 'Verification failed')}. Enter details manually.'),
           backgroundColor: Colors.orange,
         ));
       }

@@ -7,6 +7,7 @@ import 'agent_profile_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 import '../widgets/searchable_dropdown.dart';
 
 class AddClientScreen extends StatefulWidget {
@@ -231,7 +232,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text('Failed to load LGAs: ${response.statusCode}')),
+                content: Text(ErrorMessages.fromResponse(response,
+                    fallback: 'Failed to load LGAs'))),
           );
         }
       }
@@ -241,7 +243,9 @@ class _AddClientScreenState extends State<AddClientScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading LGAs: ${e.toString()}')),
+          SnackBar(
+              content: Text(ErrorMessages.fromException(e,
+                  fallback: 'Failed to load LGAs'))),
         );
       }
     }
@@ -351,7 +355,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  'Verification failed: ${response.statusCode}. Please enter details manually'),
+                  '${ErrorMessages.fromResponse(response, fallback: 'Verification failed')}. Please enter details manually'),
             ),
           );
         }
@@ -363,8 +367,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text('Error: ${e.toString()}. Please enter details manually'),
+            content: Text(
+                '${ErrorMessages.fromException(e, fallback: 'Verification failed')}. Please enter details manually'),
           ),
         );
       }
@@ -431,8 +435,10 @@ class _AddClientScreenState extends State<AddClientScreen> {
           final responseData = json.decode(response.body);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-                  Text(responseData['message'] ?? 'Failed to create customer'),
+              content: Text(
+                  ErrorMessages.fromDecodedJson(responseData).isNotEmpty
+                      ? ErrorMessages.fromDecodedJson(responseData)
+                      : 'Failed to create customer'),
               backgroundColor: Colors.red,
             ),
           );
@@ -446,7 +452,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(ErrorMessages.fromException(e,
+                fallback: 'Failed to create customer')),
             backgroundColor: Colors.red,
           ),
         );

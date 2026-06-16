@@ -11,6 +11,7 @@ import '../providers/auth_provider.dart';
 import '../services/payment_service.dart';
 import '../utils/app_theme.dart';
 import '../utils/customer_details.dart';
+import '../utils/error_messages.dart';
 import '../utils/occupations.dart';
 import '../widgets/paystack_webview.dart';
 import '../widgets/searchable_dropdown.dart';
@@ -278,8 +279,9 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
         _ninFailed = true;
       });
       if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e. Enter details manually.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                '${ErrorMessages.fromException(e, fallback: 'Verification failed')}. Enter details manually.')));
     }
   }
 
@@ -419,8 +421,10 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
     } catch (e) {
       setState(() => _isPayingNow = false);
       if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                ErrorMessages.fromException(e, fallback: 'Payment failed')),
+            backgroundColor: Colors.red));
     }
   }
 
@@ -495,8 +499,8 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
       }
     } catch (e) {
       if (mounted)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(ErrorMessages.fromException(e))));
     }
   }
 

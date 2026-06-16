@@ -5,6 +5,7 @@ import 'dart:convert';
 import '../providers/agent_policy_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 import 'agent_dashboard_screen.dart';
 import 'clients_list_screen.dart';
 import 'reports_screen.dart';
@@ -147,11 +148,10 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
               MaterialPageRoute(builder: (_) => const ClientsListScreen()),
               (route) => route.isFirst);
         } else {
-          final responseData = json.decode(response.body);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-                  Text(responseData['message'] ?? 'Failed to create customer'),
+              content: Text(ErrorMessages.fromResponse(response,
+                  fallback: 'Failed to create customer')),
               backgroundColor: Colors.red,
             ),
           );
@@ -169,7 +169,8 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(ErrorMessages.fromException(e,
+                fallback: 'Failed to create customer')),
             backgroundColor: Colors.red,
           ),
         );

@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/error_messages.dart';
 
 class VerifyPhoneScreen extends StatefulWidget {
   final String email;
@@ -127,14 +128,8 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
     debugPrint('Response Body: ${response.body}');
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      String message = 'Failed to send OTP';
-      try {
-        final data = json.decode(response.body);
-        message = data['message']?.toString() ??
-            data['Message']?.toString() ??
-            message;
-      } catch (_) {}
-      throw Exception(message);
+      throw Exception(
+          ErrorMessages.fromResponse(response, fallback: 'Failed to send OTP'));
     }
 
     return true;
@@ -167,8 +162,10 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSendingOtp = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              ErrorMessages.fromException(e, fallback: 'Failed to send OTP')),
+          backgroundColor: Colors.red));
     }
   }
 
@@ -256,8 +253,10 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSendingOtp = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(ErrorMessages.fromException(e,
+              fallback: 'Failed to resend code')),
+          backgroundColor: Colors.red));
     }
   }
 
