@@ -489,25 +489,31 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
     final acknowledged = await showDialog<bool>(
           context: context,
           barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            title: const Text('Name mismatch'),
-            content: Text(
-              'The name entered during KYC does not match the name returned by NIN verification.\n\n'
-              'Entered name: ${_enteredFullName.isEmpty ? 'Not provided' : _enteredFullName}\n'
-              'NIN name: ${_verifiedFullName.isEmpty ? 'Not provided' : _verifiedFullName}\n\n'
-              'Please confirm you want to continue with the name you entered.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Review'),
+          builder: (context) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return AlertDialog(
+              title: const Text('Name mismatch'),
+              content: Text(
+                'The name entered during KYC does not match the name returned by NIN verification.\n\n'
+                'Entered name: ${_enteredFullName.isEmpty ? 'Not provided' : _enteredFullName}\n'
+                'NIN name: ${_verifiedFullName.isEmpty ? 'Not provided' : _verifiedFullName}\n\n'
+                'Please confirm you want to continue with the name you entered.',
               ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Acknowledge & Continue'),
-              ),
-            ],
-          ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(
+                    'Review',
+                    style: TextStyle(color: isDark ? Colors.white : null),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Acknowledge & Continue'),
+                ),
+              ],
+            );
+          },
         ) ??
         false;
 
