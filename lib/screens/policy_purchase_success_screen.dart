@@ -13,6 +13,7 @@ class PolicyPurchaseSuccessScreen extends StatefulWidget {
   final String? reference;
   final String? message;
   final Map<String, String> accountData;
+  final bool isExploreFlow;
   const PolicyPurchaseSuccessScreen({
     super.key,
     this.isLoggedIn = false,
@@ -20,6 +21,7 @@ class PolicyPurchaseSuccessScreen extends StatefulWidget {
     this.reference,
     this.message,
     this.accountData = const {},
+    this.isExploreFlow = false,
   });
 
   @override
@@ -299,7 +301,7 @@ class _PolicyPurchaseSuccessScreenState
               const SizedBox(height: 12),
 
               // Create Account button (only for non-logged-in users)
-              if (!widget.isLoggedIn)
+              if (!widget.isLoggedIn && !widget.isExploreFlow)
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(

@@ -211,26 +211,33 @@ class _ExploreServicesScreenState extends State<ExploreServicesScreen> {
                           final title = service['title']!;
                           Widget? screen;
                           if (title == 'Motor Insurance') {
-                            screen = const MotorInsuranceScreen();
+                            screen = const MotorInsuranceScreen(
+                                requiresKycOnBuy: true);
                           } else if (title.contains('Personal Care')) {
-                            screen = const RoyalPersonalCareScreen();
+                            screen = const RoyalPersonalCareScreen(
+                                requiresKycOnBuy: true);
                           } else if (title.contains('Family Care')) {
-                            screen = const RoyalFamilyCareScreen();
+                            screen = const RoyalFamilyCareScreen(
+                                requiresKycOnBuy: true);
                           } else if (title.contains('Group Care')) {
                             screen = const RoyalGroupCareScreen();
                           } else if (title.contains('Shop')) {
-                            screen = const ShopProtectionPlanScreen();
+                            screen = const ShopProtectionPlanScreen(
+                                requiresKycOnBuy: true);
                           } else if (title.contains('Driver')) {
-                            screen = const DriversRidersProtectionScreen();
+                            screen = const DriversRidersProtectionScreen(
+                                requiresKycOnBuy: true);
                           } else if (title.contains('Home')) {
                             screen = const HomeProtectionPlanScreen();
                           } else if (title.contains('Parcel')) {
-                            screen = const ParcelProtectionPlanScreen();
+                            screen = const ParcelProtectionPlanScreen(
+                                requiresKycOnBuy: true);
                           } else if (title.contains('Student')) {
                             screen = const StudentProtectionPlanScreen();
                           }
                           if (screen != null) {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => screen!));
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (_) => screen!));
                           }
                         },
                         style: OutlinedButton.styleFrom(

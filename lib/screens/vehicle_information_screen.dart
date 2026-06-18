@@ -13,6 +13,7 @@ class VehicleInformationScreen extends StatefulWidget {
   final bool isLoggedIn;
   final bool isAgent;
   final String agentCode;
+  final bool isExploreFlow;
 
   const VehicleInformationScreen({
     super.key,
@@ -22,6 +23,7 @@ class VehicleInformationScreen extends StatefulWidget {
     this.isLoggedIn = false,
     this.isAgent = false,
     this.agentCode = '',
+    this.isExploreFlow = false,
   });
 
   @override
@@ -191,7 +193,8 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
                           vehicleData: _vehicleData!,
                           isLoggedIn: widget.isLoggedIn,
                           isAgent: widget.isAgent,
-                          agentCode: widget.agentCode)));
+                          agentCode: widget.agentCode,
+                          isExploreFlow: widget.isExploreFlow)));
             }
           } else {
             setState(() {
@@ -542,7 +545,9 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
                                                 vehicleData: manualData,
                                                 isLoggedIn: widget.isLoggedIn,
                                                 isAgent: widget.isAgent,
-                                                agentCode: widget.agentCode)));
+                                                agentCode: widget.agentCode,
+                                                isExploreFlow:
+                                                    widget.isExploreFlow)));
                               }
                             : null,
                         style: ElevatedButton.styleFrom(

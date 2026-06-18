@@ -156,6 +156,172 @@ class PolicyRenewalScreen extends StatelessWidget {
     return '$year-$month-$day';
   }
 
+  bool _isMotorRelatedPolicy() {
+    final productCode = (policyData?['product_code'] ??
+            policyData?['productCode'] ??
+            policyData?['ProductCode'] ??
+            policyData?['ProdCode'] ??
+            policyData?['prodCode'])
+        ?.toString()
+        .trim()
+        .toUpperCase();
+
+    if (productCode != null &&
+        {'TP', 'CP', 'RAB', 'RAS'}.contains(productCode)) {
+      return true;
+    }
+
+    final source = [
+      policyType,
+      policyData?['policyClass'],
+      policyData?['PolicyClass'],
+      policyData?['ProductClass'],
+      policyData?['ProductCover'],
+      policyData?['productName'],
+      policyData?['ProductName'],
+      policyData?['riskType'],
+      policyData?['RiskType'],
+    ].whereType<Object>().map((value) => value.toString()).join(' ');
+
+    final normalized = source.toLowerCase();
+    return normalized.contains('motor') ||
+        normalized.contains('auto') ||
+        normalized.contains('vehicle') ||
+        normalized.contains('third party') ||
+        normalized.contains('comprehensive');
+  }
+
+  String _policyValue(List<String> keys) {
+    final value = _readPolicyValue(policyData, keys);
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? '-' : text;
+  }
+
+  dynamic _readPolicyValue(dynamic source, List<String> keys) {
+    if (source is! Map) return null;
+
+    for (final key in keys) {
+      if (source.containsKey(key)) {
+        final value = source[key];
+        if (value != null && value.toString().trim().isNotEmpty) return value;
+      }
+    }
+
+    final lowerKeys = keys.map((key) => key.toLowerCase()).toSet();
+    for (final entry in source.entries) {
+      if (lowerKeys.contains(entry.key.toString().toLowerCase())) {
+        final value = entry.value;
+        if (value != null && value.toString().trim().isNotEmpty) return value;
+      }
+    }
+
+    for (final value in source.values) {
+      if (value is Map) {
+        final nestedValue = _readPolicyValue(value, keys);
+        if (nestedValue != null && nestedValue.toString().trim().isNotEmpty) {
+          return nestedValue;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  List<Widget> _vehicleInfoRows(BuildContext context) {
+    final items = [
+      MapEntry(
+          'Reg Number',
+          _policyValue([
+            'RegNo',
+            'RegNumber',
+            'RegistrationNo',
+            'RegistrationNumber',
+            'VehicleRegNo',
+            'VehicleRegistrationNo',
+            'vehregno',
+            'registrationNo',
+            'regNumber',
+          ])),
+      MapEntry(
+          'Chassis No.',
+          _policyValue([
+            'ChassisNo',
+            'ChassisNumber',
+            'VehicleChassisNo',
+            'VehicleChassisNumber',
+            'chassisNo',
+            'chassisNumber',
+          ])),
+      MapEntry(
+          'Make',
+          _policyValue([
+            'Make',
+            'VehicleMake',
+            'VehicleManufacturer',
+            'make',
+            'vehicleMake',
+          ])),
+      MapEntry(
+          'Colour',
+          _policyValue([
+            'Colour',
+            'Color',
+            'VehicleColour',
+            'VehicleColor',
+            'colour',
+            'color',
+          ])),
+      MapEntry(
+          'Model',
+          _policyValue([
+            'Model',
+            'VehicleModel',
+            'model',
+            'vehicleModel',
+          ])),
+      MapEntry(
+          'Engine Number',
+          _policyValue([
+            'EngineNo',
+            'EngineNumber',
+            'VehicleEngineNo',
+            'VehicleEngineNumber',
+            'engineNo',
+            'engineNumber',
+          ])),
+      MapEntry(
+          'Engine Capacity',
+          _policyValue([
+            'EngineCapacity',
+            'VehicleEngineCapacity',
+            'Capacity',
+            'engineCapacity',
+          ])),
+      MapEntry(
+          'Year',
+          _policyValue([
+            'Year',
+            'YearOfMake',
+            'ManufactureYear',
+            'VehicleYear',
+            'ModelYear',
+            'year',
+            'vehicleYear',
+          ])),
+    ];
+
+    if (items.every((item) => item.value == '-')) {
+      return [
+        _buildInfoRow(context, 'Vehicle Details',
+            'No vehicle details available for this policy'),
+      ];
+    }
+
+    return items
+        .map((item) => _buildInfoRow(context, item.key, item.value))
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -182,6 +348,7 @@ class PolicyRenewalScreen extends StatelessWidget {
         userData?['PhoneNumber']?.toString() ??
         userData?['Telephone']?.toString() ??
         '';
+    final showVehicleInformation = _isMotorRelatedPolicy();
 
     return Scaffold(
       appBar: AppBar(
@@ -318,37 +485,31 @@ class PolicyRenewalScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Vehicle Information
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                        color: ThemeHelper.getSecondaryCardColor(context),
-                        borderRadius: BorderRadius.circular(12)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Vehicle Information',
-                            style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color:
-                                    Theme.of(context).colorScheme.onSurface)),
-                        const SizedBox(height: 14),
-                        _buildInfoRow(context, 'Reg Number', 'AB 789 CD'),
-                        _buildInfoRow(
-                            context, 'Chassis No.', '1HGCMBB2633A123456'),
-                        _buildInfoRow(context, 'Make', 'Honda'),
-                        _buildInfoRow(context, 'Colour', 'Silver'),
-                        _buildInfoRow(context, 'Model', 'City VX'),
-                        _buildInfoRow(context, 'Engine Number', 'G4KEBX123456'),
-                        _buildInfoRow(context, 'Engine Capacity', '1.5L'),
-                        _buildInfoRow(context, 'Year', '2024'),
-                        _buildInfoRow(context, 'Model', '2024'),
-                      ],
+                  if (showVehicleInformation) ...[
+                    // Vehicle Information
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                          color: ThemeHelper.getSecondaryCardColor(context),
+                          borderRadius: BorderRadius.circular(12)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Vehicle Information',
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface)),
+                          const SizedBox(height: 14),
+                          ..._vehicleInfoRows(context),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 16),
+                  ],
+                  const SizedBox(height: 16),
                 ],
               ),
             ),

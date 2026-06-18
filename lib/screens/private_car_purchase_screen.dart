@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/customer_details.dart';
 import '../utils/error_messages.dart';
 import '../utils/occupations.dart';
 import '../providers/auth_provider.dart';
@@ -17,6 +18,7 @@ class PrivateCarPurchaseScreen extends StatefulWidget {
   final bool isLoggedIn;
   final bool isAgent;
   final String agentCode;
+  final bool isExploreFlow;
 
   const PrivateCarPurchaseScreen({
     super.key,
@@ -26,6 +28,7 @@ class PrivateCarPurchaseScreen extends StatefulWidget {
     this.isLoggedIn = false,
     this.isAgent = false,
     this.agentCode = '',
+    this.isExploreFlow = false,
   });
 
   @override
@@ -135,6 +138,10 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.isExploreFlow) {
+        _continueWithExploreKyc();
+        return;
+      }
       // Use client data if available (agent buying for client), otherwise use logged-in user data
       if (widget.clientData != null) {
         final c = widget.clientData!;
@@ -171,6 +178,37 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
         }
       }
     });
+  }
+
+  Future<void> _continueWithExploreKyc() async {
+    final details = await CustomerDetails.signupKycDetails();
+    if (!mounted) return;
+
+    final personalInfo = {
+      'firstName': details['firstName'] ?? '',
+      'lastName': details['lastName'] ?? '',
+      'email': details['email'] ?? '',
+      'phone': details['phone'] ?? '',
+      'occupation': '',
+      'address': details['address'] ?? '',
+      'state': details['state'] ?? '',
+      'lga': details['lga'] ?? '',
+    };
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VehicleInformationScreen(
+          vehicleType: widget.vehicleType,
+          price: widget.price,
+          personalInfo: personalInfo,
+          isLoggedIn: widget.isLoggedIn,
+          isAgent: widget.isAgent,
+          agentCode: widget.agentCode,
+          isExploreFlow: widget.isExploreFlow,
+        ),
+      ),
+    );
   }
 
   @override

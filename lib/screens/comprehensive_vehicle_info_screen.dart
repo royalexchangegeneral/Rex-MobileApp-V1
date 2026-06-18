@@ -12,12 +12,14 @@ class ComprehensiveVehicleInfoScreen extends StatefulWidget {
   final Map<String, String> personalInfo;
   final bool isLoggedIn;
   final bool isAgent;
+  final bool isExploreFlow;
   const ComprehensiveVehicleInfoScreen({
     super.key,
     this.vehicleType = 'Comprehensive Motor',
     this.personalInfo = const {},
     this.isLoggedIn = false,
     this.isAgent = false,
+    this.isExploreFlow = false,
   });
   @override
   State<ComprehensiveVehicleInfoScreen> createState() =>
@@ -205,6 +207,7 @@ class _ComprehensiveVehicleInfoScreenState
                     vehicleData: _vehicleData!,
                     isLoggedIn: widget.isLoggedIn,
                     isAgent: widget.isAgent,
+                    isExploreFlow: widget.isExploreFlow,
                   ),
                 ),
               );
@@ -644,6 +647,7 @@ class _ComprehensiveVehicleInfoScreenState
                                       vehicleData: manualData,
                                       isLoggedIn: widget.isLoggedIn,
                                       isAgent: widget.isAgent,
+                                      isExploreFlow: widget.isExploreFlow,
                                     ),
                                   ),
                                 );

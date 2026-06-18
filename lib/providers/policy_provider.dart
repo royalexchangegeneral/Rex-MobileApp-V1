@@ -96,6 +96,7 @@ class PolicyProvider with ChangeNotifier {
                 if (policyId.isNotEmpty && !seenPolicyIds.contains(policyId)) {
                   seenPolicyIds.add(policyId);
                   allPolicies.add({
+                    if (p is Map) ...Map<String, dynamic>.from(p),
                     'policyId': policyId,
                     'premium': p['Premium']?.toString() ?? '',
                     'policyClass': p['PolicyClass']?.toString() ?? '',

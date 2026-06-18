@@ -31,6 +31,38 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
       ? AppTheme.accentOrange
       : AppTheme.primaryNavy;
 
+  DateTime? _ticketDate(Map<String, dynamic> ticket) {
+    for (final key in [
+      'created_at',
+      'createdAt',
+      'createdDate',
+      'date',
+      'updated_at',
+      'updatedAt'
+    ]) {
+      final value = ticket[key]?.toString();
+      if (value == null || value.isEmpty) continue;
+      final parsed = DateTime.tryParse(value);
+      if (parsed != null) return parsed;
+    }
+    return null;
+  }
+
+  List<Map<String, dynamic>> _sortTickets(List<Map<String, dynamic>> tickets) {
+    final sorted = List<Map<String, dynamic>>.from(tickets);
+    sorted.sort((a, b) {
+      final bDate = _ticketDate(b);
+      final aDate = _ticketDate(a);
+      if (bDate != null && aDate != null) return bDate.compareTo(aDate);
+      if (bDate != null) return 1;
+      if (aDate != null) return -1;
+      final bId = int.tryParse(b['id']?.toString() ?? '') ?? 0;
+      final aId = int.tryParse(a['id']?.toString() ?? '') ?? 0;
+      return bId.compareTo(aId);
+    });
+    return sorted;
+  }
+
   final List<Map<String, dynamic>> _categories = [
     {
       'icon': Icons.headset_mic_outlined,
@@ -58,34 +90,64 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
     setState(() => _loading = true);
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final userCode = auth.userCode ?? auth.userId ?? '';
-      final userId = int.tryParse(userCode) ?? 0;
+      final userId = (auth.loginEmail ??
+              auth.userEmail ??
+              auth.userData?['Email']?.toString() ??
+              auth.userData?['email']?.toString() ??
+              auth.userCode ??
+              auth.userId ??
+              '')
+          .trim();
 
-      final url =
-          'https://eportaltest.rexinsure.com/api/support/tickets?userId=$userId';
-      print('Fetching tickets with payload: userId=$userId');
-      print('Request URL: $url');
+      if (userId.isEmpty) {
+        _tickets = [];
+        return;
+      }
 
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Accept': 'application/json'},
-      ).timeout(const Duration(seconds: 15));
+      final tickets = <Map<String, dynamic>>[];
+      var page = 1;
+      var hasNextPage = true;
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      while (hasNextPage) {
+        final uri = Uri.https(
+          'eportaltest.rexinsure.com',
+          '/api/support/tickets',
+          {
+            'userId': userId,
+            'page': '$page',
+            'perPage': '15',
+          },
+        );
 
-      if (response.statusCode == 200) {
+        print('Fetching tickets: $uri');
+
+        final response = await http.get(
+          uri,
+          headers: {'Accept': 'application/json'},
+        ).timeout(const Duration(seconds: 15));
+
+        print('Response status: ${response.statusCode}');
+        print('Response body: ${response.body}');
+
+        if (response.statusCode != 200) break;
+
         final data = json.decode(response.body);
         if (data['success'] == true && data['data'] is List) {
-          _tickets = (data['data'] as List)
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList();
-        } else {
-          _tickets = [];
+          tickets.addAll(
+              (data['data'] as List).map((e) => Map<String, dynamic>.from(e)));
         }
-      } else {
-        _tickets = [];
+
+        final meta = data['meta'];
+        if (meta is Map) {
+          hasNextPage = meta['hasNextPage'] == true;
+          final nextPage = int.tryParse(meta['nextPage']?.toString() ?? '');
+          page = nextPage ?? page + 1;
+        } else {
+          hasNextPage = false;
+        }
       }
+
+      _tickets = _sortTickets(tickets);
     } catch (e) {
       print('Error fetching tickets: $e');
       _tickets = [];
@@ -199,19 +261,22 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
               const Center(child: CircularProgressIndicator())
             else
               ...List.generate(
-                  _tickets.length,
+                  _tickets.take(5).length,
                   (i) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
-                      child: _buildTicketCard(_tickets[i]))),
+                      child: _buildTicketCard(_tickets.take(5).toList()[i]))),
             const SizedBox(height: 16),
             SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => NewTicketScreen(
-                              isAgentFlow: widget.isAgentFlow))),
+                  onPressed: () async {
+                    await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => NewTicketScreen(
+                                isAgentFlow: widget.isAgentFlow)));
+                    if (context.mounted) _fetchTickets();
+                  },
                   child: const Text('Create New Ticket',
                       style:
                           TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
@@ -290,26 +355,27 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
   Widget _buildCategoryItem(
       IconData icon, String title, String sub, Color bg, Color ic) {
     return GestureDetector(
-        onTap: () {
+        onTap: () async {
           if (title == 'Service Request') {
-            Navigator.push(
+            await Navigator.push(
                 context,
                 MaterialPageRoute(
                     builder: (_) =>
                         ServiceRequestScreen(isAgentFlow: widget.isAgentFlow)));
           } else if (title == 'Complaint') {
-            Navigator.push(
+            await Navigator.push(
                 context,
                 MaterialPageRoute(
                     builder: (_) =>
                         ComplaintScreen(isAgentFlow: widget.isAgentFlow)));
           } else {
-            Navigator.push(
+            await Navigator.push(
                 context,
                 MaterialPageRoute(
                     builder: (_) =>
                         NewTicketScreen(isAgentFlow: widget.isAgentFlow)));
           }
+          if (context.mounted) _fetchTickets();
         },
         child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),

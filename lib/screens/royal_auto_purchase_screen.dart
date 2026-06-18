@@ -19,6 +19,7 @@ class RoyalAutoPurchaseScreen extends StatefulWidget {
   final bool isCustomerFlow;
   final bool isAgent;
   final Map<String, dynamic>? clientData;
+  final bool isExploreFlow;
   const RoyalAutoPurchaseScreen({
     super.key,
     required this.productName,
@@ -26,6 +27,7 @@ class RoyalAutoPurchaseScreen extends StatefulWidget {
     this.isCustomerFlow = false,
     this.isAgent = false,
     this.clientData,
+    this.isExploreFlow = false,
   });
   @override
   State<RoyalAutoPurchaseScreen> createState() =>
@@ -166,7 +168,11 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
   void initState() {
     super.initState();
     _prefillAgentClientDetails();
-    _prefillCustomerNin();
+    if (widget.isExploreFlow) {
+      _prefillExploreKyc();
+    } else {
+      _prefillCustomerNin();
+    }
     _fetchVehicleList();
   }
 
@@ -218,6 +224,29 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
       _selectedIdType = 'NIN';
       _ninController.text = nin;
       _isCustomerNinLocked = true;
+    });
+  }
+
+  Future<void> _prefillExploreKyc() async {
+    final details = await CustomerDetails.signupKycDetails();
+    if (!mounted) return;
+
+    setState(() {
+      _selectedIdType = 'NIN';
+      _ninController.text = details['nin'] ?? '';
+      _firstName = details['firstName'] ?? '';
+      _lastName = details['lastName'] ?? '';
+      _email = details['email'] ?? '';
+      _phone = details['phone'] ?? '';
+      _dob = details['dob'] ?? '';
+      _state = details['state'] ?? '';
+      _lga = details['lga'] ?? '';
+      _address = details['address'] ?? '';
+      _manualFirstNameController.text = _firstName;
+      _manualLastNameController.text = _lastName;
+      _manualEmailController.text = _email;
+      _manualPhoneController.text = _phone;
+      _step = 1;
     });
   }
 
@@ -460,6 +489,7 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
             builder: (_) => PolicyPurchaseSuccessScreen(
               reference: res.reference,
               message: res.message,
+              isExploreFlow: widget.isExploreFlow,
               accountData: {
                 'firstName': _firstName,
                 'lastName': _lastName,
@@ -1100,17 +1130,19 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
           _sRow('License Type', _selectedLicenseType ?? '-'),
           _sRow('Driving Years', _drivingYearsController.text),
         ]),
-        const SizedBox(height: 20),
-        _sec('Personal Information', [
-          _sRow('First Name', _firstName),
-          _sRow('Last Name', _lastName),
-          _sRow('Email', _email),
-          _sRow('Phone Number', _phone),
-          _sRow('DOB', _dob),
-          _sRow('State', _state),
-          _sRow('LGA', _lga),
-          _sRow('Address', _address)
-        ]),
+        if (!widget.isExploreFlow) ...[
+          const SizedBox(height: 20),
+          _sec('Personal Information', [
+            _sRow('First Name', _firstName),
+            _sRow('Last Name', _lastName),
+            _sRow('Email', _email),
+            _sRow('Phone Number', _phone),
+            _sRow('DOB', _dob),
+            _sRow('State', _state),
+            _sRow('LGA', _lga),
+            _sRow('Address', _address)
+          ]),
+        ],
         if (_selectedEmployment == 'Employed') ...[
           const SizedBox(height: 20),
           _sec('Employment Details', [

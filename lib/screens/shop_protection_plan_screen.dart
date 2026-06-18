@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import '../utils/explore_kyc_flow.dart';
 import '../utils/theme_helper.dart';
 import 'shop_protection_purchase_screen.dart';
 import 'customer_renewal_screen.dart';
@@ -7,8 +8,12 @@ import 'customer_renewal_screen.dart';
 class ShopProtectionPlanScreen extends StatelessWidget {
   final bool isFromNewPolicy;
   final bool isCustomerFlow;
+  final bool requiresKycOnBuy;
   const ShopProtectionPlanScreen(
-      {super.key, this.isFromNewPolicy = false, this.isCustomerFlow = false});
+      {super.key,
+      this.isFromNewPolicy = false,
+      this.isCustomerFlow = false,
+      this.requiresKycOnBuy = false});
 
   final List<String> _cardImages = const [
     'assets/images/e5.png',
@@ -332,13 +337,26 @@ class ShopProtectionPlanScreen extends StatelessWidget {
               Align(
                   alignment: Alignment.centerRight,
                   child: ElevatedButton(
-                      onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => ShopProtectionPurchaseScreen(
-                                  optionTitle: data['title']!,
-                                  price: data['price']!,
-                                  isCustomerFlow: isCustomerFlow))),
+                      onPressed: () {
+                        if (requiresKycOnBuy) {
+                          startExploreKycFlow(
+                            context,
+                            target: 'shop_protection',
+                            productName: 'Shop Protection Plan',
+                            optionTitle: data['title']!,
+                            price: data['price']!,
+                          );
+                          return;
+                        }
+
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => ShopProtectionPurchaseScreen(
+                                    optionTitle: data['title']!,
+                                    price: data['price']!,
+                                    isCustomerFlow: isCustomerFlow)));
+                      },
                       style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.accentOrange,
                           foregroundColor: Colors.white,

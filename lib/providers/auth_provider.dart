@@ -147,6 +147,7 @@ class AuthProvider with ChangeNotifier {
       if (kDebugMode) {
         print('=== LOGIN API REQUEST ===');
         print('URL: https://eportaltest.rexinsure.com/api/userlogin');
+        print('Payload: ${json.encode(requestBody)}');
         print('=========================');
       }
 
@@ -161,6 +162,7 @@ class AuthProvider with ChangeNotifier {
       if (kDebugMode) {
         print('=== LOGIN API RESPONSE ===');
         print('Status Code: ${response.statusCode}');
+        print('Response Body: ${response.body}');
         print('==========================');
       }
 

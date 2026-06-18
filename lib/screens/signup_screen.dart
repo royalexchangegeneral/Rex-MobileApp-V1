@@ -5,7 +5,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_theme.dart';
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+  final String nextRoute;
+  final String? title;
+  final bool showLoginPrompt;
+
+  const SignupScreen({
+    super.key,
+    this.nextRoute = '/existing-policy-question',
+    this.title = 'Sign Up',
+    this.showLoginPrompt = true,
+  });
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
@@ -36,7 +45,13 @@ class _SignupScreenState extends State<SignupScreen> {
       await prefs.setString('signup_email', _emailController.text.trim());
       await prefs.setBool('is_signup_flow', true);
       if (mounted) {
-        Navigator.pushNamed(context, '/existing-policy-question');
+        Navigator.pushNamed(
+          context,
+          widget.nextRoute,
+          arguments: widget.nextRoute == '/verify-phone'
+              ? _emailController.text.trim()
+              : null,
+        );
       }
     }
   }
@@ -71,16 +86,16 @@ class _SignupScreenState extends State<SignupScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Text(
-                    'Sign up',
+                    widget.title ?? 'Sign Up',
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 32),
+                  const SizedBox(height: 32),
                   Text(
                     'First Name',
                     style: TextStyle(
@@ -89,7 +104,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextFormField(
                     controller: _firstNameController,
                     textCapitalization: TextCapitalization.words,
@@ -136,7 +151,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       return null;
                     },
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   Text(
                     'Last Name',
                     style: TextStyle(
@@ -145,7 +160,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextFormField(
                     controller: _lastNameController,
                     textCapitalization: TextCapitalization.words,
@@ -192,7 +207,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       return null;
                     },
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   Text(
                     'Email Address',
                     style: TextStyle(
@@ -201,7 +216,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -271,7 +286,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         elevation: 0,
                       ),
                       child: const Text(
-                        'Sign up',
+                        'Next',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -279,39 +294,45 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Already have an account? ',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(0, 0),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: Text(
-                            'Log in',
+                  if (widget.showLoginPrompt) ...[
+                    const SizedBox(height: 24),
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Already have an account? ',
                             style: TextStyle(
                               fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.onSurface,
+                              color: Colors.grey[600],
                             ),
                           ),
-                        ),
-                      ],
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/login',
+                                (route) => false,
+                              );
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 0),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              'Log in',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

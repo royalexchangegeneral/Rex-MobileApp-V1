@@ -16,6 +16,7 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
   final bool isLoggedIn;
   final bool isAgent;
   final String agentCode;
+  final bool isExploreFlow;
 
   const PrivateMotorDetailsScreen({
     super.key,
@@ -26,6 +27,7 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
     this.isLoggedIn = false,
     this.isAgent = false,
     this.agentCode = '',
+    this.isExploreFlow = false,
   });
 
   double _getBaseAmount() {
@@ -149,6 +151,7 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
                 builder: (_) => PolicyPurchaseSuccessScreen(
                         isLoggedIn: isLoggedIn,
                         isAgent: isAgent,
+                        isExploreFlow: isExploreFlow,
                         reference: payResult.reference,
                         message: payResult.message,
                         accountData: {

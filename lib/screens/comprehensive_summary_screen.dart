@@ -15,6 +15,7 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
   final List<File> imageFiles;
   final bool isLoggedIn;
   final bool isAgent;
+  final bool isExploreFlow;
 
   const ComprehensiveSummaryScreen(
       {super.key,
@@ -26,7 +27,8 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
       this.vehicleData = const {},
       this.imageFiles = const [],
       this.isLoggedIn = false,
-      this.isAgent = false});
+      this.isAgent = false,
+      this.isExploreFlow = false});
 
   double _getBaseAmount() {
     final cleaned = premium.replaceAll(RegExp(r'[^0-9.]'), '');
@@ -123,6 +125,7 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
                 builder: (_) => PolicyPurchaseSuccessScreen(
                         isLoggedIn: isLoggedIn,
                         isAgent: isAgent,
+                        isExploreFlow: isExploreFlow,
                         reference: payResult.reference,
                         message: payResult.message,
                         accountData: {

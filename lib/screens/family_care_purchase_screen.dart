@@ -21,11 +21,13 @@ class FamilyCarePurchaseScreen extends StatefulWidget {
   final String optionTitle;
   final String price;
   final bool isCustomerFlow;
+  final bool isExploreFlow;
   const FamilyCarePurchaseScreen(
       {super.key,
       required this.optionTitle,
       required this.price,
-      this.isCustomerFlow = false});
+      this.isCustomerFlow = false,
+      this.isExploreFlow = false});
   @override
   State<FamilyCarePurchaseScreen> createState() =>
       _FamilyCarePurchaseScreenState();
@@ -162,7 +164,40 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
   @override
   void initState() {
     super.initState();
-    _prefillCustomerNin();
+    if (widget.isExploreFlow) {
+      _prefillExploreKyc();
+    } else {
+      _prefillCustomerNin();
+    }
+  }
+
+  Future<void> _prefillExploreKyc() async {
+    final details = await CustomerDetails.signupKycDetails();
+    if (!mounted) return;
+
+    setState(() {
+      _ninController.text = details['nin'] ?? '';
+      _firstName = details['firstName'] ?? '';
+      _lastName = details['lastName'] ?? '';
+      _email = details['email'] ?? '';
+      _emailController.text = _email;
+      _phone = details['phone'] ?? '';
+      _dob = details['dob'] ?? '';
+      _address = details['address'] ?? '';
+      _state = details['state'] ?? '';
+      _lga = details['lga'] ?? '';
+      _ninVerified = true;
+      _manualFirstNameController.text = _firstName;
+      _manualLastNameController.text = _lastName;
+      _manualEmailController.text = _email;
+      _manualPhoneController.text = _phone;
+      _manualAddressController.text = _address;
+      _selectedManualState = _nigerianStates.cast<String?>().firstWhere(
+            (s) => s!.toLowerCase() == _state.trim().toLowerCase(),
+            orElse: () => null,
+          );
+      _currentStep = 1;
+    });
   }
 
   Future<void> _prefillCustomerNin() async {
@@ -398,6 +433,7 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
               builder: (_) => PolicyPurchaseSuccessScreen(
                 reference: res.reference,
                 message: res.message,
+                isExploreFlow: widget.isExploreFlow,
                 accountData: {
                   'firstName': _firstName,
                   'lastName': _lastName,
@@ -1314,18 +1350,20 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
           _summaryRow('Paystack Charges', _formatNaira(_getPaystackCharge())),
           _summaryRow('Total', _formatNaira(_getTotalAmount())),
         ]),
-        const SizedBox(height: 20),
-        _summarySection('Group & Contact Information', [
-          _summaryRow('First Name', _firstName),
-          _summaryRow('Last Name', _lastName),
-          _summaryRow('Email', _email),
-          _summaryRow('Phone Number', _phone),
-          _summaryRow('DOB', _dob),
-          _summaryRow('Gender', _gender),
-          _summaryRow('State', _state),
-          _summaryRow('LGA', _lga),
-          _summaryRow('Address', _address),
-        ]),
+        if (!widget.isExploreFlow) ...[
+          const SizedBox(height: 20),
+          _summarySection('Group & Contact Information', [
+            _summaryRow('First Name', _firstName),
+            _summaryRow('Last Name', _lastName),
+            _summaryRow('Email', _email),
+            _summaryRow('Phone Number', _phone),
+            _summaryRow('DOB', _dob),
+            _summaryRow('Gender', _gender),
+            _summaryRow('State', _state),
+            _summaryRow('LGA', _lga),
+            _summaryRow('Address', _address),
+          ]),
+        ],
         const SizedBox(height: 20),
         _summarySection('Leadership & Risk Details', [
           _summaryRow('Occupation', _occupationController.text),

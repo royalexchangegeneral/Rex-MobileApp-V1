@@ -14,6 +14,7 @@ class ComprehensiveImageUploadScreen extends StatefulWidget {
   final Map<String, dynamic> vehicleData;
   final bool isLoggedIn;
   final bool isAgent;
+  final bool isExploreFlow;
 
   const ComprehensiveImageUploadScreen(
       {super.key,
@@ -24,7 +25,8 @@ class ComprehensiveImageUploadScreen extends StatefulWidget {
       this.personalInfo = const {},
       this.vehicleData = const {},
       this.isLoggedIn = false,
-      this.isAgent = false});
+      this.isAgent = false,
+      this.isExploreFlow = false});
   @override
   State<ComprehensiveImageUploadScreen> createState() =>
       _ComprehensiveImageUploadScreenState();
@@ -270,6 +272,7 @@ class _ComprehensiveImageUploadScreenState
                                             imageFiles: _imageFiles,
                                             isLoggedIn: widget.isLoggedIn,
                                             isAgent: widget.isAgent,
+                                            isExploreFlow: widget.isExploreFlow,
                                           )));
                             }
                           : null,

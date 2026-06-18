@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import '../utils/explore_kyc_flow.dart';
 import '../utils/theme_helper.dart';
 import 'personal_care_purchase_screen.dart';
 import 'customer_renewal_screen.dart';
@@ -7,8 +8,12 @@ import 'customer_renewal_screen.dart';
 class RoyalPersonalCareScreen extends StatelessWidget {
   final bool isFromNewPolicy;
   final bool isCustomerFlow;
+  final bool requiresKycOnBuy;
   const RoyalPersonalCareScreen(
-      {super.key, this.isFromNewPolicy = false, this.isCustomerFlow = false});
+      {super.key,
+      this.isFromNewPolicy = false,
+      this.isCustomerFlow = false,
+      this.requiresKycOnBuy = false});
 
   final List<String> _cardImages = const [
     'assets/images/e2.png',
@@ -350,13 +355,26 @@ class RoyalPersonalCareScreen extends StatelessWidget {
               Align(
                   alignment: Alignment.centerRight,
                   child: ElevatedButton(
-                      onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => PersonalCarePurchaseScreen(
-                                  optionTitle: data['title']!,
-                                  price: data['price']!,
-                                  isCustomerFlow: isCustomerFlow))),
+                      onPressed: () {
+                        if (requiresKycOnBuy) {
+                          startExploreKycFlow(
+                            context,
+                            target: 'personal_care',
+                            productName: 'Royal Personal Care',
+                            optionTitle: data['title']!,
+                            price: data['price']!,
+                          );
+                          return;
+                        }
+
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => PersonalCarePurchaseScreen(
+                                    optionTitle: data['title']!,
+                                    price: data['price']!,
+                                    isCustomerFlow: isCustomerFlow)));
+                      },
                       style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.accentOrange,
                           foregroundColor: Colors.white,

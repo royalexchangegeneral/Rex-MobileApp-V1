@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/customer_details.dart';
 import '../utils/error_messages.dart';
 import '../utils/occupations.dart';
 import '../providers/auth_provider.dart';
@@ -13,11 +14,13 @@ class ComprehensivePersonalInfoScreen extends StatefulWidget {
   final String vehicleType;
   final bool isLoggedIn;
   final bool isAgent;
+  final bool isExploreFlow;
   const ComprehensivePersonalInfoScreen(
       {super.key,
       this.vehicleType = 'Comprehensive Motor',
       this.isLoggedIn = false,
-      this.isAgent = false});
+      this.isAgent = false,
+      this.isExploreFlow = false});
   @override
   State<ComprehensivePersonalInfoScreen> createState() =>
       _ComprehensivePersonalInfoScreenState();
@@ -125,6 +128,10 @@ class _ComprehensivePersonalInfoScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.isExploreFlow) {
+        _continueWithExploreKyc();
+        return;
+      }
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final userData = auth.userData;
       if (userData != null) {
@@ -149,6 +156,35 @@ class _ComprehensivePersonalInfoScreenState
         _addressController.text = userData['Address']?.toString() ?? '';
       }
     });
+  }
+
+  Future<void> _continueWithExploreKyc() async {
+    final details = await CustomerDetails.signupKycDetails();
+    if (!mounted) return;
+
+    final personalInfo = {
+      'firstName': details['firstName'] ?? '',
+      'lastName': details['lastName'] ?? '',
+      'email': details['email'] ?? '',
+      'phone': details['phone'] ?? '',
+      'occupation': '',
+      'address': details['address'] ?? '',
+      'state': details['state'] ?? '',
+      'lga': details['lga'] ?? '',
+    };
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ComprehensiveVehicleInfoScreen(
+          vehicleType: widget.vehicleType,
+          personalInfo: personalInfo,
+          isLoggedIn: widget.isLoggedIn,
+          isAgent: widget.isAgent,
+          isExploreFlow: widget.isExploreFlow,
+        ),
+      ),
+    );
   }
 
   @override

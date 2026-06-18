@@ -16,11 +16,13 @@ class ParcelProtectionPurchaseScreen extends StatefulWidget {
   final String optionTitle;
   final String price;
   final bool isCustomerFlow;
+  final bool isExploreFlow;
   const ParcelProtectionPurchaseScreen(
       {super.key,
       required this.optionTitle,
       required this.price,
-      this.isCustomerFlow = false});
+      this.isCustomerFlow = false,
+      this.isExploreFlow = false});
   @override
   State<ParcelProtectionPurchaseScreen> createState() =>
       _ParcelProtectionPurchaseScreenState();
@@ -170,7 +172,40 @@ class _ParcelProtectionPurchaseScreenState
   @override
   void initState() {
     super.initState();
-    _prefillCustomerNin();
+    if (widget.isExploreFlow) {
+      _prefillExploreKyc();
+    } else {
+      _prefillCustomerNin();
+    }
+  }
+
+  Future<void> _prefillExploreKyc() async {
+    final details = await CustomerDetails.signupKycDetails();
+    if (!mounted) return;
+
+    setState(() {
+      _ninController.text = details['nin'] ?? '';
+      _firstName = details['firstName'] ?? '';
+      _lastName = details['lastName'] ?? '';
+      _email = details['email'] ?? '';
+      _emailController.text = _email;
+      _phone = details['phone'] ?? '';
+      _dob = details['dob'] ?? '';
+      _address = details['address'] ?? '';
+      _state = details['state'] ?? '';
+      _lga = details['lga'] ?? '';
+      _ninVerified = true;
+      _manualFirstNameController.text = _firstName;
+      _manualLastNameController.text = _lastName;
+      _manualEmailController.text = _email;
+      _manualPhoneController.text = _phone;
+      _manualAddressController.text = _address;
+      _selectedManualState = _nigerianStates.cast<String?>().firstWhere(
+            (s) => s!.toLowerCase() == _state.trim().toLowerCase(),
+            orElse: () => null,
+          );
+      _currentStep = 1;
+    });
   }
 
   Future<void> _prefillCustomerNin() async {
@@ -367,6 +402,7 @@ class _ParcelProtectionPurchaseScreenState
               builder: (_) => PolicyPurchaseSuccessScreen(
                 reference: res.reference,
                 message: res.message,
+                isExploreFlow: widget.isExploreFlow,
                 accountData: {
                   'firstName': _firstName,
                   'lastName': _lastName,
@@ -900,19 +936,21 @@ class _ParcelProtectionPurchaseScreenState
           _sRow('Paystack Charges', _fmtN(_getCharge())),
           _sRow('Total', _fmtN(_getTotal()))
         ]),
-        const SizedBox(height: 20),
-        _sec('Personal Information', [
-          _sRow('First Name', _firstName),
-          _sRow('Last Name', _lastName),
-          _sRow('Email', _email),
-          _sRow('Phone Number', _phone),
-          _sRow('DOB', _dob),
-          _sRow('Gender', _gender),
-          _sRow('Occupation', _occupationController.text),
-          _sRow('State', _state),
-          _sRow('LGA', _lga),
-          _sRow('Address', _address)
-        ]),
+        if (!widget.isExploreFlow) ...[
+          const SizedBox(height: 20),
+          _sec('Personal Information', [
+            _sRow('First Name', _firstName),
+            _sRow('Last Name', _lastName),
+            _sRow('Email', _email),
+            _sRow('Phone Number', _phone),
+            _sRow('DOB', _dob),
+            _sRow('Gender', _gender),
+            _sRow('Occupation', _occupationController.text),
+            _sRow('State', _state),
+            _sRow('LGA', _lga),
+            _sRow('Address', _address)
+          ]),
+        ],
         const SizedBox(height: 20),
         _sec('Socioeconomic Information', [
           _sRow('Occupation', _occupationController.text),

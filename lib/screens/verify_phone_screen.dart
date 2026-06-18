@@ -112,12 +112,12 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
     final payload = {'mobileNo': phone};
 
     debugPrint('=== SEND PHONE OTP REQUEST ===');
-    debugPrint('URL: https://eportartaltest.rexinsure.com/api/send-otp');
+    debugPrint('URL: https://eportaltest.rexinsure.com/api/send-otp');
     debugPrint('Payload: ${json.encode(payload)}');
 
     final response = await http
         .post(
-          Uri.parse('https://eportartaltest.rexinsure.com/api/send-otp'),
+          Uri.parse('https://eportaltest.rexinsure.com/api/send-otp'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(payload),
         )
@@ -224,18 +224,93 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
 
   bool _isVerifyingOtp = false;
 
+  Future<bool> _verifyOtp(String phone, String otp) async {
+    final payload = {
+      'mobileNo': phone,
+      'otp': otp,
+    };
+
+    debugPrint('=== VERIFY PHONE OTP REQUEST ===');
+    debugPrint('URL: https://eportaltest.rexinsure.com/mobile/verify-otp');
+    debugPrint('Payload: ${json.encode(payload)}');
+
+    final response = await http
+        .post(
+          Uri.parse('https://eportaltest.rexinsure.com/mobile/verify-otp'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(payload),
+        )
+        .timeout(const Duration(seconds: 30));
+
+    debugPrint('=== VERIFY PHONE OTP RESPONSE ===');
+    debugPrint('Status Code: ${response.statusCode}');
+    debugPrint('Response Body: ${response.body}');
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(ErrorMessages.fromResponse(response,
+          fallback: 'OTP verification failed'));
+    }
+
+    final data = json.decode(response.body);
+    final status = data['Status']?.toString().toLowerCase() ??
+        data['status']?.toString().toLowerCase() ??
+        '';
+    final statusCode = data['StatusCode']?.toString() ??
+        data['Statuscode']?.toString() ??
+        data['statusCode']?.toString() ??
+        data['statuscode']?.toString() ??
+        '';
+
+    if (status == 'success' ||
+        status.contains('success') ||
+        statusCode == '200' ||
+        statusCode == '201') {
+      return true;
+    }
+
+    throw Exception(ErrorMessages.fromResponse(response,
+        fallback: 'Invalid or expired OTP'));
+  }
+
   Future<void> _verifyCode() async {
+    if (_isVerifyingOtp) return;
+
     final otp = _codeControllers.map((c) => c.text).join();
     if (otp.length != 4) return;
 
     setState(() => _isVerifyingOtp = true);
-    await Future.delayed(const Duration(milliseconds: 700));
-    if (!mounted) return;
-    setState(() => _isVerifyingOtp = false);
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Phone verified successfully'),
-        backgroundColor: Colors.green));
-    Navigator.pushNamed(context, '/create-password');
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedPhone = prefs.getString('signup_phone') ?? '';
+      var phone = savedPhone.trim();
+      if (phone.isEmpty) {
+        var rawPhone = _phoneController.text.trim();
+        if (rawPhone.startsWith('0')) rawPhone = rawPhone.substring(1);
+        phone = '$_selectedCountryCode$rawPhone';
+      }
+
+      await _verifyOtp(phone, otp);
+
+      if (!mounted) return;
+      setState(() => _isVerifyingOtp = false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Phone verified successfully'),
+          backgroundColor: Colors.green));
+      final isSignupFlow = prefs.getBool('is_signup_flow') ?? false;
+      final hasExistingPolicy = prefs.getBool('has_existing_policy') ?? false;
+      final nextRoute = isSignupFlow && !hasExistingPolicy
+          ? '/enter-nin'
+          : '/create-password';
+      Navigator.pushNamed(context, nextRoute);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isVerifyingOtp = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(ErrorMessages.fromException(e,
+              fallback: 'OTP verification failed')),
+          backgroundColor: Colors.red));
+    }
   }
 
   Future<void> _resendCode() async {

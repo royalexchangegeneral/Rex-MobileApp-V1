@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import '../utils/explore_kyc_flow.dart';
 import '../utils/theme_helper.dart';
 import 'private_car_purchase_screen.dart';
 import 'comprehensive_personal_info_screen.dart';
 import 'royal_auto_purchase_screen.dart';
 
 class MotorInsuranceScreen extends StatelessWidget {
-  const MotorInsuranceScreen({super.key});
+  final bool requiresKycOnBuy;
+
+  const MotorInsuranceScreen({super.key, this.requiresKycOnBuy = false});
 
   final List<String> _thirdPartyCardImages = const [
     'assets/images/t1.png',
@@ -250,6 +253,23 @@ class MotorInsuranceScreen extends StatelessWidget {
   }
 
   void _navigateToScreen(BuildContext context, int index) {
+    if (requiresKycOnBuy) {
+      final cardData = _getCardData(index);
+      final target = index == 6
+          ? 'comprehensive_motor'
+          : index == 7 || index == 8
+              ? 'royal_auto'
+              : 'private_car';
+      startExploreKycFlow(
+        context,
+        target: target,
+        productName: cardData['title'] as String,
+        optionTitle: cardData['title'] as String,
+        price: cardData['price'] as String,
+      );
+      return;
+    }
+
     if (index == 6) {
       Navigator.push(
           context,

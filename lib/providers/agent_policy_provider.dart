@@ -77,6 +77,7 @@ class AgentPolicyProvider with ChangeNotifier {
                   seenPolicyIds.add(policyId);
                   final policyClass = p['PolicyClass']?.toString() ?? '';
                   allPolicies.add({
+                    if (p is Map) ...Map<String, dynamic>.from(p),
                     'policyId': policyId,
                     'premium': p['Premium']?.toString() ?? '',
                     'policyClass': policyClass,

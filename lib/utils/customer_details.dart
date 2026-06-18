@@ -5,6 +5,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
 
 class CustomerDetails {
+  static Future<Map<String, String>> signupKycDetails() async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      'nin': prefs.getString('signup_nin') ?? '',
+      'firstName': prefs.getString('signup_first_name') ?? '',
+      'lastName': prefs.getString('signup_last_name') ?? '',
+      'email': prefs.getString('signup_email') ?? '',
+      'phone': prefs.getString('signup_phone') ?? '',
+      'dob': prefs.getString('signup_dob') ?? '',
+      'state': prefs.getString('signup_state') ?? '',
+      'lga': prefs.getString('signup_lga') ?? '',
+      'address': prefs.getString('signup_address') ?? '',
+    };
+  }
+
   static Future<String> ninFromAuth(AuthProvider authProvider) async {
     final inMemoryNin = ninFrom(authProvider.userData);
     if (inMemoryNin.isNotEmpty) return inMemoryNin;

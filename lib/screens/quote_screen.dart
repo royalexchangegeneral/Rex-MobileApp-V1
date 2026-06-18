@@ -28,6 +28,29 @@ class _QuoteScreenState extends State<QuoteScreen> {
   final _sumInsuredController = TextEditingController();
   bool _isLoading = false;
 
+  String get _productSubtext {
+    switch (widget.insuranceType.toLowerCase()) {
+      case 'fire insurance':
+        return 'Cover buildings, contents, and business assets against fire and related damage.';
+      case 'general accident':
+        return 'Protection for everyday accident risks, liability exposures, and unexpected losses.';
+      case 'engineering insurance':
+        return 'Cover machinery, equipment, projects, and engineering risks during operation or installation.';
+      case 'marine insurance':
+        return 'Protect goods in transit by sea, air, road, or rail against loss or damage.';
+      case 'industrial all risk':
+        return 'Broad protection for industrial property, machinery, stock, and business interruption risks.';
+      case 'energy insurance':
+        return 'Specialized cover for energy assets, operations, equipment, and associated liabilities.';
+      case 'agriculture insurance':
+        return 'Protect farms, crops, livestock, and agribusiness investments from insured losses.';
+      case 'bond insurance':
+        return 'Support contract, performance, advance payment, and other surety obligations.';
+      default:
+        return 'Request a tailored quote for this product based on your coverage needs.';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -95,15 +118,32 @@ class _QuoteScreenState extends State<QuoteScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(Icons.description_outlined,
                         color: AppTheme.primaryNavy, size: 18),
                     const SizedBox(width: 8),
-                    Text('Product: ${widget.insuranceType}',
-                        style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryNavy)),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Product: ${widget.insuranceType}',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primaryNavy)),
+                          const SizedBox(height: 4),
+                          Text(_productSubtext,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  height: 1.35,
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white70
+                                      : const Color(0xFF475569))),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),

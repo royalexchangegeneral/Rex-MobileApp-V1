@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/explore_kyc_flow.dart';
 
 class EnterNinScreen extends StatefulWidget {
   const EnterNinScreen({super.key});
@@ -24,6 +25,10 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
   bool _isVerifying = false;
   bool _hasAttemptedVerification = false;
   bool _verificationSucceeded = false;
+  bool _didSkipNin = false;
+  bool _nameMismatchAcknowledged = false;
+  String? _verifiedFirstName;
+  String? _verifiedLastName;
   String? _selectedState;
   String? _selectedLga;
 
@@ -273,6 +278,7 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
   void initState() {
     super.initState();
     _ninController.addListener(() => setState(() {}));
+    _loadSignupDetails();
   }
 
   @override
@@ -298,24 +304,38 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
     setState(() {
       _isVerifying = true;
       _hasAttemptedVerification = false;
+      _didSkipNin = false;
+      _nameMismatchAcknowledged = false;
+      _verifiedFirstName = null;
+      _verifiedLastName = null;
     });
 
     try {
+      final payload = {
+        'Intcode': 'TESTCODE',
+        'Password': 'royal1234',
+        'number': _ninController.text.trim(),
+      };
+
+      debugPrint('=== VERIFY NIN REQUEST ===');
+      debugPrint(
+          'URL: https://eportaltest.rexinsure.com/api/mobile/verify/nin');
+      debugPrint('Payload: ${json.encode(payload)}');
+
       final response = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
+            Uri.parse(
+                'https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
             headers: {
               'Content-Type': 'application/json',
-              'Authorization':
-                  'Bearer mi0KCnDdglTcTuIJWD6iW4AJMVKnUlOqWT8GbQTh',
             },
-            body: json.encode({
-              'Intcode': 'TESTCODE',
-              'Password': 'royal1234',
-              'number': _ninController.text.trim(),
-            }),
+            body: json.encode(payload),
           )
           .timeout(const Duration(seconds: 15));
+
+      debugPrint('=== VERIFY NIN RESPONSE ===');
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response Body: ${response.body}');
 
       Map<String, dynamic>? kyc;
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -331,7 +351,7 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
       if (kyc != null) {
         _populateFromKyc(kyc);
       } else {
-        _clearDetails();
+        _clearDetails(preserveIdentity: true);
       }
 
       if (!mounted) return;
@@ -345,19 +365,26 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
         SnackBar(
           content: Text(
             kyc != null
-                ? 'NIN verified. You can edit the details before continuing.'
+                ? 'NIN verified. Please review the details before continuing.'
                 : 'NIN verification failed. Please enter your details manually.',
           ),
           backgroundColor: kyc != null ? Colors.green : Colors.orange,
         ),
       );
+
+      if (kyc != null && _hasNameMismatch) {
+        await _showNameMismatchDialog();
+      }
     } catch (e) {
-      _clearDetails();
+      _clearDetails(preserveIdentity: true);
       if (!mounted) return;
       setState(() {
         _isVerifying = false;
         _hasAttemptedVerification = true;
         _verificationSucceeded = false;
+        _nameMismatchAcknowledged = false;
+        _verifiedFirstName = null;
+        _verifiedLastName = null;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -369,27 +396,126 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
     }
   }
 
+  Future<void> _loadSignupDetails() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _firstNameController.text = prefs.getString('signup_first_name') ?? '';
+      _lastNameController.text = prefs.getString('signup_last_name') ?? '';
+      _emailController.text = prefs.getString('signup_email') ?? '';
+      _dobController.text = prefs.getString('signup_dob') ?? '';
+      final savedState = prefs.getString('signup_state') ?? '';
+      final savedLga = prefs.getString('signup_lga') ?? '';
+      _selectedState = savedState.isEmpty ? null : savedState;
+      _selectedLga = savedLga.isEmpty ? null : savedLga;
+      _addressController.text = prefs.getString('signup_address') ?? '';
+    });
+  }
+
+  void _skipNinVerification() {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _ninController.clear();
+      _isVerifying = false;
+      _hasAttemptedVerification = true;
+      _verificationSucceeded = false;
+      _didSkipNin = true;
+      _nameMismatchAcknowledged = false;
+      _verifiedFirstName = null;
+      _verifiedLastName = null;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('You can complete NIN verification later.'),
+      ),
+    );
+  }
+
   void _populateFromKyc(Map<String, dynamic> kyc) {
     final state = _matchState(kyc['residence_state']?.toString() ?? '');
     final lga = _matchLga(state, kyc['residence_lga']?.toString() ?? '');
 
-    _firstNameController.text = kyc['firstname']?.toString() ?? '';
-    _lastNameController.text = kyc['surname']?.toString() ?? '';
-    _emailController.text = kyc['email']?.toString() ?? '';
+    _verifiedFirstName = kyc['firstname']?.toString().trim();
+    _verifiedLastName = kyc['surname']?.toString().trim();
     _dobController.text = _normalizeDob(kyc['birthdate']?.toString() ?? '');
     _selectedState = state;
     _selectedLga = lga;
     _addressController.text = kyc['residence_address']?.toString() ?? '';
   }
 
-  void _clearDetails() {
-    _firstNameController.clear();
-    _lastNameController.clear();
-    _emailController.clear();
+  void _clearDetails({bool preserveIdentity = false}) {
+    if (!preserveIdentity) {
+      _firstNameController.clear();
+      _lastNameController.clear();
+      _emailController.clear();
+    }
+    _nameMismatchAcknowledged = false;
+    _verifiedFirstName = null;
+    _verifiedLastName = null;
     _dobController.clear();
     _selectedState = null;
     _selectedLga = null;
     _addressController.clear();
+  }
+
+  String _normalizeNameForCompare(String? value) {
+    return (value ?? '').toLowerCase().replaceAll(RegExp(r"[^a-z]"), '').trim();
+  }
+
+  bool get _hasNameMismatch {
+    if (!_verificationSucceeded) return false;
+    final verifiedFirst = _normalizeNameForCompare(_verifiedFirstName);
+    final verifiedLast = _normalizeNameForCompare(_verifiedLastName);
+    if (verifiedFirst.isEmpty && verifiedLast.isEmpty) return false;
+
+    final enteredFirst = _normalizeNameForCompare(_firstNameController.text);
+    final enteredLast = _normalizeNameForCompare(_lastNameController.text);
+
+    return enteredFirst != verifiedFirst || enteredLast != verifiedLast;
+  }
+
+  String get _enteredFullName {
+    return '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'
+        .trim();
+  }
+
+  String get _verifiedFullName {
+    return '${_verifiedFirstName ?? ''} ${_verifiedLastName ?? ''}'.trim();
+  }
+
+  Future<bool> _showNameMismatchDialog() async {
+    if (!mounted) return false;
+
+    final acknowledged = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Name mismatch'),
+            content: Text(
+              'The name entered during KYC does not match the name returned by NIN verification.\n\n'
+              'Entered name: ${_enteredFullName.isEmpty ? 'Not provided' : _enteredFullName}\n'
+              'NIN name: ${_verifiedFullName.isEmpty ? 'Not provided' : _verifiedFullName}\n\n'
+              'Please confirm you want to continue with the name you entered.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Review'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Acknowledge & Continue'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (acknowledged && mounted) {
+      setState(() => _nameMismatchAcknowledged = true);
+    }
+
+    return acknowledged;
   }
 
   String? _matchState(String value) {
@@ -434,6 +560,11 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
     }
     if (!_formKey.currentState!.validate()) return;
 
+    if (_hasNameMismatch && !_nameMismatchAcknowledged) {
+      final acknowledged = await _showNameMismatchDialog();
+      if (!acknowledged) return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('signup_nin', _ninController.text.trim());
     await prefs.setString(
@@ -446,11 +577,28 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
     await prefs.setString('signup_address', _addressController.text.trim());
 
     if (!mounted) return;
-    Navigator.pushNamed(
-      context,
-      '/verify-phone',
-      arguments: _emailController.text.trim(),
-    );
+    final exploreResumeScreen = await ExploreKycFlow.pendingResumeScreen();
+    if (!mounted) return;
+    if (exploreResumeScreen != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => exploreResumeScreen),
+      );
+      return;
+    }
+
+    final hasExistingPolicy = prefs.getBool('has_existing_policy') ?? false;
+    final phoneAlreadyVerified =
+        (prefs.getString('signup_phone') ?? '').trim().isNotEmpty;
+    if (!hasExistingPolicy && phoneAlreadyVerified) {
+      Navigator.pushNamed(context, '/create-password');
+    } else {
+      Navigator.pushNamed(
+        context,
+        '/verify-phone',
+        arguments: _emailController.text.trim(),
+      );
+    }
   }
 
   String? _required(String? value, String label) {
@@ -747,7 +895,12 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
                                 ? 'NIN must be exactly 11 digits'
                                 : null,
                           ),
-                          validator: _nin,
+                          validator: (value) {
+                            if (_didSkipNin && (value ?? '').trim().isEmpty) {
+                              return null;
+                            }
+                            return _nin(value);
+                          },
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
                             LengthLimitingTextInputFormatter(11),
@@ -795,6 +948,22 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
                       ),
                     ],
                   ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _isVerifying ? null : _skipNinVerification,
+                      child: Text(
+                        "Skip, I'll do it later",
+                        style: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : AppTheme.primaryBlue,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
                   if (_hasAttemptedVerification) ...[
                     const SizedBox(height: 20),
                     Container(
@@ -813,8 +982,10 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
                       ),
                       child: Text(
                         _verificationSucceeded
-                            ? 'Verified details loaded. Please review and edit if needed.'
-                            : 'Verification failed. Please complete your details manually.',
+                            ? 'NIN verified. Your entered name was kept; please review the remaining details.'
+                            : _didSkipNin
+                                ? 'NIN skipped. Please complete your details manually.'
+                                : 'Verification failed. Please complete your details manually.',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

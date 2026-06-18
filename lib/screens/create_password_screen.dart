@@ -224,6 +224,10 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
           'cust_national_id_no': prefs.getString('signup_nin') ?? '',
         };
 
+        debugPrint('=== CREATE CUSTOMER REQUEST ===');
+        debugPrint('URL: https://eportaltest.rexinsure.com/api/createcustomer');
+        debugPrint('Payload: ${json.encode(customerPayload)}');
+
         final customerResponse = await http
             .post(
               Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
@@ -231,6 +235,10 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
               body: json.encode(customerPayload),
             )
             .timeout(const Duration(seconds: 15));
+
+        debugPrint('=== CREATE CUSTOMER RESPONSE ===');
+        debugPrint('Status Code: ${customerResponse.statusCode}');
+        debugPrint('Response Body: ${customerResponse.body}');
 
         if (customerResponse.statusCode != 200 &&
             customerResponse.statusCode != 201) {
@@ -260,6 +268,10 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
         'cust_password': password,
       };
 
+      debugPrint('=== CREATE LOGIN REQUEST ===');
+      debugPrint('URL: https://eportaltest.rexinsure.com/api/createlogin');
+      debugPrint('Payload: ${json.encode(loginPayload)}');
+
       final loginResponse = await http
           .post(
             Uri.parse('https://eportaltest.rexinsure.com/api/createlogin'),
@@ -267,6 +279,10 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
             body: json.encode(loginPayload),
           )
           .timeout(const Duration(seconds: 15));
+
+      debugPrint('=== CREATE LOGIN RESPONSE ===');
+      debugPrint('Status Code: ${loginResponse.statusCode}');
+      debugPrint('Response Body: ${loginResponse.body}');
 
       if (loginResponse.statusCode != 200 && loginResponse.statusCode != 201) {
         await _showSignupApiError(loginResponse.body,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'signup_screen.dart';
 import '../utils/app_theme.dart';
 
 class ExistingPolicyQuestionScreen extends StatefulWidget {
@@ -35,7 +36,14 @@ class _ExistingPolicyQuestionScreenState
     } else {
       await prefs.setBool('has_existing_policy', false);
       if (mounted) {
-        Navigator.pushNamed(context, '/enter-nin');
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SignupScreen(
+              nextRoute: '/verify-phone',
+            ),
+          ),
+        );
       }
     }
   }
@@ -57,6 +65,8 @@ class _ExistingPolicyQuestionScreenState
         isDark ? const Color(0xFF2F3B52) : const Color(0xFFE3F2FD);
     final helpTitleColor =
         isDark ? const Color(0xFFA7C7FF) : AppTheme.primaryNavy;
+    final adviceLinkColor =
+        isDark ? AppTheme.accentOrange : selectedColor;
     const buttonForegroundColor = Colors.white;
     final disabledButtonColor = AppTheme.disabledButtonColor(context);
     final disabledButtonTextColor = AppTheme.disabledButtonTextColor(context);
@@ -308,12 +318,12 @@ class _ExistingPolicyQuestionScreenState
                           }
                         }
                       },
-                      child: const Text(
+                      child: Text(
                         'Click here for advice.',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: selectedColor,
+                          color: adviceLinkColor,
                         ),
                       ),
                     ),

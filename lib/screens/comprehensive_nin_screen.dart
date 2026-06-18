@@ -18,6 +18,7 @@ class ComprehensiveNinScreen extends StatefulWidget {
   final List<File> imageFiles;
   final bool isLoggedIn;
   final bool isAgent;
+  final bool isExploreFlow;
 
   const ComprehensiveNinScreen(
       {super.key,
@@ -29,7 +30,8 @@ class ComprehensiveNinScreen extends StatefulWidget {
       this.vehicleData = const {},
       this.imageFiles = const [],
       this.isLoggedIn = false,
-      this.isAgent = false});
+      this.isAgent = false,
+      this.isExploreFlow = false});
   @override
   State<ComprehensiveNinScreen> createState() => _ComprehensiveNinScreenState();
 }
@@ -366,6 +368,7 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
                                             imageFiles: widget.imageFiles,
                                             isLoggedIn: widget.isLoggedIn,
                                             isAgent: widget.isAgent,
+                                            isExploreFlow: widget.isExploreFlow,
                                           )));
                             }
                           : null,

@@ -29,6 +29,7 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
   final _picker = ImagePicker();
   final List<XFile> _attachments = [];
   bool _isSubmitting = false;
+  static const Duration _ticketUploadTimeout = Duration(seconds: 60);
   final _categories = [
     'Policy Information',
     'Claims',
@@ -111,38 +112,19 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
         auth.userData?['Email']?.toString() ??
         '';
 
+    final fields = {
+      'category': _selectedCategory!,
+      if (_policyController.text.isNotEmpty)
+        'policyNo': _policyController.text.trim(),
+      'title': _titleController.text.trim(),
+      'description': _descController.text.trim(),
+      'userId': userEmail,
+      'userType': widget.isAgentFlow ? 'agent' : 'customer',
+    };
+
     try {
-      final request = http.MultipartRequest(
-          'POST',
-          Uri.parse(
-              'https://eportaltest.rexinsure.com/api/support/ticket/create'));
-      request.headers['Accept'] = 'application/json';
-
-      // Add fields
-      request.fields['category'] = _selectedCategory!;
-      if (_policyController.text.isNotEmpty) {
-        request.fields['policyNo'] = _policyController.text;
-      }
-      request.fields['title'] = _titleController.text;
-      request.fields['description'] = _descController.text;
-      request.fields['userId'] = userEmail;
-      request.fields['userType'] = widget.isAgentFlow ? 'agent' : 'customer';
-
-      // Add attachments
-      for (int i = 0; i < _attachments.length; i++) {
-        final file = await http.MultipartFile.fromPath(
-            'attachments', _attachments[i].path);
-        request.files.add(file);
-      }
-
-      // Print payload
-      print('Sending ticket creation request:');
-      print('Fields: ${request.fields}');
-      print('Files: ${request.files.map((f) => f.filename).toList()}');
-
-      final response =
-          await request.send().timeout(const Duration(seconds: 15));
-      final responseBody = await response.stream.bytesToString();
+      final response = await _sendTicketRequest(fields);
+      final responseBody = response.body;
 
       print('Response status: ${response.statusCode}');
       print('Response body: $responseBody');
@@ -153,9 +135,8 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
             content: Text('Ticket submitted successfully'),
             backgroundColor: Colors.green));
       } else {
-        final errorResponse = http.Response(responseBody, response.statusCode);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(ErrorMessages.fromResponse(errorResponse,
+            content: Text(ErrorMessages.fromResponse(response,
                 fallback: 'Failed to submit ticket')),
             backgroundColor: Colors.red));
       }
@@ -168,6 +149,45 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
     } finally {
       setState(() => _isSubmitting = false);
     }
+  }
+
+  Future<http.Response> _sendTicketRequest(Map<String, String> fields) async {
+    Object? lastError;
+
+    for (var attempt = 1; attempt <= 2; attempt++) {
+      final request = http.MultipartRequest(
+          'POST',
+          Uri.parse(
+              'https://eportaltest.rexinsure.com/api/support/ticket/create'));
+      request.headers['Accept'] = 'application/json';
+      request.headers['Connection'] = 'close';
+      request.fields.addAll(fields);
+
+      // Add attachments
+      for (int i = 0; i < _attachments.length; i++) {
+        final file = await http.MultipartFile.fromPath(
+            'attachments', _attachments[i].path);
+        request.files.add(file);
+      }
+
+      // Print payload
+      print('Sending ticket creation request:');
+      print('Fields: ${request.fields}');
+      print('Files: ${request.files.map((f) => f.filename).toList()}');
+      print('Attempt: $attempt');
+
+      try {
+        final streamed = await request.send().timeout(_ticketUploadTimeout);
+        return await http.Response.fromStream(streamed)
+            .timeout(_ticketUploadTimeout);
+      } catch (e) {
+        lastError = e;
+        if (attempt == 2) rethrow;
+        await Future.delayed(const Duration(milliseconds: 700));
+      }
+    }
+
+    throw lastError ?? Exception('Unable to submit ticket');
   }
 
   @override

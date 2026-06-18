@@ -543,7 +543,8 @@ class NewPolicyScreen extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 4),
-                  Text('Lorem ipsum dolor sit amet consectetur.',
+                  Text(
+                      'Specialized cover for business, marine, energy, agriculture, engineering, bond, and industrial risks.',
                       style: TextStyle(
                           fontSize: 11,
                           color: _secondaryTextColor(context),

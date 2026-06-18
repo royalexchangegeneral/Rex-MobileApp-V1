@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'dart:convert';
 import '../utils/app_theme.dart';
 import '../utils/theme_helper.dart';
 import '../providers/auth_provider.dart';
@@ -31,6 +33,158 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _drawerSelectedIndex = 0;
+  final Map<String, Map<String, dynamic>> _claimStatusCache = {};
+  final Set<String> _claimStatusLoading = {};
+
+  String _claimValue(Map<String, dynamic> claim, List<String> keys) {
+    for (final key in keys) {
+      final value = claim[key];
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString().trim();
+      }
+    }
+    return '';
+  }
+
+  String _claimNumber(Map<String, dynamic> claim) {
+    return _claimValue(claim, [
+      'ClaimNo',
+      'claimNo',
+      'ClaimNO',
+      'ClaimNum',
+      'ClaimNumber',
+      'Claim_Number',
+      'ClaimID',
+      'claim_num',
+      'claim_no',
+    ]);
+  }
+
+  int _claimProgressIndex(String status) {
+    final s = status.toLowerCase();
+    if (s.contains('claim paid')) return 7;
+    if (s.contains('paid') || s.contains('settled')) return 6;
+    if (s.contains('payment approved')) return 5;
+    if (s.contains('payment approval stage')) return 4;
+    if (s.contains('offer')) return 2;
+    if (s.contains('payment approval') ||
+        s.contains('awaiting payement approval') ||
+        s.contains('awaiting payment approval') ||
+        s.contains('payment')) {
+      return 4;
+    }
+    if (s.contains('awaiting appointment of loss adjuster')) return 1;
+    if (s.contains('pending offer processing')) return 2;
+    if (s.contains('dv') || s.contains('execution') || s.contains('execut')) {
+      return 3;
+    }
+    if (s.contains('review') ||
+        s.contains('progress') ||
+        s.contains('process')) {
+      return 1;
+    }
+    if (s.contains('registered') ||
+        s.contains('new claim') ||
+        s.contains('submitted') ||
+        s.contains('pending')) {
+      return 1;
+    }
+    return 1;
+  }
+
+  Map<String, dynamic> _payloadFrom(dynamic decoded) {
+    if (decoded is Map) {
+      final map = Map<String, dynamic>.from(decoded);
+      final data = map['Data'] ?? map['data'];
+      if (data is List && data.isNotEmpty && data.first is Map) {
+        return Map<String, dynamic>.from(data.first as Map);
+      }
+      if (data is Map) return Map<String, dynamic>.from(data);
+      return map;
+    }
+    return <String, dynamic>{};
+  }
+
+  String _displayClaimStatus(Map<String, dynamic> claim) {
+    final claimNo = _claimNumber(claim);
+    final statusPayload = _claimStatusCache[claimNo];
+    final fallbackStatus =
+        _claimValue(claim, ['ClaimStatus', 'Status', 'status']);
+
+    if (statusPayload == null) {
+      return fallbackStatus.isNotEmpty ? fallbackStatus : 'Pending';
+    }
+
+    final status = _claimValue(statusPayload, ['Status', 'status']).isNotEmpty
+        ? _claimValue(statusPayload, ['Status', 'status'])
+        : fallbackStatus;
+    final progressStage = _claimValue(
+        statusPayload, ['Status2_Stages', 'status2_stages', 'Status2Stages']);
+    final progressIndex =
+        _claimProgressIndex(progressStage.isNotEmpty ? progressStage : status);
+
+    if (progressIndex > 6) return 'Claim Paid';
+    if (progressStage.isNotEmpty) return progressStage;
+    return status.isNotEmpty ? status : 'Pending';
+  }
+
+  Color _claimStatusColor(String status) {
+    final s = status.toLowerCase();
+    if (s.contains('claim paid') ||
+        s.contains('complet') ||
+        s.contains('settled') ||
+        s.contains('paid') ||
+        s.contains('payment approved')) {
+      return Colors.green;
+    }
+    if (s.contains('reject') || s.contains('denied')) return Colors.red;
+    if (s.contains('approv') && !s.contains('payment approval')) {
+      return Colors.green;
+    }
+    return const Color(0xFFFF9800);
+  }
+
+  void _prefetchClaimStatuses(List<Map<String, dynamic>> claims) {
+    for (final claim in claims) {
+      final claimNo = _claimNumber(claim);
+      if (claimNo.isEmpty ||
+          _claimStatusCache.containsKey(claimNo) ||
+          _claimStatusLoading.contains(claimNo)) {
+        continue;
+      }
+
+      _claimStatusLoading.add(claimNo);
+      _fetchClaimStatus(claimNo).then((payload) {
+        if (!mounted) return;
+        setState(() {
+          _claimStatusCache[claimNo] = payload;
+          _claimStatusLoading.remove(claimNo);
+        });
+      }).catchError((e) {
+        debugPrint('Unable to load dashboard claim status for $claimNo: $e');
+        if (!mounted) return;
+        setState(() => _claimStatusLoading.remove(claimNo));
+      });
+    }
+  }
+
+  Future<Map<String, dynamic>> _fetchClaimStatus(String claimNo) async {
+    final uri = Uri.https(
+      'eportaltest.rexinsure.com',
+      '/api/getclaim-status',
+      {'claim_num': claimNo},
+    );
+
+    final response = await http.get(uri, headers: {
+      'Accept': 'application/json'
+    }).timeout(const Duration(seconds: 30));
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Unable to load claim status');
+    }
+
+    return _payloadFrom(json.decode(response.body));
+  }
 
   @override
   void initState() {
@@ -294,27 +448,15 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                               style: TextStyle(
                                   color: Colors.grey[500], fontSize: 12))));
                 final displayClaims = pp.claims.take(3).toList();
+                _prefetchClaimStatuses(displayClaims);
                 return Column(
                     children: displayClaims.map((c) {
                   final claimId = c['ClaimID']?.toString() ?? '';
                   final claimType = c['ClaimType']?.toString() ??
                       c['PolicyClass']?.toString() ??
                       'Claim';
-                  final claimStatus = c['ClaimStatus']?.toString() ??
-                      c['Status']?.toString() ??
-                      'Pending';
-                  final statusColor = claimStatus
-                              .toLowerCase()
-                              .contains('complet') ||
-                          claimStatus.toLowerCase().contains('settled')
-                      ? Colors.green
-                      : claimStatus.toLowerCase().contains('progress') ||
-                              claimStatus.toLowerCase().contains('process')
-                          ? const Color(0xFFFF9800)
-                          : claimStatus.toLowerCase().contains('reject') ||
-                                  claimStatus.toLowerCase().contains('denied')
-                              ? Colors.red
-                              : Colors.grey;
+                  final claimStatus = _displayClaimStatus(c);
+                  final statusColor = _claimStatusColor(claimStatus);
                   return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _buildClaimCard(
@@ -324,6 +466,12 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                         const Color(0xFF1A3A5C),
                         claimStatus,
                         statusColor,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ClaimDetailsScreen(claim: c),
+                          ),
+                        ),
                       ));
                 }).toList());
               }),
@@ -571,45 +719,58 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
   }
 
   Widget _buildClaimCard(String title, String claimNumber, IconData icon,
-      Color iconColor, String status, Color statusColor) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-          color: ThemeHelper.getCardColor(context),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!)),
-      child: Row(children: [
-        Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8)),
-            child: Icon(icon, color: iconColor, size: 20)),
-        SizedBox(width: 10),
-        Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title,
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface)),
-          Text(claimNumber,
-              style: TextStyle(
-                  fontSize: 10,
-                  color: ThemeHelper.getSecondaryTextColor(context))),
-        ])),
-        Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-            decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16)),
-            child: Text(status,
-                style: TextStyle(
-                    color: statusColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600))),
-      ]),
+      Color iconColor, String status, Color statusColor,
+      {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+            color: ThemeHelper.getCardColor(context),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[200]!)),
+        child: Row(children: [
+          Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8)),
+              child: Icon(icon, color: iconColor, size: 20)),
+          SizedBox(width: 10),
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text(title,
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface)),
+                Text(claimNumber,
+                    style: TextStyle(
+                        fontSize: 10,
+                        color: ThemeHelper.getSecondaryTextColor(context))),
+              ])),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 118),
+            child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16)),
+                child: Text(status,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: statusColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600))),
+          ),
+        ]),
+      ),
     );
   }
 

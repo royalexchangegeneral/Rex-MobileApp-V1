@@ -24,6 +24,15 @@ class UnderwrittenProductsScreen extends StatelessWidget {
   Color _secondaryTextColor(BuildContext context) =>
       _isDark(context) ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
 
+  void _openProductDescription(BuildContext context, String product) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UnderwrittenProductDescriptionScreen(product: product),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,12 +69,7 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               iconBgColor: const Color(0xFFFFF5F5),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
-              onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        const QuoteScreen(insuranceType: 'Fire Insurance'),
-                  )),
+              onTap: () => _openProductDescription(context, 'Fire Insurance'),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -78,8 +82,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        const QuoteScreen(insuranceType: 'General Accident'),
+                    builder: (_) => const UnderwrittenProductDescriptionScreen(
+                        product: 'General Accident'),
                   )),
             ),
             const SizedBox(height: 12),
@@ -93,8 +97,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const QuoteScreen(
-                        insuranceType: 'Engineering Insurance'),
+                    builder: (_) => const UnderwrittenProductDescriptionScreen(
+                        product: 'Engineering Insurance'),
                   )),
             ),
             const SizedBox(height: 12),
@@ -108,8 +112,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        const QuoteScreen(insuranceType: 'Marine Insurance'),
+                    builder: (_) => const UnderwrittenProductDescriptionScreen(
+                        product: 'Marine Insurance'),
                   )),
             ),
             const SizedBox(height: 12),
@@ -123,8 +127,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        const QuoteScreen(insuranceType: 'Industrial All Risk'),
+                    builder: (_) => const UnderwrittenProductDescriptionScreen(
+                        product: 'Industrial All Risk'),
                   )),
             ),
             const SizedBox(height: 12),
@@ -138,8 +142,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        const QuoteScreen(insuranceType: 'Energy Insurance'),
+                    builder: (_) => const UnderwrittenProductDescriptionScreen(
+                        product: 'Energy Insurance'),
                   )),
             ),
             const SizedBox(height: 12),
@@ -153,8 +157,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const QuoteScreen(
-                        insuranceType: 'Agriculture Insurance'),
+                    builder: (_) => const UnderwrittenProductDescriptionScreen(
+                        product: 'Agriculture Insurance'),
                   )),
             ),
             const SizedBox(height: 12),
@@ -168,8 +172,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        const QuoteScreen(insuranceType: 'Bond Insurance'),
+                    builder: (_) => const UnderwrittenProductDescriptionScreen(
+                        product: 'Bond Insurance'),
                   )),
             ),
             const SizedBox(height: 20),
@@ -366,6 +370,321 @@ class UnderwrittenProductsScreen extends StatelessWidget {
                       ? AppTheme.bottomNavSelectedColor(context)
                       : AppTheme.bottomNavUnselectedColor(context))),
         ],
+      ),
+    );
+  }
+}
+
+class UnderwrittenProductDescriptionScreen extends StatelessWidget {
+  final String product;
+
+  const UnderwrittenProductDescriptionScreen(
+      {super.key, required this.product});
+
+  bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  Color _sectionColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF111827) : const Color(0xFFFAFAFA);
+
+  Color _borderColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFF334155) : Colors.grey.shade200;
+
+  Color _secondaryTextColor(BuildContext context) =>
+      _isDark(context) ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+
+  IconData get _productIcon {
+    switch (product.toLowerCase()) {
+      case 'fire insurance':
+        return Icons.local_fire_department_outlined;
+      case 'general accident':
+        return Icons.health_and_safety_outlined;
+      case 'engineering insurance':
+        return Icons.precision_manufacturing_outlined;
+      case 'marine insurance':
+        return Icons.directions_boat_filled_outlined;
+      case 'industrial all risk':
+        return Icons.factory_outlined;
+      case 'energy insurance':
+        return Icons.bolt_outlined;
+      case 'agriculture insurance':
+        return Icons.agriculture_outlined;
+      case 'bond insurance':
+        return Icons.handshake_outlined;
+      default:
+        return Icons.verified_user_outlined;
+    }
+  }
+
+  List<String> get _descriptions {
+    final summary = _content['summary']?.toString() ?? '';
+    return summary.trim().isEmpty ? const [] : [summary.trim()];
+  }
+
+  Map<String, dynamic> get _content {
+    switch (product.toLowerCase()) {
+      case 'fire insurance':
+        return {
+          'summary':
+              'Protect your building, contents, stock, and business assets against fire and related insured damage.',
+          'covers': [
+            'Fire and lightning damage',
+            'Explosion and impact damage',
+            'Business premises, contents, and stock',
+          ],
+        };
+      case 'general accident':
+        return {
+          'summary':
+              'Cover everyday accident risks, liability exposures, and unexpected losses affecting your operations.',
+          'covers': [
+            'Personal and workplace accident exposures',
+            'Public liability and third-party injury risks',
+            'Unexpected loss events requiring tailored protection',
+          ],
+        };
+      case 'engineering insurance':
+        return {
+          'summary':
+              'Protect machinery, equipment, construction works, and engineering projects from operational or installation risks.',
+          'covers': [
+            'Machinery breakdown and plant risks',
+            'Contract works and installation exposures',
+            'Equipment damage during use or project execution',
+          ],
+        };
+      case 'marine insurance':
+        return {
+          'summary':
+              'Protect cargo and goods while they move by sea, air, road, or rail from loss or damage in transit.',
+          'covers': [
+            'Single transit cargo movement',
+            'Import, export, and inland transit risks',
+            'Loss or damage to insured goods while in transit',
+          ],
+        };
+      case 'industrial all risk':
+        return {
+          'summary':
+              'Broad protection for industrial businesses, covering property, machinery, stock, and interruption risks.',
+          'covers': [
+            'Industrial buildings, plant, and machinery',
+            'Stock, contents, and business assets',
+            'Wider all-risk protection for complex operations',
+          ],
+        };
+      case 'energy insurance':
+        return {
+          'summary':
+              'Specialized protection for energy assets, equipment, operations, and liabilities across energy projects.',
+          'covers': [
+            'Energy equipment and operational assets',
+            'Project and production-related risks',
+            'Associated liability and business interruption exposures',
+          ],
+        };
+      case 'agriculture insurance':
+        return {
+          'summary':
+              'Protect farms, crops, livestock, and agribusiness investments from insured events that can disrupt production.',
+          'covers': [
+            'Crop and farm asset protection',
+            'Livestock and agribusiness risks',
+            'Loss events affecting agricultural production',
+          ],
+        };
+      case 'bond insurance':
+        return {
+          'summary':
+              'Support contractual obligations with surety protection for performance, advance payment, and related bond needs.',
+          'covers': [
+            'Performance bond requirements',
+            'Advance payment and contract bonds',
+            'Surety support for business obligations',
+          ],
+        };
+      default:
+        return {
+          'summary':
+              'Request a tailored underwriting quote based on your business, asset, or project risk.',
+          'covers': [
+            'Specialized risk assessment',
+            'Tailored cover recommendations',
+            'Quote support for complex insurance needs',
+          ],
+        };
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final covers = (_content['covers'] as List).cast<String>();
+    final descriptions = _descriptions;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final isDark = _isDark(context);
+    final iconColor =
+        isDark ? const Color(0xFFFFC073) : AppTheme.accentOrange;
+    final iconBackground = AppTheme.accentOrange.withValues(
+      alpha: isDark ? 0.18 : 0.12,
+    );
+    final iconBorderColor = AppTheme.accentOrange.withValues(
+      alpha: isDark ? 0.34 : 0.18,
+    );
+    final keyCoverageColor =
+        isDark ? const Color(0xFFFFC073) : AppTheme.primaryNavy;
+    final cardShadowColor = isDark
+        ? Colors.transparent
+        : AppTheme.primaryNavy.withValues(alpha: 0.06);
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new,
+              color: AppTheme.primaryNavy, size: 22),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
+                  decoration: BoxDecoration(
+                    color: _sectionColor(context),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: _borderColor(context)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: cardShadowColor,
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 58,
+                          height: 58,
+                          decoration: BoxDecoration(
+                            color: iconBackground,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: iconBorderColor),
+                          ),
+                          child: Icon(
+                            _productIcon,
+                            color: iconColor,
+                            size: 30,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Center(
+                        child: Text(product,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: onSurface)),
+                      ),
+                      const SizedBox(height: 14),
+                      ...descriptions.map(
+                        (description) => Padding(
+                          padding: const EdgeInsets.only(bottom: 14),
+                          child: Text(description,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.36,
+                                  color: _secondaryTextColor(context))),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        height: 1,
+                        color: _borderColor(context),
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        'Key Coverage',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: keyCoverageColor,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      ...covers.map((cover) => Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFEFF3FF),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.check,
+                                      color: AppTheme.primaryNavy, size: 19),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Text(cover,
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          height: 1.3,
+                                          color: onSurface)),
+                                ),
+                              ],
+                            ),
+                          )),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                  24, 18, 24, 22 + MediaQuery.of(context).padding.bottom),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => QuoteScreen(insuranceType: product),
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryNavy,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    elevation: 0,
+                  ),
+                  child: const Text('Next',
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

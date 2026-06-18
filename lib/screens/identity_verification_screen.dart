@@ -43,17 +43,28 @@ class _IdentityVerificationScreenState
     }
     setState(() => _isVerifying = true);
     try {
+      final payload = {
+        'Intcode': 'TESTCODE',
+        'Password': 'royal1234',
+        'number': nin,
+      };
+
+      debugPrint('=== VERIFY NIN REQUEST ===');
+      debugPrint('URL: https://eportaltest.rexinsure.com/api/mobile/verify/nin');
+      debugPrint('Payload: ${json.encode(payload)}');
+
       final response = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
-            headers: {'Content-Type': 'application/json'},
-            body: json.encode({
-              'Intcode': 'TESTCODE',
-              'Password': 'royal1234',
-              'number': nin
-            }),
+            Uri.parse('https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: json.encode(payload),
           )
           .timeout(const Duration(seconds: 15));
+      debugPrint('=== VERIFY NIN RESPONSE ===');
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response Body: ${response.body}');
       setState(() => _isVerifying = false);
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
