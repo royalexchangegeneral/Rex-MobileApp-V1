@@ -108,6 +108,7 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
       email: email,
       mobileno: mobileno,
       premium: premiumAmount,
+      isExploreFlow: isExploreFlow,
     );
 
     if (!context.mounted) return;

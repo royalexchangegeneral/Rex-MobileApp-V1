@@ -133,6 +133,7 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
       mobileno: mobileno,
       premium: premium,
       extraFields: extraFields,
+      isExploreFlow: isExploreFlow,
     );
 
     if (!context.mounted) return;

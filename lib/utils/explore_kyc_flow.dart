@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -33,6 +35,16 @@ class ExploreKycFlow {
     await prefs.setString(_optionTitleKey, optionTitle);
     await prefs.setString(_priceKey, price);
 
+    debugPrint('=== EXPLORE FLOW KYC START PAYLOAD ===');
+    debugPrint('Payload: ${json.encode({
+          'target': target,
+          'productName': productName,
+          'optionTitle': optionTitle,
+          'price': price,
+          'nextRoute': '/verify-phone',
+        })}');
+    debugPrint('======================================');
+
     if (!context.mounted) return;
     Navigator.push(
       context,
@@ -55,6 +67,28 @@ class ExploreKycFlow {
     final optionTitle = prefs.getString(_optionTitleKey) ?? '';
     final price = prefs.getString(_priceKey) ?? '';
     final productName = prefs.getString(_productNameKey) ?? '';
+    final resumePayload = {
+      'target': target,
+      'productName': productName,
+      'optionTitle': optionTitle,
+      'price': price,
+      'kyc': {
+        'nin': prefs.getString('signup_nin') ?? '',
+        'firstName': prefs.getString('signup_first_name') ?? '',
+        'lastName': prefs.getString('signup_last_name') ?? '',
+        'email': prefs.getString('signup_email') ?? '',
+        'phone': prefs.getString('signup_phone') ?? '',
+        'dob': prefs.getString('signup_dob') ?? '',
+        'state': prefs.getString('signup_state') ?? '',
+        'lga': prefs.getString('signup_lga') ?? '',
+        'address': prefs.getString('signup_address') ?? '',
+      },
+    };
+
+    debugPrint('=== EXPLORE FLOW RESUME PAYLOAD ===');
+    debugPrint('Payload: ${json.encode(resumePayload)}');
+    debugPrint('===================================');
+
     final screen = _screenFor(
       target: target,
       optionTitle: optionTitle,

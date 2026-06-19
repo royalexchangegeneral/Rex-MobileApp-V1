@@ -472,6 +472,7 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
         'vehiclepurpose': _selectedVehiclePurpose ?? '',
         'employment': _selectedEmployment ?? '',
       },
+      isExploreFlow: widget.isExploreFlow,
     );
 
     setState(() => _isPayingNow = false);

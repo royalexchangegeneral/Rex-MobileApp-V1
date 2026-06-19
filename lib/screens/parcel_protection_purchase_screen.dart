@@ -386,6 +386,7 @@ class _ParcelProtectionPurchaseScreenState
           'trackno': _trackingNoController.text.trim(),
           'grosspremium': premiumAmount.toInt(),
         },
+        isExploreFlow: widget.isExploreFlow,
       );
       setState(() => _isPayingNow = false);
       if (!mounted) return;

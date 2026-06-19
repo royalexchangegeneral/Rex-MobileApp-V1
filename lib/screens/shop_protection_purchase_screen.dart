@@ -472,6 +472,7 @@ class _ShopProtectionPurchaseScreenState
                   })
               .toList(),
         },
+        isExploreFlow: widget.isExploreFlow,
       );
       setState(() => _isPayingNow = false);
       if (!mounted) return;

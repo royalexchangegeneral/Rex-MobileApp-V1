@@ -377,6 +377,7 @@ class _PersonalCarePurchaseScreenState
           'nokrel': _selectedRelationship ?? '',
           'grosspremium': premiumAmount.toInt(),
         },
+        isExploreFlow: widget.isExploreFlow,
       );
       setState(() => _isPayingNow = false);
       if (!mounted) return;

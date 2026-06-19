@@ -33,6 +33,7 @@ class PaymentService {
     required int premium,
     Map<String, dynamic> extraFields = const {},
     bool includeCredentials = true,
+    bool isExploreFlow = false,
   }) async {
     try {
       // Step 1: Submit product proposal
@@ -50,7 +51,9 @@ class PaymentService {
       };
 
       if (kDebugMode) {
-        print('=== STEP 1: SUBMIT PROPOSAL ===');
+        print(isExploreFlow
+            ? '=== EXPLORE FLOW STEP 1: SUBMIT PROPOSAL ==='
+            : '=== STEP 1: SUBMIT PROPOSAL ===');
         print('URL: $_proposalUrl');
         print('Payload: ${json.encode(proposalPayload)}');
         print('================================');
@@ -65,7 +68,9 @@ class PaymentService {
           .timeout(const Duration(seconds: 20));
 
       if (kDebugMode) {
-        print('=== PROPOSAL RESPONSE ===');
+        print(isExploreFlow
+            ? '=== EXPLORE FLOW PROPOSAL RESPONSE ==='
+            : '=== PROPOSAL RESPONSE ===');
         print('Status: ${proposalResponse.statusCode}');
         print('Body: ${proposalResponse.body}');
         print('=========================');
@@ -116,7 +121,9 @@ class PaymentService {
       };
 
       if (kDebugMode) {
-        print('=== STEP 2: INITIATE PURCHASE ===');
+        print(isExploreFlow
+            ? '=== EXPLORE FLOW STEP 2: INITIATE PURCHASE ==='
+            : '=== STEP 2: INITIATE PURCHASE ===');
         print('URL: $_purchaseUrl');
         print('Payload: ${json.encode(purchasePayload)}');
         print('=================================');
@@ -131,7 +138,9 @@ class PaymentService {
           .timeout(const Duration(seconds: 20));
 
       if (kDebugMode) {
-        print('=== PURCHASE RESPONSE ===');
+        print(isExploreFlow
+            ? '=== EXPLORE FLOW PURCHASE RESPONSE ==='
+            : '=== PURCHASE RESPONSE ===');
         print('Status: ${purchaseResponse.statusCode}');
         print('Body: ${purchaseResponse.body}');
         print('=========================');
@@ -264,6 +273,7 @@ class PaymentService {
     required String email,
     required String mobileno,
     required int premium,
+    bool isExploreFlow = false,
   }) async {
     try {
       // Step 1: Submit CP proposal as multipart with images
@@ -290,7 +300,9 @@ class PaymentService {
       }
 
       if (kDebugMode) {
-        print('=== STEP 1: SUBMIT CP PROPOSAL (MULTIPART) ===');
+        print(isExploreFlow
+            ? '=== EXPLORE FLOW STEP 1: SUBMIT CP PROPOSAL (MULTIPART) ==='
+            : '=== STEP 1: SUBMIT CP PROPOSAL (MULTIPART) ===');
         print('URL: $_proposalUrl');
         print('Fields: ${request.fields}');
         print('Files: ${request.files.length}');
@@ -302,7 +314,9 @@ class PaymentService {
       final proposalBody = await proposalStreamResponse.stream.bytesToString();
 
       if (kDebugMode) {
-        print('=== CP PROPOSAL RESPONSE ===');
+        print(isExploreFlow
+            ? '=== EXPLORE FLOW CP PROPOSAL RESPONSE ==='
+            : '=== CP PROPOSAL RESPONSE ===');
         print('Status: ${proposalStreamResponse.statusCode}');
         print('Body: $proposalBody');
         print('============================');
@@ -352,7 +366,9 @@ class PaymentService {
       };
 
       if (kDebugMode) {
-        print('=== STEP 2: INITIATE CP PURCHASE ===');
+        print(isExploreFlow
+            ? '=== EXPLORE FLOW STEP 2: INITIATE CP PURCHASE ==='
+            : '=== STEP 2: INITIATE CP PURCHASE ===');
         print('URL: $_purchaseUrl');
         print('Payload: ${json.encode(purchasePayload)}');
         print('====================================');
@@ -367,7 +383,9 @@ class PaymentService {
           .timeout(const Duration(seconds: 20));
 
       if (kDebugMode) {
-        print('=== CP PURCHASE RESPONSE ===');
+        print(isExploreFlow
+            ? '=== EXPLORE FLOW CP PURCHASE RESPONSE ==='
+            : '=== CP PURCHASE RESPONSE ===');
         print('Status: ${purchaseResponse.statusCode}');
         print('Body: ${purchaseResponse.body}');
         print('============================');

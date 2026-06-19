@@ -417,6 +417,7 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
                   })
               .toList(),
         },
+        isExploreFlow: widget.isExploreFlow,
       );
       setState(() => _isPayingNow = false);
       if (!mounted) return;
