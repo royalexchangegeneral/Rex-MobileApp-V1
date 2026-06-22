@@ -131,7 +131,10 @@ class _QuoteScreenState extends State<QuoteScreen> {
                               style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: AppTheme.primaryNavy)),
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : AppTheme.primaryNavy)),
                           const SizedBox(height: 4),
                           Text(_productSubtext,
                               style: TextStyle(

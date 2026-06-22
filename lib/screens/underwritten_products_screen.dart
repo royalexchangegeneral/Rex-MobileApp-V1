@@ -65,7 +65,7 @@ class UnderwrittenProductsScreen extends StatelessWidget {
             _buildInsuranceCard(
               context,
               title: 'Fire Insurance',
-              subtitle: 'Protect your home',
+              subtitle: 'Protect your private residence and business premises',
               iconBgColor: const Color(0xFFFFF5F5),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
@@ -75,7 +75,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
             _buildInsuranceCard(
               context,
               title: 'General Accident',
-              subtitle: 'Protect your vehicle',
+              subtitle:
+                  'Protect your life and finances against accidental injuries, disability, or death.',
               iconBgColor: const Color(0xFFFFF5E6),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
@@ -90,7 +91,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
             _buildInsuranceCard(
               context,
               title: 'Engineering Insurance',
-              subtitle: 'Protect your equipment',
+              subtitle:
+                  'Protect your engineering projects, equipment, and construction works',
               iconBgColor: const Color(0xFFE8F4FD),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
@@ -105,7 +107,7 @@ class UnderwrittenProductsScreen extends StatelessWidget {
             _buildInsuranceCard(
               context,
               title: 'Marine Insurance',
-              subtitle: 'This policy covers Single Transit only',
+              subtitle: 'Protect your shipment',
               iconBgColor: const Color(0xFFF3E8FF),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
@@ -120,7 +122,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
             _buildInsuranceCard(
               context,
               title: 'Industrial All Risk',
-              subtitle: 'Protect your tools',
+              subtitle:
+                  'Protect your industrial assets, machinery, and operations',
               iconBgColor: const Color(0xFFE0F5F5),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
@@ -135,7 +138,7 @@ class UnderwrittenProductsScreen extends StatelessWidget {
             _buildInsuranceCard(
               context,
               title: 'Energy Insurance',
-              subtitle: 'Protect your tools',
+              subtitle: 'Protect your energy assets and operations',
               iconBgColor: const Color(0xFFFFF9DB),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
@@ -150,7 +153,7 @@ class UnderwrittenProductsScreen extends StatelessWidget {
             _buildInsuranceCard(
               context,
               title: 'Agriculture Insurance',
-              subtitle: 'Protect your food',
+              subtitle: 'Protect your crops and livestock',
               iconBgColor: const Color(0xFFE8F5E9),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
@@ -165,7 +168,7 @@ class UnderwrittenProductsScreen extends StatelessWidget {
             _buildInsuranceCard(
               context,
               title: 'Bond Insurance',
-              subtitle: 'Protect your Assets',
+              subtitle: 'Protect your project payments and contract delivery',
               iconBgColor: const Color(0xFFF3E8FF),
               svgIcon: 'assets/icons/Capa_1 (1).svg',
               trailingSvgIcon: 'assets/icons/Capa_1 (1).svg',
@@ -321,14 +324,14 @@ class UnderwrittenProductsScreen extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(subtitle,
                             style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 9,
                                 color: _secondaryTextColor(context)),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 48),
+                  const SizedBox(width: 72),
                 ],
               ),
             ),
@@ -425,83 +428,541 @@ class UnderwrittenProductDescriptionScreen extends StatelessWidget {
     switch (product.toLowerCase()) {
       case 'fire insurance':
         return {
+          'title': 'FIRE INSURANCE',
+          'subtitle': 'Fire & Special Perils (FSP) Insurance',
+          'overviewTitle': 'Product Overview / Summary',
           'summary':
-              'Protect your building, contents, stock, and business assets against fire and related insured damage.',
+              'The Fire & Special Perils (FSP) policy provides cover for both private residences and business premises against loss or damage to insured property caused by fire and related perils such as flood, storm, tempest, explosion (domestic gas and boilers), lightning, burst water pipes, and other specified risks.',
+          'coversTitle': 'Key Features and Benefits',
           'covers': [
-            'Fire and lightning damage',
-            'Explosion and impact damage',
-            'Business premises, contents, and stock',
+            'Covers both private residences and business premises.',
+            'Provides financial protection against fire and a wide range of specified perils.',
+            'Protects buildings and insured property from accidental loss or damage.',
+            'Helps minimize the financial impact of unexpected events affecting homes and businesses.',
           ],
+          'targetTitle': 'Target Customer Segment',
+          'targetCustomers': [
+            'Homeowners with private residences.',
+            'Owners of business premises.',
+            'Individuals and businesses seeking protection against fire and related perils affecting insured property.',
+          ],
+          'taglineTitle': 'Recommended Customer-Friendly Tagline',
+          'tagline':
+              'Protecting Your Home and Business Against Fire and Special Perils',
         };
       case 'general accident':
         return {
-          'summary':
-              'Cover everyday accident risks, liability exposures, and unexpected losses affecting your operations.',
-          'covers': [
-            'Personal and workplace accident exposures',
-            'Public liability and third-party injury risks',
-            'Unexpected loss events requiring tailored protection',
+          'title': 'GENERAL ACCIDENT INSURANCE',
+          'productSections': [
+            {
+              'subtitle': 'Product Name: Professional Indemnity Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Professional Indemnity Insurance is a form of liability insurance that helps protect professionals such as doctors, pharmacists, nurses, lawyers, engineers, architects and other professions against legal liability arising from professional negligence in the course of their business.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Protection against legal liability to pay damages to persons who have sustained loss due to professional negligence',
+                'Safeguards professionals from financial consequences of errors, omissions, or negligent acts',
+                'Supports business continuity by mitigating the financial impact of claims',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Doctors',
+                'Pharmacists',
+                'Nurses',
+                'Lawyers',
+                'Engineers',
+                'Architects',
+                'Brokers',
+                'Other professionals offering specialized services',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline':
+                  'Helping you stay secure when professional mistakes happen',
+            },
+            {
+              'subtitle':
+                  'Product Name: Directors & Officers (D&O) Liability Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Directors and officers (D&O) liability insurance is insurance coverage intended to protect individuals from personal losses if they are sued as a result of serving as a director or an officer of a business or other type of organization.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Protects directors and officers from personal losses',
+                'Covers legal fees and other related costs',
+                'Supports organizations in managing the financial impact of lawsuits',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Directors of companies or organizations',
+                'Officers of businesses or organizations',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline':
+                  'Reducing the impact of high-stakes leadership decisions',
+            },
+            {
+              'subtitle': 'Product Name: Public Liability Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'This policy covers legal liabilities arising from the activities of the insured\'s business (excluding product-related liabilities) for bodily injury, death of third parties, or loss or damage to their property. It also covers the cost of litigation.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Protects businesses against third-party liability claims',
+                'Covers compensation for injury, death, or property damage',
+                'Includes legal and litigation cost coverage',
+                'Reduces financial impact of public-facing business risks',
+                'Supports business continuity during claims or disputes',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Business owners',
+                'Companies with physical operations or public interaction',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline': 'Reducing the impact of everyday business risks',
+            },
+            {
+              'subtitle': 'Product Name: Occupiers Liability Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Covers the insured\'s legal liability arising from ownership, maintenance, or use of designated premises for injury, death, or property damage to third parties occurring on or around the premises.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Protects against claims from incidents on insured premises',
+                'Covers legal liability for bodily injury, death, or property damage',
+                'Extends to adjoining areas and defined facility spaces (e.g., parking areas, storage garages, recreation areas)',
+                'Supports compliance with statutory insurance requirements',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Owners or occupiers of public buildings',
+                'Operators of facilities accessible to the public (educational, medical, commercial, or recreational)',
+                'Businesses with physical premises exposed to public use',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline':
+                  'Protection for your premises and the people around it',
+            },
+            {
+              'subtitle': 'Product Name: Employer\'s Liability Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Provides insurance cover for employers against liability for injury, disease, or death of employees arising in the course of employment, as required under the Employee Compensation Act of 2010.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Protects employers from employee compensation claims',
+                'Covers workplace-related injury, disease, or death',
+                'Helps ensure compliance with statutory requirements',
+                'Reduces financial impact of employment-related liabilities',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Employers across all sectors',
+                'Businesses with staff engaged in operational or field activities',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline': 'Supporting your team and strengthening your business',
+            },
+            {
+              'subtitle': 'Product Name: Product Liability Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Provides cover for compensation claims arising from injury or property damage caused by defective products supplied or distributed by the insured.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Protects against claims from faulty or defective products',
+                'Covers compensation costs for third-party injury or property damage',
+                'Applies across manufacturing, sales, and distribution activities',
+                'Helps safeguard business reputation and financial stability',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Manufacturers',
+                'Distributors and suppliers',
+                'Retailers and wholesalers',
+                'Service providers handling or altering products',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline': 'Reducing the impact of product performance failures',
+            },
+            {
+              'subtitle': 'Product Name: Group Personal Accident Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Provides 24-hour accident insurance cover for groups, offering compensation for injuries, disability, or death resulting from accidental events.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Round-the-clock accident protection',
+                'Covers multiple individuals under a single policy',
+                'Financial support in the event of accidental injury or death',
+                'Suitable for organizational or group arrangements',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Employers and corporate organizations',
+                'Associations and cooperatives',
+                'Institutions covering staff or members',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline': 'Coverage for employees or team wherever they go',
+            },
+            {
+              'subtitle': 'Product Name: Personal Accident Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Annual policy that provides worldwide 24-hour cover, offering compensation for injury, disability, or death resulting from accidental events.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                '24-hour global accident protection',
+                'Individual cover for personal use',
+                'Financial support in case of accidental injury, disability, or death',
+                'Flexible protection regardless of location',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Individuals seeking personal protection',
+                'Professionals, travelers, and self-employed persons',
+                'Anyone requiring standalone accident cover',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline': 'Insurance support for everyday life',
+            },
+            {
+              'subtitle': 'Product Name: Goods-in-Transit Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Provides cover for loss, damage, or theft of goods while being transported by road or inland waterways, including handling and temporary storage during transit.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Protects goods during transportation and handling',
+                'Covers theft, loss, or damage in transit',
+                'Includes protection during loading, unloading, and temporary storage',
+                'Flexible policy options based on transit frequency',
+              ],
+              'policyTypesTitle': '3. Policy Types',
+              'policyTypes': [
+                'Open Cover: Annual agreement with a defined estimated carrying value; each transit is covered within agreed limits',
+                'Declaration Policy: Cover based on periodic declarations of actual transits made',
+                'Single Transit: One-off cover for occasional shipments',
+              ],
+              'targetTitle': '4. Target Customer Segment',
+              'targetCustomers': [
+                'Importers and exporters',
+                'Logistics and transport companies',
+                'Manufacturers and distributors',
+                'Businesses moving goods regularly or occasionally',
+              ],
+              'taglineTitle': '5. Recommended Customer-Friendly Tagline',
+              'tagline': 'Secure your goods, every step of the journey',
+            },
+            {
+              'subtitle': 'Product Name: Fidelity Guarantee Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Provides cover for financial loss suffered by an employer due to fraud or dishonesty committed by employees.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Protects against employee fraud and dishonesty',
+                'Covers loss of money or business property',
+                'Helps safeguard business assets and cash flow',
+                'Reduces financial exposure from internal risks',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Businesses handling cash or valuable assets',
+                'Financial institutions and service companies',
+                'Organizations with employees in trusted or sensitive roles',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline': 'Protection against internal financial risks',
+            },
+            {
+              'subtitle': 'Product Name: All Risk Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Provides cover against accidental loss of or damage to insured assets within a specified geographical area, regardless of where the items are located.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Broad protection for insured assets',
+                'Covers accidental loss or damage',
+                'Flexible cover not limited to a fixed location',
+                'Helps protect valuable personal or business property',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Individuals with valuable personal assets',
+                'Businesses with movable equipment or assets',
+                'Organizations requiring flexible asset protection',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline': 'Comprehensive protection for what matters most',
+            },
           ],
         };
       case 'engineering insurance':
         return {
+          'title': 'ENGINEERING INSURANCE',
+          'subtitle': 'Product Name: Contractors\' All Risk Insurance',
+          'overviewTitle': '1. Product Overview / Summary',
           'summary':
-              'Protect machinery, equipment, construction works, and engineering projects from operational or installation risks.',
+              'Provides protection against physical loss or damage to construction works during the course of a project, including associated liabilities.',
+          'coversTitle': '2. Key Features and Benefits',
           'covers': [
-            'Machinery breakdown and plant risks',
-            'Contract works and installation exposures',
-            'Equipment damage during use or project execution',
+            'Covers construction works from start to completion',
+            'Protects building materials and works in progress',
+            'Covers construction plant and equipment',
+            'Includes protection against third-party injury or property damage claims',
+            'Helps reduce financial setbacks from construction risks',
           ],
+          'targetTitle': '3. Target Customer Segment',
+          'targetCustomers': [
+            'Contractors and construction companies',
+            'Property developers',
+            'Engineering and infrastructure firms',
+          ],
+          'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+          'tagline': 'Coverage for every stage of your building project',
         };
       case 'marine insurance':
         return {
-          'summary':
-              'Protect cargo and goods while they move by sea, air, road, or rail from loss or damage in transit.',
-          'covers': [
-            'Single transit cargo movement',
-            'Import, export, and inland transit risks',
-            'Loss or damage to insured goods while in transit',
+          'title': 'MARINE INSURANCE',
+          'productSections': [
+            {
+              'subtitle': 'Product Name: Marine Cargo Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Provides cover for goods transported by sea from the point of embarkation to the point of destination, protecting against loss or damage during transit.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Covers goods in international and domestic sea transit',
+                'Protection against loss or damage during shipping',
+                'Flexible cover options based on risk needs',
+                'Helps reduce financial loss from cargo incidents',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Importers and exporters',
+                'Shipping and logistics companies',
+                'Manufacturers and distributors engaged in international trade',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline': 'Safeguarding your cargo every step of the journey',
+            },
+            {
+              'subtitle': 'Product Name: Marine Hull Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Covers loss or damage to hull and machinery of insured vessels, including ships, boats, ferries, and barges owned by the insured.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Covers loss or damage to vessel hull and machinery',
+                'Protects the vessel structure (hull) and operational systems',
+                'Includes machinery such as engines, boilers, generators, and cooling systems used for propulsion, lighting, and temperature control',
+                'Applies to various vessels including ships, boats, ferries, and barges',
+                'Helps reduce financial loss from damage or breakdown of marine vessels',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Ship and vessel owners',
+                'Shipping and transport companies',
+                'Marine and logistics operators',
+                'Commercial marine asset owners',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline': 'Peace of mind for your vessels, wherever they go',
+            },
           ],
         };
       case 'industrial all risk':
         return {
+          'overviewTitle': '1. Product Overview / Summary',
           'summary':
-              'Broad protection for industrial businesses, covering property, machinery, stock, and interruption risks.',
+              'Provides cover against accidental loss of or damage to insured assets within a specified geographical area, regardless of where the items are located.',
+          'coversTitle': '2. Key Features and Benefits',
           'covers': [
-            'Industrial buildings, plant, and machinery',
-            'Stock, contents, and business assets',
-            'Wider all-risk protection for complex operations',
+            'Broad protection for insured assets',
+            'Covers accidental loss or damage',
+            'Flexible cover not limited to a fixed location',
+            'Helps protect valuable personal or business property',
           ],
+          'targetTitle': '3. Target Customer Segment',
+          'targetCustomers': [
+            'Individuals with valuable personal assets',
+            'Businesses with movable equipment or assets',
+            'Organizations requiring flexible asset protection',
+          ],
+          'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+          'tagline': 'Comprehensive protection for what matters most',
         };
       case 'energy insurance':
         return {
+          'title': 'Energy Insurance',
+          'overviewTitle': '1. Product Overview / Summary',
           'summary':
-              'Specialized protection for energy assets, equipment, operations, and liabilities across energy projects.',
+              'Provides insurance cover for operations and assets involved in the exploration, production, refining, storage, and transportation of oil, gas, and other energy resources, including petrochemical risks.',
+          'coversTitle': '2. Key Features and Benefits',
           'covers': [
-            'Energy equipment and operational assets',
-            'Project and production-related risks',
-            'Associated liability and business interruption exposures',
+            'Covers assets and operations across the energy value chain',
+            'Includes protection for oil, gas, and petrochemical activities',
+            'Covers liabilities arising from energy production and consumption',
+            'Provides financial protection against accidents affecting workers, third parties, and property',
           ],
+          'targetTitle': '3. Target Customer Segment',
+          'targetCustomers': [
+            'Oil and gas companies',
+            'Energy and power sector operators',
+            'Petrochemical and refining companies',
+            'Industrial energy producers and distributors',
+          ],
+          'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+          'tagline':
+              'Protecting the energy sector with confidence and coverage',
         };
       case 'agriculture insurance':
         return {
-          'summary':
-              'Protect farms, crops, livestock, and agribusiness investments from insured events that can disrupt production.',
-          'covers': [
-            'Crop and farm asset protection',
-            'Livestock and agribusiness risks',
-            'Loss events affecting agricultural production',
+          'title': 'AGRICULTURE INSURANCE',
+          'productSections': [
+            {
+              'subtitle': 'Product Name: Weather Index Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'An insurance product that provides cover against climate changes affecting crop growth from germination to maturity, using predefined weather indices.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Covers climate-related risks affecting crop production',
+                'Uses measurable weather indices such as rainfall, temperature, soil moisture, humidity, and evaporation',
+                'Automatic payouts triggered by predefined index thresholds',
+                'Suitable for group-based agricultural protection',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Smallholder farmers',
+                'Farmer cooperatives and agricultural groups',
+                'Agribusiness stakeholders involved in crop production',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline':
+                  'Protection for your harvest against changing weather patterns',
+            },
+            {
+              'subtitle': 'Product Name: Area-Yield Index Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'A crop insurance product that provides compensation based on the average yield of a defined area, rather than individual farm performance.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Uses area-based yield data as the basis for compensation',
+                'Protects against yield loss from drought, flood, pests, diseases, windstorm, excessive rainfall, and fire',
+                'Payout is triggered when area yield falls below a pre-set guaranteed threshold',
+                'Does not require individual farm loss assessment',
+                'Suitable for group-based agricultural risk protection',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Smallholder farmers',
+                'Farmer cooperatives and agricultural groups',
+                'Agricultural communities within defined geographic areas',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline':
+                  'Coverage for seasons when harvests fall below expectations',
+            },
+            {
+              'subtitle': 'Product Name: Poultry Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Provides protection against physical loss or death of poultry arising from diseases, accidents, and adverse weather conditions affecting poultry production.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Covers loss or death of poultry due to uncontrollable diseases',
+                'Protection against unforeseen accidents',
+                'Covers mortality resulting from excessive weather conditions (e.g., drought)',
+                'Optional cover for Avian influenza',
+                'Helps reduce financial loss in poultry farming operations',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Poultry farmers',
+                'Smallholder farmers and agricultural groups',
+                'Commercial poultry production businesses',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline': 'Safeguarding your poultry and your income',
+            },
+            {
+              'subtitle': 'Product Name: Livestock Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Provides protection for livestock farmers against physical loss or death of livestock such as sheep, goats, and cattle arising from disease, accidents, and adverse weather conditions.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Covers loss of livestock due to uncontrollable diseases',
+                'Protection against unforeseen accidents',
+                'Covers mortality resulting from adverse weather conditions such as drought',
+                'Helps reduce financial loss from livestock mortality',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Smallholder livestock farmers',
+                'Livestock-rearing communities and agricultural groups',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline': 'Protecting your herd and reducing financial loss',
+            },
+            {
+              'subtitle': 'Product Name: Fish Farm Insurance',
+              'overviewTitle': '1. Product Overview / Summary',
+              'summary':
+                  'Provides protection for fish farmers against physical loss or death of fish stock, with possible extension to fishponds and hatcheries, arising from flood, fire, and uncontrollable diseases.',
+              'coversTitle': '2. Key Features and Benefits',
+              'covers': [
+                'Covers loss or death of fish stock',
+                'Protection against flood and fire risks',
+                'Covers uncontrollable diseases affecting fish stock',
+                'Can be extended to fishponds and hatcheries',
+                'Helps reduce financial loss in aquaculture operations',
+              ],
+              'targetTitle': '3. Target Customer Segment',
+              'targetCustomers': [
+                'Fish farmers',
+                'Aquaculture businesses',
+                'Smallholder and commercial fish production operators',
+              ],
+              'taglineTitle': '4. Recommended Customer-Friendly Tagline',
+              'tagline': 'Safeguarding your ponds and your harvest',
+            },
           ],
         };
       case 'bond insurance':
         return {
+          'title': 'Bond Insurance',
+          'overviewTitle': '1. Product Overview / Summary',
           'summary':
-              'Support contractual obligations with surety protection for performance, advance payment, and related bond needs.',
+              'A bond is a guarantee issued by the insurer (Rex Insurance) to a contractor, under which an agreed sum is paid in the event of the contractor\'s default.',
+          'coversTitle': '2. Key Features and Benefits',
           'covers': [
-            'Performance bond requirements',
-            'Advance payment and contract bonds',
-            'Surety support for business obligations',
+            'Provides financial guarantee in case of contractor default',
+            'Assures project owners of contractor performance and commitment',
+            'Protects advance payments made before delivery of goods or services',
+            'Supports fair tendering by ensuring bidder financial capability',
+            'Helps reduce financial risk in contracting and procurement processes',
           ],
+          'bondTypesTitle': '3. Types of Bonds',
+          'bondTypes': [
+            'Advance Payment Bond: Secures advance payments made before goods or services are delivered, protecting against contractor default',
+            'Performance Bond: Guarantees satisfactory completion of a project as per contract terms',
+            'Bid Bond: Assures that a bidder can accept the contract at the quoted price and covers additional costs if the bid is forfeited',
+          ],
+          'targetTitle': '4. Target Customer Segment',
+          'targetCustomers': [
+            'Contractors and construction companies',
+            'Project owners and developers',
+            'Government and private procurement bodies',
+            'Businesses involved in tendering and contracting processes',
+          ],
+          'taglineTitle': '5. Recommended Customer-Friendly Tagline',
+          'tagline': 'Confidence in every contract you award or win',
         };
       default:
         return {
@@ -518,12 +979,26 @@ class UnderwrittenProductDescriptionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final covers = (_content['covers'] as List).cast<String>();
+    final covers = ((_content['covers'] as List?) ?? const []).cast<String>();
+    final bondTypes =
+        ((_content['bondTypes'] as List?) ?? const []).cast<String>();
+    final targetCustomers =
+        ((_content['targetCustomers'] as List?) ?? const []).cast<String>();
+    final productSections = ((_content['productSections'] as List?) ?? const [])
+        .cast<Map<String, dynamic>>();
     final descriptions = _descriptions;
+    final displayTitle = _content['title']?.toString() ?? product;
+    final productSubtitle = _content['subtitle']?.toString() ?? '';
+    final overviewTitle = _content['overviewTitle']?.toString() ?? '';
+    final coversTitle = _content['coversTitle']?.toString() ?? 'Key Coverage';
+    final targetTitle =
+        _content['targetTitle']?.toString() ?? 'Target Customer Segment';
+    final taglineTitle = _content['taglineTitle']?.toString() ??
+        'Recommended Customer-Friendly Tagline';
+    final tagline = _content['tagline']?.toString() ?? '';
     final onSurface = Theme.of(context).colorScheme.onSurface;
     final isDark = _isDark(context);
-    final iconColor =
-        isDark ? const Color(0xFFFFC073) : AppTheme.accentOrange;
+    final iconColor = isDark ? const Color(0xFFFFC073) : AppTheme.accentOrange;
     final iconBackground = AppTheme.accentOrange.withValues(
       alpha: isDark ? 0.18 : 0.12,
     );
@@ -535,6 +1010,131 @@ class UnderwrittenProductDescriptionScreen extends StatelessWidget {
     final cardShadowColor = isDark
         ? Colors.transparent
         : AppTheme.primaryNavy.withValues(alpha: 0.06);
+
+    Widget sectionHeading(String text) {
+      return Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: keyCoverageColor,
+        ),
+      );
+    }
+
+    Widget bulletRow(String text, IconData icon) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(
+                color: Color(0xFFEFF3FF),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: AppTheme.primaryNavy, size: 19),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(text,
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                      color: onSurface)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget taglineBox(String text) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: iconBackground,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: iconBorderColor),
+        ),
+        child: Text(text,
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                height: 1.3,
+                color: onSurface)),
+      );
+    }
+
+    Widget productSection(Map<String, dynamic> section) {
+      final sectionSubtitle = section['subtitle']?.toString() ?? '';
+      final sectionSummary = section['summary']?.toString() ?? '';
+      final sectionCovers =
+          ((section['covers'] as List?) ?? const []).cast<String>();
+      final sectionPolicyTypes =
+          ((section['policyTypes'] as List?) ?? const []).cast<String>();
+      final sectionCustomers =
+          ((section['targetCustomers'] as List?) ?? const []).cast<String>();
+      final sectionTagline = section['tagline']?.toString() ?? '';
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (sectionSubtitle.isNotEmpty) ...[
+              Text(sectionSubtitle,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      height: 1.3,
+                      color: keyCoverageColor)),
+              const SizedBox(height: 14),
+            ],
+            sectionHeading(section['overviewTitle']?.toString() ??
+                '1. Product Overview / Summary'),
+            const SizedBox(height: 10),
+            Text(sectionSummary,
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    height: 1.36,
+                    color: _secondaryTextColor(context))),
+            const SizedBox(height: 18),
+            sectionHeading(section['coversTitle']?.toString() ??
+                '2. Key Features and Benefits'),
+            const SizedBox(height: 14),
+            ...sectionCovers.map((cover) => bulletRow(cover, Icons.check)),
+            if (sectionPolicyTypes.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              sectionHeading(
+                  section['policyTypesTitle']?.toString() ?? '3. Policy Types'),
+              const SizedBox(height: 14),
+              ...sectionPolicyTypes.map(
+                (policyType) =>
+                    bulletRow(policyType, Icons.description_outlined),
+              ),
+            ],
+            const SizedBox(height: 4),
+            sectionHeading(section['targetTitle']?.toString() ??
+                '3. Target Customer Segment'),
+            const SizedBox(height: 14),
+            ...sectionCustomers
+                .map((customer) => bulletRow(customer, Icons.person_outline)),
+            if (sectionTagline.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              sectionHeading(section['taglineTitle']?.toString() ??
+                  '4. Recommended Customer-Friendly Tagline'),
+              const SizedBox(height: 10),
+              taglineBox(sectionTagline),
+            ],
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -589,69 +1189,81 @@ class UnderwrittenProductDescriptionScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 18),
                       Center(
-                        child: Text(product,
+                        child: Text(displayTitle,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
                                 color: onSurface)),
                       ),
-                      const SizedBox(height: 14),
-                      ...descriptions.map(
-                        (description) => Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
-                          child: Text(description,
+                      if (productSubtitle.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Center(
+                          child: Text(productSubtitle,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.36,
-                                  color: _secondaryTextColor(context))),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.3,
+                                  color: keyCoverageColor)),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        width: double.infinity,
-                        height: 1,
-                        color: _borderColor(context),
-                      ),
+                      ],
                       const SizedBox(height: 18),
-                      Text(
-                        'Key Coverage',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: keyCoverageColor,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      ...covers.map((cover) => Padding(
+                      if (productSections.isNotEmpty) ...[
+                        ...productSections.map(productSection),
+                      ] else ...[
+                        if (overviewTitle.isNotEmpty) ...[
+                          sectionHeading(overviewTitle),
+                          const SizedBox(height: 10),
+                        ],
+                        ...descriptions.map(
+                          (description) => Padding(
                             padding: const EdgeInsets.only(bottom: 14),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFEFF3FF),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(Icons.check,
-                                      color: AppTheme.primaryNavy, size: 19),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Text(cover,
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          height: 1.3,
-                                          color: onSurface)),
-                                ),
-                              ],
-                            ),
-                          )),
+                            child: Text(description,
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.36,
+                                    color: _secondaryTextColor(context))),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          height: 1,
+                          color: _borderColor(context),
+                        ),
+                        const SizedBox(height: 18),
+                        sectionHeading(coversTitle),
+                        const SizedBox(height: 14),
+                        ...covers.map((cover) => bulletRow(cover, Icons.check)),
+                        if (bondTypes.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          sectionHeading(
+                              _content['bondTypesTitle']?.toString() ??
+                                  'Types of Bonds'),
+                          const SizedBox(height: 14),
+                          ...bondTypes.map(
+                            (bondType) =>
+                                bulletRow(bondType, Icons.description_outlined),
+                          ),
+                        ],
+                        if (targetCustomers.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          sectionHeading(targetTitle),
+                          const SizedBox(height: 14),
+                          ...targetCustomers.map(
+                            (customer) =>
+                                bulletRow(customer, Icons.person_outline),
+                          ),
+                        ],
+                        if (tagline.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          sectionHeading(taglineTitle),
+                          const SizedBox(height: 10),
+                          taglineBox(tagline),
+                        ],
+                      ],
                     ],
                   ),
                 ),
