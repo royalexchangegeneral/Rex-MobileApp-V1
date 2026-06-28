@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../providers/auth_provider.dart';
 import '../services/payment_service.dart';
 import '../utils/app_theme.dart';
+import '../utils/customer_details.dart';
 import '../utils/error_messages.dart';
 import '../utils/occupations.dart';
 import '../widgets/paystack_webview.dart';
@@ -27,6 +30,9 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
   int _currentStep = 0; // 0=group info, 1=leadership, 2=risk/members, 3=summary
 
   bool _isPayingNow = false;
+  int? _agentSellingPremium;
+  bool _isLoadingAgentSellingPrice = false;
+  bool _didLoadAgentSellingPrice = false;
 
   bool get _isDark => Theme.of(context).brightness == Brightness.dark;
 
@@ -48,6 +54,37 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
 
   Color get _agentAccent =>
       _isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+
+  String get _productCode => 'GC';
+
+  String get _subProductCode =>
+      PaymentService.subProductCodeForOption(_productCode, widget.optionTitle);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didLoadAgentSellingPrice) return;
+    _didLoadAgentSellingPrice = true;
+    _loadAgentSellingPrice();
+  }
+
+  Future<void> _loadAgentSellingPrice() async {
+    final authProvider = context.read<AuthProvider>();
+    final agentCode = authProvider.userCode?.toString() ?? '';
+    if (agentCode.isEmpty) return;
+
+    setState(() => _isLoadingAgentSellingPrice = true);
+    final premium = await PaymentService.agentSellingNetPremium(
+      agentCode: agentCode,
+      productCode: _productCode,
+      subProductCode: _subProductCode,
+    );
+    if (!mounted) return;
+    setState(() {
+      _agentSellingPremium = premium;
+      _isLoadingAgentSellingPrice = false;
+    });
+  }
 
   // Step 0: Group & Contact
   final _groupNameController = TextEditingController();
@@ -143,16 +180,23 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
   }
 
   double _getPaystackCharge() {
-    final base = _getBaseAmount();
+    final base = _getSummaryBaseAmount();
     double charge = (base * 0.015) + 100;
     if (charge > 2000) charge = 2000;
     return charge;
   }
 
-  double _getTotalAmount() => _getBaseAmount() + _getPaystackCharge();
+  double _getSummaryBaseAmount() =>
+      (_agentSellingPremium ?? _getBaseAmount()).toDouble();
+
+  double _getTotalAmount() => _getSummaryBaseAmount() + _getPaystackCharge();
 
   String _formatNaira(double amount) =>
       '₦${amount.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+\.)'), (m) => '${m[1]},')}';
+
+  String _summaryPriceText() => _isLoadingAgentSellingPrice
+      ? 'Loading...'
+      : _formatNaira(_getSummaryBaseAmount());
 
   Future<void> _verifyNin(
       TextEditingController ninController,
@@ -175,11 +219,11 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
     try {
       final response = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
+            Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode({
-              'Intcode': 'TESTCODE',
-              'Password': 'royal1234',
+              'Intcode': 'Kissflow',
+              'Password': '1lovetoeatcook1es',
               'number': nin
             }),
           )
@@ -249,6 +293,14 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
         ? _groupEmailController.text.trim()
         : 'customer@rexinsure.com';
     final premiumAmount = _getBaseAmount();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final agentCode = authProvider.userCode?.toString() ?? '';
+    final agentUserType = agentCode.isNotEmpty
+        ? (authProvider.userTypeCode?.toString() ?? '')
+        : '';
+    final payerEmail = agentCode.isNotEmpty
+        ? (authProvider.userEmail ?? authProvider.loginEmail ?? '')
+        : '';
     setState(() => _isPayingNow = true);
     try {
       final result = await PaymentService.initiatePurchase(
@@ -257,6 +309,10 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
         email: email,
         mobileno: _chairPhoneController.text.trim(),
         premium: premiumAmount.toInt(),
+        agentCode: agentCode,
+        agentUserType: agentUserType,
+        payerEmail: payerEmail,
+        subProductCode: _subProductCode,
         extraFields: {
           'type': 'Corporate',
           'address': _groupAddressController.text.trim(),
@@ -275,7 +331,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
                     'gender': m['gender'] ?? '',
                     'mobileno': m['phone'] ?? '',
                     'email': m['email'] ?? '',
-                    'dob': m['dob'] ?? '',
+                    'dob': CustomerDetails.normalizeApiDate(m['dob']),
                     'nok': m['nokName'] ?? '',
                     'nokphone': m['nokPhone'] ?? ''
                   })
@@ -295,6 +351,8 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
             context,
             MaterialPageRoute(
               builder: (_) => PolicyPurchaseSuccessScreen(
+                isLoggedIn: true,
+                isAgent: true,
                 reference: res.reference,
                 message: res.message,
                 accountData: {
@@ -363,7 +421,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
       _coverMembers.add({
         'name': _memberNameController.text.trim(),
         'gender': _memberGender!,
-        'dob': _memberDobController.text.trim(),
+        'dob': CustomerDetails.normalizeApiDate(_memberDobController.text),
         'occupation': _memberOccupationController.text.trim(),
         'phone': _memberPhoneController.text.trim(),
         'email': _memberEmailController.text.trim(),
@@ -975,7 +1033,7 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           _sec('Payment Information', [
             _sRow('Product', 'Royal Group Care ${widget.optionTitle}'),
-            _sRow('Price', widget.price),
+            _sRow('Price', _summaryPriceText()),
             _sRow('Paystack Charges', _formatNaira(_getPaystackCharge())),
             _sRow('Total', _formatNaira(_getTotalAmount()))
           ]),

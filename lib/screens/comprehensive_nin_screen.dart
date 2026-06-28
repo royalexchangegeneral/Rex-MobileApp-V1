@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/customer_details.dart';
@@ -84,11 +85,11 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
     try {
       final r = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
+            Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode({
-              'Intcode': 'TESTCODE',
-              'Password': 'royal1234',
+              'Intcode': 'Kissflow',
+              'Password': '1lovetoeatcook1es',
               'number': _ninController.text.trim()
             }),
           )
@@ -102,6 +103,10 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
             (d['data']['data']['kyc']['firstname']?.toString() ?? '')
                 .isNotEmpty) {
           final k = d['data']['data']['kyc'];
+          final nin = _ninController.text.trim();
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('signup_nin', nin);
+          await prefs.setBool('signup_nin_skipped', false);
           setState(() {
             _ninVerified = true;
             _firstName = k['firstname']?.toString() ?? '';
@@ -136,6 +141,11 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
 
   Map<String, String> get _mergedPersonalInfo {
     final info = Map<String, String>.from(widget.personalInfo);
+    final nin = _ninController.text.trim();
+    if (nin.isNotEmpty) {
+      info['NIN'] = nin;
+      info['nin'] = nin;
+    }
     if (_ninVerified) {
       if (_firstName.isNotEmpty) info['ninFirstName'] = _firstName;
       if (_lastName.isNotEmpty) info['ninLastName'] = _lastName;
@@ -143,7 +153,7 @@ class _ComprehensiveNinScreenState extends State<ComprehensiveNinScreen> {
         info['email'] = _email;
       if (_phone.isNotEmpty && (info['phone'] ?? '').isEmpty)
         info['phone'] = _phone;
-      if (_dob.isNotEmpty) info['dob'] = _dob;
+      if (_dob.isNotEmpty) info['dob'] = CustomerDetails.normalizeApiDate(_dob);
       if (_gender.isNotEmpty) info['gender'] = _gender;
     }
     return info;

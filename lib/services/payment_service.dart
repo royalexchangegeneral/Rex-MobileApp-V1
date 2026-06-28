@@ -11,15 +11,182 @@ class PaymentService {
   PaymentService._();
 
   static const String _proposalUrl =
-      'https://eportaltest.rexinsure.com/api/submit-product-proposal';
+      'https://eportal.rexinsure.com/api/submit-product-proposal';
   static const String _purchaseUrl =
-      'https://eportaltest.rexinsure.com/api/mobile/initiate-purchase';
+      'https://eportal.rexinsure.com/api/mobile/initiate-purchase';
+  static const String _agentSellingPriceUrl =
+      'https://eportal.rexinsure.com/api/mobile/agent-selling-price';
 
   /// Calculate Paystack charge: 1.5% + ₦100, capped at ₦2,000.
   static int calculatePaystackCharge(int premium) {
     double charge = (premium * 0.015) + 100;
     if (charge > 2000) charge = 2000;
     return charge.toInt();
+  }
+
+  static void _addAgentFields(
+    Map<String, dynamic> payload,
+    String agentCode,
+    String agentUserType,
+  ) {
+    if (agentCode.isEmpty) return;
+
+    payload['agentcode'] = agentCode;
+    payload['agent_code'] = agentCode;
+    payload['AgencyCode'] = agentCode;
+    payload['Usercode'] = agentCode;
+    if (agentUserType.isNotEmpty) {
+      payload['UserType'] = agentUserType;
+    }
+  }
+
+  static void _addAgentStringFields(
+    Map<String, String> fields,
+    String agentCode,
+    String agentUserType,
+  ) {
+    if (agentCode.isEmpty) return;
+
+    fields['agentcode'] = agentCode;
+    fields['agent_code'] = agentCode;
+    fields['AgencyCode'] = agentCode;
+    fields['Usercode'] = agentCode;
+    if (agentUserType.isNotEmpty) {
+      fields['UserType'] = agentUserType;
+    }
+  }
+
+  static String subProductCodeForOption(
+      String productCode, String optionTitle) {
+    final normalizedProductCode = productCode.trim().toUpperCase();
+    final normalizedOption = optionTitle.trim().toLowerCase();
+
+    const optionSuffixes = {
+      'option a': 'A',
+      'option b': 'B',
+      'option c': 'C',
+      'option d': 'D',
+      'option e': 'E',
+    };
+
+    final suffix = optionSuffixes[normalizedOption];
+    if (suffix == null || normalizedProductCode.isEmpty) {
+      return normalizedProductCode;
+    }
+    return '$normalizedProductCode$suffix';
+  }
+
+  static int? _intFrom(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.round();
+
+    final cleaned = value.toString().replaceAll(RegExp(r'[^0-9.]'), '');
+    if (cleaned.isEmpty) return null;
+    return double.tryParse(cleaned)?.round();
+  }
+
+  static int? _findNetPremium(dynamic data) {
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+      const keys = [
+        'netpremium',
+        'netPremium',
+        'NetPremium',
+        'NETPREMIUM',
+        'net_premium',
+      ];
+
+      for (final key in keys) {
+        final amount = _intFrom(map[key]);
+        if (amount != null && amount > 0) return amount;
+      }
+
+      for (final value in map.values) {
+        final nested = _findNetPremium(value);
+        if (nested != null && nested > 0) return nested;
+      }
+    }
+
+    if (data is List) {
+      for (final item in data) {
+        final nested = _findNetPremium(item);
+        if (nested != null && nested > 0) return nested;
+      }
+    }
+
+    return null;
+  }
+
+  static Future<int?> _agentSellingNetPremium({
+    required String agentCode,
+    required String productCode,
+    required String subProductCode,
+  }) async {
+    final normalizedAgentCode = agentCode.trim();
+    if (normalizedAgentCode.isEmpty) return null;
+
+    final payload = {
+      'Intcode': 'Kissflow',
+      'Password': '1lovetoeatcook1es',
+      'agentcode': normalizedAgentCode,
+      'productcode': productCode.trim().toUpperCase(),
+      'subproductcode': subProductCode.trim().toUpperCase(),
+    };
+
+    if (kDebugMode) {
+      debugPrint('=== AGENT SELLING PRICE REQUEST ===');
+      debugPrint('URL: $_agentSellingPriceUrl');
+      debugPrint('Payload: ${json.encode(payload)}');
+      debugPrint('===================================');
+    }
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse(_agentSellingPriceUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(payload),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      if (kDebugMode) {
+        debugPrint('=== AGENT SELLING PRICE RESPONSE ===');
+        debugPrint('Status: ${response.statusCode}');
+        debugPrint('Body: ${response.body}');
+        debugPrint('====================================');
+      }
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        return null;
+      }
+
+      final data = json.decode(response.body);
+      return _findNetPremium(data);
+    } catch (e) {
+      if (kDebugMode) debugPrint('Agent selling price error: $e');
+      return null;
+    }
+  }
+
+  static bool _usesCalculatedAgentPremium(String productCode) {
+    return {'CP', 'RAS', 'RAB'}.contains(productCode.trim().toUpperCase());
+  }
+
+  static bool usesCalculatedAgentPremium(String productCode) {
+    return _usesCalculatedAgentPremium(productCode);
+  }
+
+  static Future<int?> agentSellingNetPremium({
+    required String agentCode,
+    required String productCode,
+    required String subProductCode,
+  }) {
+    return _agentSellingNetPremium(
+      agentCode: agentCode,
+      productCode: productCode,
+      subProductCode: subProductCode,
+    );
   }
 
   /// Full purchase flow:
@@ -32,15 +199,36 @@ class PaymentService {
     required String mobileno,
     required int premium,
     Map<String, dynamic> extraFields = const {},
+    String? agentCode,
+    String? agentUserType,
+    String? payerEmail,
+    String? subProductCode,
     bool includeCredentials = true,
     bool isExploreFlow = false,
   }) async {
     try {
+      final normalizedAgentCode = agentCode?.trim() ?? '';
+      final normalizedAgentUserType = agentUserType?.trim() ?? '';
+      final paymentEmail =
+          payerEmail?.trim().isNotEmpty == true ? payerEmail!.trim() : email;
+      final shouldUseAgentSellingPrice = normalizedAgentCode.isNotEmpty &&
+          !_usesCalculatedAgentPremium(productCode);
+      final agentNetPremium = shouldUseAgentSellingPrice
+          ? await _agentSellingNetPremium(
+              agentCode: normalizedAgentCode,
+              productCode: productCode,
+              subProductCode: subProductCode ?? productCode,
+            )
+          : null;
+      if (shouldUseAgentSellingPrice && agentNetPremium == null) {
+        return PaymentResult(
+            success: false, message: 'Unable to get agent selling price');
+      }
       // Step 1: Submit product proposal
       final proposalPayload = {
         if (includeCredentials) ...{
-          'IntCode': 'TESTCODE',
-          'Password': 'royal1234',
+          'Intcode': 'Kissflow',
+          'Password': '1lovetoeatcook1es',
         },
         'product_code': productCode,
         'names': names,
@@ -49,14 +237,16 @@ class PaymentService {
         'premium': premium,
         ...extraFields,
       };
+      _addAgentFields(
+          proposalPayload, normalizedAgentCode, normalizedAgentUserType);
 
       if (kDebugMode) {
-        print(isExploreFlow
+        debugPrint(isExploreFlow
             ? '=== EXPLORE FLOW STEP 1: SUBMIT PROPOSAL ==='
             : '=== STEP 1: SUBMIT PROPOSAL ===');
-        print('URL: $_proposalUrl');
-        print('Payload: ${json.encode(proposalPayload)}');
-        print('================================');
+        debugPrint('URL: $_proposalUrl');
+        debugPrint('Payload: ${json.encode(proposalPayload)}');
+        debugPrint('================================');
       }
 
       final proposalResponse = await http
@@ -68,12 +258,12 @@ class PaymentService {
           .timeout(const Duration(seconds: 20));
 
       if (kDebugMode) {
-        print(isExploreFlow
+        debugPrint(isExploreFlow
             ? '=== EXPLORE FLOW PROPOSAL RESPONSE ==='
             : '=== PROPOSAL RESPONSE ===');
-        print('Status: ${proposalResponse.statusCode}');
-        print('Body: ${proposalResponse.body}');
-        print('=========================');
+        debugPrint('Status: ${proposalResponse.statusCode}');
+        debugPrint('Body: ${proposalResponse.body}');
+        debugPrint('=========================');
       }
 
       if (proposalResponse.statusCode != 200 &&
@@ -108,25 +298,38 @@ class PaymentService {
       }
 
       // Step 2: Initiate purchase with the proposal reference
-      final charge = calculatePaystackCharge(premium);
-      final totalAmount = premium + charge;
+      final payablePremium = agentNetPremium ?? premium;
+      final charge = calculatePaystackCharge(payablePremium);
+      final totalAmount = payablePremium + charge;
+      if (kDebugMode && normalizedAgentCode.isNotEmpty) {
+        debugPrint('=== AGENT PAYSTACK AMOUNT ===');
+        debugPrint('Original premium: $premium');
+        debugPrint(shouldUseAgentSellingPrice
+            ? 'Agent netpremium: $payablePremium'
+            : 'Calculated premium: $payablePremium');
+        debugPrint('Paystack charge: $charge');
+        debugPrint('Paystack total: $totalAmount');
+        debugPrint('=============================');
+      }
 
       final purchasePayload = {
         'product_code': productCode,
         'names': names,
-        'email': email,
+        'email': paymentEmail,
         'mobileno': mobileno,
         'premium': totalAmount,
         'reference': proposalRef,
       };
+      _addAgentFields(
+          purchasePayload, normalizedAgentCode, normalizedAgentUserType);
 
       if (kDebugMode) {
-        print(isExploreFlow
+        debugPrint(isExploreFlow
             ? '=== EXPLORE FLOW STEP 2: INITIATE PURCHASE ==='
             : '=== STEP 2: INITIATE PURCHASE ===');
-        print('URL: $_purchaseUrl');
-        print('Payload: ${json.encode(purchasePayload)}');
-        print('=================================');
+        debugPrint('URL: $_purchaseUrl');
+        debugPrint('Payload: ${json.encode(purchasePayload)}');
+        debugPrint('=================================');
       }
 
       final purchaseResponse = await http
@@ -138,12 +341,12 @@ class PaymentService {
           .timeout(const Duration(seconds: 20));
 
       if (kDebugMode) {
-        print(isExploreFlow
+        debugPrint(isExploreFlow
             ? '=== EXPLORE FLOW PURCHASE RESPONSE ==='
             : '=== PURCHASE RESPONSE ===');
-        print('Status: ${purchaseResponse.statusCode}');
-        print('Body: ${purchaseResponse.body}');
-        print('=========================');
+        debugPrint('Status: ${purchaseResponse.statusCode}');
+        debugPrint('Body: ${purchaseResponse.body}');
+        debugPrint('=========================');
       }
 
       if (purchaseResponse.statusCode == 200 ||
@@ -175,7 +378,7 @@ class PaymentService {
                 fallback: 'Unable to initiate payment'));
       }
     } catch (e) {
-      if (kDebugMode) print('Payment error: $e');
+      if (kDebugMode) debugPrint('Payment error: $e');
       return PaymentResult(
           success: false,
           message: 'Connection error. Please check your internet.');
@@ -191,27 +394,62 @@ class PaymentService {
     required String mobileno,
     required String productCode,
     required String endDate,
+    String? agentCode,
+    String? agentUserType,
+    String? payerEmail,
+    String? subProductCode,
   }) async {
     try {
-      final ref =
-          'RENEW_${policyNumber}_${DateTime.now().millisecondsSinceEpoch}';
+      final normalizedAgentCode = agentCode?.trim() ?? '';
+      final normalizedAgentUserType = agentUserType?.trim() ?? '';
+      final paymentEmail =
+          payerEmail?.trim().isNotEmpty == true ? payerEmail!.trim() : email;
+
+      final shouldUseAgentSellingPrice = normalizedAgentCode.isNotEmpty &&
+          !_usesCalculatedAgentPremium(productCode);
+      final agentNetPremium = shouldUseAgentSellingPrice
+          ? await _agentSellingNetPremium(
+              agentCode: normalizedAgentCode,
+              productCode: productCode,
+              subProductCode: subProductCode ?? productCode,
+            )
+          : null;
+      if (shouldUseAgentSellingPrice && agentNetPremium == null) {
+        return PaymentResult(
+            success: false, message: 'Unable to get agent selling price');
+      }
+      final payablePremium = agentNetPremium ?? premium;
+      final charge = calculatePaystackCharge(payablePremium);
+      final totalAmount =
+          normalizedAgentCode.isNotEmpty ? payablePremium + charge : premium;
+      if (kDebugMode && normalizedAgentCode.isNotEmpty) {
+        debugPrint('=== AGENT RENEWAL PAYSTACK AMOUNT ===');
+        debugPrint('Original renewal premium: $premium');
+        debugPrint(shouldUseAgentSellingPrice
+            ? 'Agent netpremium: $payablePremium'
+            : 'Calculated premium: $payablePremium');
+        debugPrint('Paystack charge: $charge');
+        debugPrint('Paystack total: $totalAmount');
+        debugPrint('=====================================');
+      }
 
       final payload = {
         'product_code': productCode,
         'names': names,
-        'email': email,
+        'email': paymentEmail,
         'mobileno': mobileno,
-        'premium': premium,
+        'premium': totalAmount,
         'PolicyNo': policyNumber,
         'ProdCode': productCode,
         'EndDate': endDate,
       };
+      _addAgentFields(payload, normalizedAgentCode, normalizedAgentUserType);
 
       if (kDebugMode) {
-        print('=== INITIATE RENEWAL ===');
-        print('URL: $_purchaseUrl');
-        print('Payload: ${json.encode(payload)}');
-        print('========================');
+        debugPrint('=== INITIATE RENEWAL ===');
+        debugPrint('URL: $_purchaseUrl');
+        debugPrint('Payload: ${json.encode(payload)}');
+        debugPrint('========================');
       }
 
       final response = await http
@@ -223,10 +461,10 @@ class PaymentService {
           .timeout(const Duration(seconds: 20));
 
       if (kDebugMode) {
-        print('=== RENEWAL RESPONSE ===');
-        print('Status: ${response.statusCode}');
-        print('Body: ${response.body}');
-        print('========================');
+        debugPrint('=== RENEWAL RESPONSE ===');
+        debugPrint('Status: ${response.statusCode}');
+        debugPrint('Body: ${response.body}');
+        debugPrint('========================');
       }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -235,8 +473,7 @@ class PaymentService {
           final authUrl = data['authorization_url']?.toString() ??
               data['data']?['authorization_url']?.toString();
           final respRef = data['reference']?.toString() ??
-              data['data']?['reference']?.toString() ??
-              ref;
+              data['data']?['reference']?.toString();
           if (authUrl != null && authUrl.isNotEmpty) {
             return PaymentResult(
                 success: true, authorizationUrl: authUrl, reference: respRef);
@@ -256,7 +493,7 @@ class PaymentService {
                 fallback: 'Unable to initiate renewal'));
       }
     } catch (e) {
-      if (kDebugMode) print('Renewal error: $e');
+      if (kDebugMode) debugPrint('Renewal error: $e');
       return PaymentResult(
           success: false,
           message: 'Connection error. Please check your internet.');
@@ -273,14 +510,25 @@ class PaymentService {
     required String email,
     required String mobileno,
     required int premium,
+    String? agentCode,
+    String? agentUserType,
+    String? payerEmail,
+    String? subProductCode,
     bool isExploreFlow = false,
   }) async {
     try {
+      final normalizedAgentCode = agentCode?.trim() ?? '';
+      final normalizedAgentUserType = agentUserType?.trim() ?? '';
+      final paymentEmail =
+          payerEmail?.trim().isNotEmpty == true ? payerEmail!.trim() : email;
+      const agentNetPremium = null;
       // Step 1: Submit CP proposal as multipart with images
       final request = http.MultipartRequest('POST', Uri.parse(_proposalUrl));
       request.fields.addAll(fields);
-      request.fields['IntCode'] = 'TESTCODE';
-      request.fields['Password'] = 'royal1234';
+      request.fields['Intcode'] = 'Kissflow';
+      request.fields['Password'] = '1lovetoeatcook1es';
+      _addAgentStringFields(
+          request.fields, normalizedAgentCode, normalizedAgentUserType);
 
       // Map image files to API field names
       // API requires 7 files: idtype, idtypeb, idtypec, idtyped, idtypee, idtypef, idtypeg
@@ -300,13 +548,23 @@ class PaymentService {
       }
 
       if (kDebugMode) {
-        print(isExploreFlow
-            ? '=== EXPLORE FLOW STEP 1: SUBMIT CP PROPOSAL (MULTIPART) ==='
-            : '=== STEP 1: SUBMIT CP PROPOSAL (MULTIPART) ===');
-        print('URL: $_proposalUrl');
-        print('Fields: ${request.fields}');
-        print('Files: ${request.files.length}');
-        print('================================================');
+        const encoder = JsonEncoder.withIndent('  ');
+        debugPrint('================ CP PROPOSAL REQUEST ================');
+        debugPrint('Flow: ${isExploreFlow ? 'Explore' : 'Standard'}');
+        debugPrint('Method: POST multipart/form-data');
+        debugPrint('URL: $_proposalUrl');
+        debugPrint('Fields:');
+        debugPrint(encoder.convert(request.fields));
+        debugPrint('Files:');
+        debugPrint(encoder.convert(request.files
+            .map((file) => {
+                  'field': file.field,
+                  'filename': file.filename,
+                  'contentType': file.contentType.toString(),
+                  'length': file.length,
+                })
+            .toList()));
+        debugPrint('=====================================================');
       }
 
       final proposalStreamResponse =
@@ -314,12 +572,10 @@ class PaymentService {
       final proposalBody = await proposalStreamResponse.stream.bytesToString();
 
       if (kDebugMode) {
-        print(isExploreFlow
-            ? '=== EXPLORE FLOW CP PROPOSAL RESPONSE ==='
-            : '=== CP PROPOSAL RESPONSE ===');
-        print('Status: ${proposalStreamResponse.statusCode}');
-        print('Body: $proposalBody');
-        print('============================');
+        debugPrint('================ CP PROPOSAL RESPONSE ===============');
+        debugPrint('Status: ${proposalStreamResponse.statusCode}');
+        debugPrint('Body: $proposalBody');
+        debugPrint('=====================================================');
       }
 
       if (proposalStreamResponse.statusCode != 200 &&
@@ -327,7 +583,11 @@ class PaymentService {
         String errorMsg = 'Failed to submit proposal';
         try {
           final d = json.decode(proposalBody);
-          errorMsg = d['message']?.toString() ?? errorMsg;
+          errorMsg = d['message']?.toString() ??
+              d['Message']?.toString() ??
+              d['status']?.toString() ??
+              d['Status']?.toString() ??
+              errorMsg;
         } catch (_) {}
         return PaymentResult(success: false, message: errorMsg);
       }
@@ -353,25 +613,38 @@ class PaymentService {
       }
 
       // Step 2: Initiate purchase with the proposal reference
-      final charge = calculatePaystackCharge(premium);
-      final totalAmount = premium + charge;
+      final payablePremium = agentNetPremium ?? premium;
+      final charge = calculatePaystackCharge(payablePremium);
+      final totalAmount = payablePremium + charge;
+      if (kDebugMode && normalizedAgentCode.isNotEmpty) {
+        debugPrint('=== AGENT CP PAYSTACK AMOUNT ===');
+        debugPrint('Original premium: $premium');
+        debugPrint('Calculated premium: $payablePremium');
+        debugPrint('Paystack charge: $charge');
+        debugPrint('Paystack total: $totalAmount');
+        debugPrint('================================');
+      }
 
       final purchasePayload = {
         'product_code': 'CP',
         'names': names,
-        'email': email,
+        'email': paymentEmail,
         'mobileno': mobileno,
         'premium': totalAmount,
         'reference': proposalRef,
       };
+      _addAgentFields(
+          purchasePayload, normalizedAgentCode, normalizedAgentUserType);
 
       if (kDebugMode) {
-        print(isExploreFlow
-            ? '=== EXPLORE FLOW STEP 2: INITIATE CP PURCHASE ==='
-            : '=== STEP 2: INITIATE CP PURCHASE ===');
-        print('URL: $_purchaseUrl');
-        print('Payload: ${json.encode(purchasePayload)}');
-        print('====================================');
+        const encoder = JsonEncoder.withIndent('  ');
+        debugPrint('================ CP PURCHASE REQUEST ================');
+        debugPrint('Flow: ${isExploreFlow ? 'Explore' : 'Standard'}');
+        debugPrint('Method: POST application/json');
+        debugPrint('URL: $_purchaseUrl');
+        debugPrint('Payload:');
+        debugPrint(encoder.convert(purchasePayload));
+        debugPrint('=====================================================');
       }
 
       final purchaseResponse = await http
@@ -383,12 +656,10 @@ class PaymentService {
           .timeout(const Duration(seconds: 20));
 
       if (kDebugMode) {
-        print(isExploreFlow
-            ? '=== EXPLORE FLOW CP PURCHASE RESPONSE ==='
-            : '=== CP PURCHASE RESPONSE ===');
-        print('Status: ${purchaseResponse.statusCode}');
-        print('Body: ${purchaseResponse.body}');
-        print('============================');
+        debugPrint('================ CP PURCHASE RESPONSE ===============');
+        debugPrint('Status: ${purchaseResponse.statusCode}');
+        debugPrint('Body: ${purchaseResponse.body}');
+        debugPrint('=====================================================');
       }
 
       if (purchaseResponse.statusCode == 200 ||
@@ -419,7 +690,7 @@ class PaymentService {
                 fallback: 'Unable to initiate payment'));
       }
     } catch (e) {
-      if (kDebugMode) print('CP payment error: $e');
+      if (kDebugMode) debugPrint('CP payment error: $e');
       return PaymentResult(
           success: false,
           message: 'Connection error. Please check your internet.');

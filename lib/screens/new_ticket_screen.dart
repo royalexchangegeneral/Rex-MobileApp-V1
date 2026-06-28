@@ -126,8 +126,10 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
       final response = await _sendTicketRequest(fields);
       final responseBody = response.body;
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: $responseBody');
+      debugPrint('Response status: ${response.statusCode}');
+      debugPrint('Response body: $responseBody');
+
+      if (!mounted) return;
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         Navigator.pop(context);
@@ -141,13 +143,16 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
             backgroundColor: Colors.red));
       }
     } catch (e) {
-      print('Error submitting ticket: $e');
+      debugPrint('Error submitting ticket: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(ErrorMessages.fromException(e,
               fallback: 'Unable to submit ticket')),
           backgroundColor: Colors.red));
     } finally {
-      setState(() => _isSubmitting = false);
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -155,10 +160,8 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
     Object? lastError;
 
     for (var attempt = 1; attempt <= 2; attempt++) {
-      final request = http.MultipartRequest(
-          'POST',
-          Uri.parse(
-              'https://eportaltest.rexinsure.com/api/support/ticket/create'));
+      final request = http.MultipartRequest('POST',
+          Uri.parse('https://eportal.rexinsure.com/api/support/ticket/create'));
       request.headers['Accept'] = 'application/json';
       request.headers['Connection'] = 'close';
       request.fields.addAll(fields);
@@ -171,10 +174,10 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
       }
 
       // Print payload
-      print('Sending ticket creation request:');
-      print('Fields: ${request.fields}');
-      print('Files: ${request.files.map((f) => f.filename).toList()}');
-      print('Attempt: $attempt');
+      debugPrint('Sending ticket creation request:');
+      debugPrint('Fields: ${request.fields}');
+      debugPrint('Files: ${request.files.map((f) => f.filename).toList()}');
+      debugPrint('Attempt: $attempt');
 
       try {
         final streamed = await request.send().timeout(_ticketUploadTimeout);

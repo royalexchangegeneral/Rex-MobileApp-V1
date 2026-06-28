@@ -102,7 +102,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
     try {
       final response = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/createlogin'),
+            Uri.parse('https://eportal.rexinsure.com/api/createlogin'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode(payload),
           )
@@ -225,12 +225,12 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
         };
 
         debugPrint('=== CREATE CUSTOMER REQUEST ===');
-        debugPrint('URL: https://eportaltest.rexinsure.com/api/createcustomer');
+        debugPrint('URL: https://eportal.rexinsure.com/api/createcustomer');
         debugPrint('Payload: ${json.encode(customerPayload)}');
 
         final customerResponse = await http
             .post(
-              Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
+              Uri.parse('https://eportal.rexinsure.com/api/createcustomer'),
               headers: {'Content-Type': 'application/json'},
               body: json.encode(customerPayload),
             )
@@ -269,12 +269,12 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       };
 
       debugPrint('=== CREATE LOGIN REQUEST ===');
-      debugPrint('URL: https://eportaltest.rexinsure.com/api/createlogin');
+      debugPrint('URL: https://eportal.rexinsure.com/api/createlogin');
       debugPrint('Payload: ${json.encode(loginPayload)}');
 
       final loginResponse = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/createlogin'),
+            Uri.parse('https://eportal.rexinsure.com/api/createlogin'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode(loginPayload),
           )
@@ -375,6 +375,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       'signup_email',
       'signup_phone',
       'signup_nin',
+      'signup_nin_skipped',
       'signup_password',
       'signup_dob',
       'signup_state',

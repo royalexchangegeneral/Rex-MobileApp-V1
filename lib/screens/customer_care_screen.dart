@@ -110,7 +110,7 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
 
       while (hasNextPage) {
         final uri = Uri.https(
-          'eportaltest.rexinsure.com',
+          'eportal.rexinsure.com',
           '/api/support/tickets',
           {
             'userId': userId,
@@ -119,15 +119,15 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
           },
         );
 
-        print('Fetching tickets: $uri');
+        debugPrint('Fetching tickets: $uri');
 
         final response = await http.get(
           uri,
           headers: {'Accept': 'application/json'},
         ).timeout(const Duration(seconds: 15));
 
-        print('Response status: ${response.statusCode}');
-        print('Response body: ${response.body}');
+        debugPrint('Response status: ${response.statusCode}');
+        debugPrint('Response body: ${response.body}');
 
         if (response.statusCode != 200) break;
 
@@ -149,7 +149,7 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
 
       _tickets = _sortTickets(tickets);
     } catch (e) {
-      print('Error fetching tickets: $e');
+      debugPrint('Error fetching tickets: $e');
       _tickets = [];
     } finally {
       setState(() => _loading = false);

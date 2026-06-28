@@ -40,6 +40,9 @@ class _HomeProtectionIdScreenState extends State<HomeProtectionIdScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+    final inactiveTrack = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -70,7 +73,7 @@ class _HomeProtectionIdScreenState extends State<HomeProtectionIdScreen> {
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryNavy)),
+                              color: accent)),
                       Text('Mode of Identification',
                           style: TextStyle(
                               fontSize: 13,
@@ -88,9 +91,7 @@ class _HomeProtectionIdScreenState extends State<HomeProtectionIdScreen> {
                                 margin: EdgeInsets.only(
                                     right: i < widget.totalSteps - 1 ? 4 : 0),
                                 decoration: BoxDecoration(
-                                    color: i < 2
-                                        ? AppTheme.primaryNavy
-                                        : Colors.grey[300],
+                                    color: i < 2 ? accent : inactiveTrack,
                                     borderRadius: BorderRadius.circular(2)),
                               )))),
                 ],

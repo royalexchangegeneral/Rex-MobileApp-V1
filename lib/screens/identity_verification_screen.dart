@@ -44,18 +44,18 @@ class _IdentityVerificationScreenState
     setState(() => _isVerifying = true);
     try {
       final payload = {
-        'Intcode': 'TESTCODE',
-        'Password': 'royal1234',
+        'Intcode': 'Kissflow',
+        'Password': '1lovetoeatcook1es',
         'number': nin,
       };
 
       debugPrint('=== VERIFY NIN REQUEST ===');
-      debugPrint('URL: https://eportaltest.rexinsure.com/api/mobile/verify/nin');
+      debugPrint('URL: https://eportal.rexinsure.com/api/mobile/verify/nin');
       debugPrint('Payload: ${json.encode(payload)}');
 
       final response = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
+            Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
             headers: {
               'Content-Type': 'application/json',
             },

@@ -29,7 +29,24 @@ class AuthProvider with ChangeNotifier {
   String? get userEmail => _userEmail;
   String? get loginEmail => _loginEmail;
   String? get userType => _userType;
-  String? get userCode => _userCode;
+  String? get userTypeCode {
+    final code = _userData == null ? null : _read(_userData!, 'UserType');
+    final value = code?.toString().trim() ?? '';
+    return value.isEmpty ? null : value;
+  }
+
+  String? get userCode {
+    final agencyCode =
+        _userData == null ? null : _read(_userData!, 'AgencyCode');
+    final agencyValue = agencyCode?.toString().trim() ?? '';
+    if (agencyValue.isNotEmpty) return agencyValue;
+    final userCode = _userData == null ? null : _read(_userData!, 'Usercode');
+    final userCodeValue = userCode?.toString().trim() ?? '';
+    if (userCodeValue.isNotEmpty) return userCodeValue;
+    final storedValue = _userCode?.trim() ?? '';
+    return storedValue.isEmpty ? null : storedValue;
+  }
+
   String? get profilePhoto => _profilePhoto;
   Map<String, dynamic>? get userData => _userData;
   int get failedLoginAttempts => _failedLoginAttempts;
@@ -145,25 +162,25 @@ class AuthProvider with ChangeNotifier {
       };
 
       if (kDebugMode) {
-        print('=== LOGIN API REQUEST ===');
-        print('URL: https://eportaltest.rexinsure.com/api/userlogin');
-        print('Payload: ${json.encode(requestBody)}');
-        print('=========================');
+        debugPrint('=== LOGIN API REQUEST ===');
+        debugPrint('URL: https://eportal.rexinsure.com/api/userlogin');
+        debugPrint('Payload: ${json.encode(requestBody)}');
+        debugPrint('=========================');
       }
 
       final response = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/userlogin'),
+            Uri.parse('https://eportal.rexinsure.com/api/userlogin'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode(requestBody),
           )
           .timeout(const Duration(seconds: 30));
 
       if (kDebugMode) {
-        print('=== LOGIN API RESPONSE ===');
-        print('Status Code: ${response.statusCode}');
-        print('Response Body: ${response.body}');
-        print('==========================');
+        debugPrint('=== LOGIN API RESPONSE ===');
+        debugPrint('Status Code: ${response.statusCode}');
+        debugPrint('Response Body: ${response.body}');
+        debugPrint('==========================');
       }
 
       final data = _decodeResponseBody(response.body);
@@ -208,8 +225,11 @@ class AuthProvider with ChangeNotifier {
               'userEmail', _read(userData, 'Email')?.toString() ?? '');
           await prefs.setString('loginEmail', userId);
           await prefs.setString('userType', userType);
-          await prefs.setString(
-              'userCode', _read(userData, 'Usercode')?.toString() ?? '');
+          final agencyCode =
+              _read(userData, 'AgencyCode')?.toString().trim() ?? '';
+          final userCode = _read(userData, 'Usercode')?.toString() ?? '';
+          final agentCode = agencyCode.isNotEmpty ? agencyCode : userCode;
+          await prefs.setString('userCode', agentCode);
           await prefs.setString('profilePhoto',
               _read(userData, 'ProfilePhoto')?.toString() ?? '');
           await prefs.setString('userData', json.encode(userData));
@@ -221,7 +241,7 @@ class AuthProvider with ChangeNotifier {
           _userEmail = _read(userData, 'Email')?.toString();
           _loginEmail = userId;
           _userType = userType;
-          _userCode = _read(userData, 'Usercode')?.toString();
+          _userCode = agentCode;
           _profilePhoto = _read(userData, 'ProfilePhoto')?.toString();
           _userData = userData;
 

@@ -32,13 +32,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           'Email': _emailController.text.trim(),
         };
 
-        print('=== SEND OTP API REQUEST ===');
-        print('URL: https://eportaltest.rexinsure.com/api/otp');
-        print('Request Body: ${json.encode(requestBody)}');
+        debugPrint('=== SEND OTP API REQUEST ===');
+        debugPrint('URL: https://eportal.rexinsure.com/api/otp');
+        debugPrint('Request Body: ${json.encode(requestBody)}');
 
         final response = await http
             .post(
-          Uri.parse('https://eportaltest.rexinsure.com/api/otp'),
+          Uri.parse('https://eportal.rexinsure.com/api/otp'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(requestBody),
         )
@@ -49,10 +49,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           },
         );
 
-        print('=== SEND OTP API RESPONSE ===');
-        print('Status Code: ${response.statusCode}');
-        print('Response Body: ${response.body}');
-        print('=============================');
+        debugPrint('=== SEND OTP API RESPONSE ===');
+        debugPrint('Status Code: ${response.statusCode}');
+        debugPrint('Response Body: ${response.body}');
+        debugPrint('=============================');
 
         setState(() => _isLoading = false);
 
@@ -80,9 +80,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           }
         }
       } catch (e) {
-        print('=== SEND OTP API ERROR ===');
-        print('Error: ${e.toString()}');
-        print('==========================');
+        debugPrint('=== SEND OTP API ERROR ===');
+        debugPrint('Error: ${e.toString()}');
+        debugPrint('==========================');
 
         setState(() => _isLoading = false);
 

@@ -12,7 +12,9 @@ class NotificationsProvider with ChangeNotifier {
   List<Map<String, dynamic>> get notifications => _notifications;
   Set<int> get readIds => _readIds;
   bool get loading => _loading;
-  int get unreadCount => _notifications.where((n) => !_readIds.contains(n['id'] ?? _notifications.indexOf(n))).length;
+  int get unreadCount => _notifications
+      .where((n) => !_readIds.contains(n['id'] ?? _notifications.indexOf(n)))
+      .length;
 
   Future<void> fetchNotifications(BuildContext context) async {
     _loading = true;
@@ -23,13 +25,20 @@ class NotificationsProvider with ChangeNotifier {
       final userCode = auth.userCode ?? auth.userId ?? '';
 
       final r = await http.get(
-        Uri.parse('https://eportaltest.rexinsure.com/api/notifications?userId=$userCode'),
+        Uri.parse(
+            'https://eportal.rexinsure.com/api/notifications?userId=$userCode'),
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 15));
 
       if (r.statusCode == 200 || r.statusCode == 201) {
         final d = json.decode(r.body);
-        List<dynamic> list = d is List ? d : (d is Map && d['data'] is List ? d['data'] : d is Map && d['notifications'] is List ? d['notifications'] : []);
+        List<dynamic> list = d is List
+            ? d
+            : (d is Map && d['data'] is List
+                ? d['data']
+                : d is Map && d['notifications'] is List
+                    ? d['notifications']
+                    : []);
         _notifications = list.map((e) => Map<String, dynamic>.from(e)).toList();
 
         // Pre-mark already read notifications
@@ -43,7 +52,7 @@ class NotificationsProvider with ChangeNotifier {
         _notifications = [];
       }
     } catch (e) {
-      print('Fetch notifications error: $e');
+      debugPrint('Fetch notifications error: $e');
       _notifications = [];
     }
 
@@ -69,14 +78,20 @@ class NotificationsProvider with ChangeNotifier {
       final userCode = auth.userCode ?? auth.userId ?? '';
 
       final body = {'notificationId': notifId, 'userId': userCode};
-      final r = await http.post(
-        Uri.parse('https://eportaltest.rexinsure.com/api/notifications/mark-read'),
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-        body: json.encode(body),
-      ).timeout(const Duration(seconds: 10));
-      print('Mark read response: ${r.statusCode} ${r.body}');
+      final r = await http
+          .post(
+            Uri.parse(
+                'https://eportal.rexinsure.com/api/notifications/mark-read'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: json.encode(body),
+          )
+          .timeout(const Duration(seconds: 10));
+      debugPrint('Mark read response: ${r.statusCode} ${r.body}');
     } catch (e) {
-      print('Mark read error: $e');
+      debugPrint('Mark read error: $e');
       // If failed, remove from readIds
       _readIds.remove(notifId);
       notifyListeners();

@@ -9,11 +9,13 @@ class DriversRidersProtectionScreen extends StatelessWidget {
   final bool isFromNewPolicy;
   final bool isCustomerFlow;
   final bool requiresKycOnBuy;
+  final Map<String, dynamic>? clientData;
   const DriversRidersProtectionScreen(
       {super.key,
       this.isFromNewPolicy = false,
       this.isCustomerFlow = false,
-      this.requiresKycOnBuy = false});
+      this.requiresKycOnBuy = false,
+      this.clientData});
 
   final List<String> _cardImages = const [
     'assets/images/e6.png',
@@ -165,7 +167,9 @@ class DriversRidersProtectionScreen extends StatelessWidget {
                                                         productName:
                                                             'Driver Protection Plan',
                                                         isCustomerFlow:
-                                                            isCustomerFlow))),
+                                                            isCustomerFlow,
+                                                        clientData:
+                                                            clientData))),
                                         style: ElevatedButton.styleFrom(
                                             backgroundColor:
                                                 _actionColor(context),
@@ -375,7 +379,8 @@ class DriversRidersProtectionScreen extends StatelessWidget {
                                     optionTitle: data['title']!,
                                     price: data['price']!,
                                     productName: 'Driver Protection Plan',
-                                    isCustomerFlow: isCustomerFlow)));
+                                    isCustomerFlow: isCustomerFlow,
+                                    clientData: clientData)));
                       },
                       style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.accentOrange,

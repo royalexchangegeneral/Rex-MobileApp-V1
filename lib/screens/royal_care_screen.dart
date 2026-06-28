@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../utils/app_theme.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'new_policy_screen.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
@@ -13,12 +14,14 @@ class RoyalCareScreen extends StatelessWidget {
   final bool isAgent;
   final bool isFromNewPolicy;
   final bool isCustomerFlow;
+  final Map<String, dynamic>? clientData;
 
   const RoyalCareScreen(
       {super.key,
       this.isAgent = false,
       this.isFromNewPolicy = false,
-      this.isCustomerFlow = false});
+      this.isCustomerFlow = false,
+      this.clientData});
 
   bool _isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
@@ -73,7 +76,8 @@ class RoyalCareScreen extends StatelessWidget {
                   MaterialPageRoute(
                       builder: (_) => RoyalPersonalCareScreen(
                           isFromNewPolicy: isFromNewPolicy,
-                          isCustomerFlow: isCustomerFlow))),
+                          isCustomerFlow: isCustomerFlow,
+                          clientData: clientData))),
             ),
             const SizedBox(height: 12),
             _buildRoyalCareCard(
@@ -87,7 +91,8 @@ class RoyalCareScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                       builder: (_) => RoyalGroupCareScreen(
-                          isFromNewPolicy: isFromNewPolicy))),
+                          isFromNewPolicy: isFromNewPolicy,
+                          clientData: clientData))),
             ),
             const SizedBox(height: 12),
             _buildRoyalCareCard(
@@ -102,7 +107,8 @@ class RoyalCareScreen extends StatelessWidget {
                   MaterialPageRoute(
                       builder: (_) => RoyalFamilyCareScreen(
                           isFromNewPolicy: isFromNewPolicy,
-                          isCustomerFlow: isCustomerFlow))),
+                          isCustomerFlow: isCustomerFlow,
+                          clientData: clientData))),
             ),
             const SizedBox(height: 20),
           ],
@@ -130,36 +136,7 @@ class RoyalCareScreen extends StatelessWidget {
       floatingActionButtonLocation:
           isAgent ? null : FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: isAgent
-          ? BottomNavigationBar(
-              type: BottomNavigationBarType.fixed,
-              selectedItemColor: AppTheme.bottomNavSelectedColor(context),
-              unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
-              currentIndex: 1,
-              selectedFontSize: 11,
-              unselectedFontSize: 11,
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home_outlined, size: 22),
-                  label: 'Home',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.description_outlined, size: 22),
-                  label: 'Policy',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.people_outline, size: 22),
-                  label: 'Clients',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.bar_chart_outlined, size: 22),
-                  label: 'Reports',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.person_outline, size: 22),
-                  label: 'Profile',
-                ),
-              ],
-            )
+          ? buildAgentBottomNav(context, currentIndex: 1)
           : BottomAppBar(
               color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),

@@ -144,15 +144,13 @@ class _PrivateCarPurchaseScreenState extends State<PrivateCarPurchaseScreen> {
       }
       // Use client data if available (agent buying for client), otherwise use logged-in user data
       if (widget.clientData != null) {
-        final c = widget.clientData!;
-        _firstNameController.text =
-            c['cust_firstname']?.toString() ?? c['Firstname']?.toString() ?? '';
-        _lastNameController.text =
-            c['cust_lastname']?.toString() ?? c['Surname']?.toString() ?? '';
-        _emailController.text = c['cust_email']?.toString() ?? '';
-        _phoneController.text = c['cust_phone']?.toString() ?? '';
-        _addressController.text = c['cust_address']?.toString() ?? '';
-        _occupationController.text = c['cust_occupation']?.toString() ?? '';
+        final details = CustomerDetails.fromClientData(widget.clientData);
+        _firstNameController.text = details['firstName'] ?? '';
+        _lastNameController.text = details['lastName'] ?? '';
+        _emailController.text = details['email'] ?? '';
+        _phoneController.text = details['phone'] ?? '';
+        _addressController.text = details['address'] ?? '';
+        _occupationController.text = details['occupation'] ?? '';
         _selectedOccupation = _occupationController.text.isNotEmpty
             ? _occupationController.text
             : null;

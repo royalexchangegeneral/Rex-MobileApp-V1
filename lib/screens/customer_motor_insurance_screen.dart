@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'private_car_purchase_screen.dart';
 import 'comprehensive_personal_info_screen.dart';
 import 'new_policy_screen.dart';
@@ -185,7 +186,9 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                       builder: (_) => ComprehensivePersonalInfoScreen(
-                          isLoggedIn: true, isAgent: isAgent))),
+                          isLoggedIn: true,
+                          isAgent: isAgent,
+                          clientData: clientData))),
             ),
             const SizedBox(height: 12),
             _buildInsuranceCard(
@@ -238,8 +241,9 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
               onGetQuote: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const QuoteScreen(
-                          insuranceType: 'Royal Auto Plan (Gold)'))),
+                      builder: (_) => QuoteScreen(
+                          insuranceType: 'Royal Auto Plan (Gold)',
+                          isAgentFlow: isAgent))),
             ),
             const SizedBox(height: 20),
           ],
@@ -267,36 +271,7 @@ class CustomerMotorInsuranceScreen extends StatelessWidget {
       floatingActionButtonLocation:
           isAgent ? null : FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: isAgent
-          ? BottomNavigationBar(
-              type: BottomNavigationBarType.fixed,
-              selectedItemColor: AppTheme.bottomNavSelectedColor(context),
-              unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
-              currentIndex: 1,
-              selectedFontSize: 11,
-              unselectedFontSize: 11,
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home_outlined, size: 22),
-                  label: 'Home',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.description_outlined, size: 22),
-                  label: 'Policy',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.people_outline, size: 22),
-                  label: 'Clients',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.bar_chart_outlined, size: 22),
-                  label: 'Reports',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.person_outline, size: 22),
-                  label: 'Profile',
-                ),
-              ],
-            )
+          ? buildAgentBottomNav(context, currentIndex: 1)
           : BottomAppBar(
               color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),

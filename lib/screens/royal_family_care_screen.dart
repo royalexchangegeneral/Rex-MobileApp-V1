@@ -9,11 +9,13 @@ class RoyalFamilyCareScreen extends StatelessWidget {
   final bool isFromNewPolicy;
   final bool isCustomerFlow;
   final bool requiresKycOnBuy;
+  final Map<String, dynamic>? clientData;
   const RoyalFamilyCareScreen(
       {super.key,
       this.isFromNewPolicy = false,
       this.isCustomerFlow = false,
-      this.requiresKycOnBuy = false});
+      this.requiresKycOnBuy = false,
+      this.clientData});
 
   final List<String> _cardImages = const [
     'assets/images/e3.png',
@@ -194,7 +196,9 @@ class RoyalFamilyCareScreen extends StatelessWidget {
                                                             d['title']!,
                                                         price: d['price']!,
                                                         isCustomerFlow:
-                                                            isCustomerFlow))),
+                                                            isCustomerFlow,
+                                                        clientData:
+                                                            clientData))),
                                         style: ElevatedButton.styleFrom(
                                             backgroundColor:
                                                 _actionColor(context),
@@ -404,7 +408,8 @@ class RoyalFamilyCareScreen extends StatelessWidget {
                                 builder: (_) => FamilyCarePurchaseScreen(
                                     optionTitle: data['title']!,
                                     price: data['price']!,
-                                    isCustomerFlow: isCustomerFlow)));
+                                    isCustomerFlow: isCustomerFlow,
+                                    clientData: clientData)));
                       },
                       style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.accentOrange,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -33,16 +35,24 @@ import 'providers/agent_policy_provider.dart';
 import 'services/inactivity_service.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
+  runZoned(
+    () {
+      WidgetsFlutterBinding.ensureInitialized();
+      debugPrint = (String? message, {int? wrapWidth}) {};
 
-  // Set system UI overlay style
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
+      // Set system UI overlay style
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+        ),
+      );
+
+      runApp(MyApp());
+    },
+    zoneSpecification: ZoneSpecification(
+      print: (self, parent, zone, line) {},
     ),
   );
-
-  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -128,7 +138,7 @@ class MyApp extends StatelessWidget {
                 );
               }
               if (settings.name == '/verify-phone') {
-                final email = settings.arguments as String;
+                final email = settings.arguments?.toString() ?? '';
                 return MaterialPageRoute(
                   builder: (context) => VerifyPhoneScreen(email: email),
                 );

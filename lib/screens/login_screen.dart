@@ -514,6 +514,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'signup_email',
                                 'signup_phone',
                                 'signup_nin',
+                                'signup_nin_skipped',
                                 'signup_password',
                                 'signup_dob',
                                 'signup_state',

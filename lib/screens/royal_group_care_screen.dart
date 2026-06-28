@@ -6,7 +6,9 @@ import 'customer_renewal_screen.dart';
 
 class RoyalGroupCareScreen extends StatelessWidget {
   final bool isFromNewPolicy;
-  const RoyalGroupCareScreen({super.key, this.isFromNewPolicy = false});
+  final Map<String, dynamic>? clientData;
+  const RoyalGroupCareScreen(
+      {super.key, this.isFromNewPolicy = false, this.clientData});
 
   final List<String> _cardImages = const [
     'assets/images/e4.png',

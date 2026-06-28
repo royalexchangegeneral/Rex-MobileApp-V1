@@ -5,6 +5,7 @@ import 'dart:convert';
 import '../utils/app_theme.dart';
 import '../utils/error_messages.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'quote_success_screen.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
@@ -13,8 +14,13 @@ import 'new_policy_screen.dart';
 
 class QuoteScreen extends StatefulWidget {
   final String insuranceType;
+  final bool isAgentFlow;
 
-  const QuoteScreen({super.key, required this.insuranceType});
+  const QuoteScreen({
+    super.key,
+    required this.insuranceType,
+    this.isAgentFlow = false,
+  });
 
   @override
   State<QuoteScreen> createState() => _QuoteScreenState();
@@ -335,55 +341,66 @@ class _QuoteScreenState extends State<QuoteScreen> {
           ),
         ),
       ),
-      floatingActionButton: Transform.translate(
-        offset: const Offset(0, 15),
-        child: SizedBox(
-          width: 52,
-          height: 52,
-          child: FloatingActionButton(
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-            backgroundColor: AppTheme.accentOrange,
-            shape: const CircleBorder(),
-            elevation: 1,
-            child: const Icon(Icons.add, color: Colors.white, size: 30),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        color: AppTheme.bottomNavBackgroundColor(context),
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 4,
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.home_outlined, 'Home', false, onTap: () {
-                Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const CustomerDashboardScreen()),
-                    (route) => false);
-              }),
-              _buildNavItem(Icons.description_outlined, 'Policies', true),
-              const SizedBox(width: 48),
-              _buildNavItem(Icons.assignment_outlined, 'Claims', false,
-                  onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const MyClaimsScreen()));
-              }),
-              _buildNavItem(Icons.person_outline, 'Profile', false, onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const CustomerProfileScreen()));
-              }),
-            ],
-          ),
-        ),
-      ),
+      floatingActionButton: widget.isAgentFlow
+          ? null
+          : Transform.translate(
+              offset: const Offset(0, 15),
+              child: SizedBox(
+                width: 52,
+                height: 52,
+                child: FloatingActionButton(
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const NewPolicyScreen())),
+                  backgroundColor: AppTheme.accentOrange,
+                  shape: const CircleBorder(),
+                  elevation: 1,
+                  child: const Icon(Icons.add, color: Colors.white, size: 30),
+                ),
+              ),
+            ),
+      floatingActionButtonLocation:
+          widget.isAgentFlow ? null : FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: widget.isAgentFlow
+          ? buildAgentBottomNav(context, currentIndex: 1)
+          : BottomAppBar(
+              color: AppTheme.bottomNavBackgroundColor(context),
+              shape: const CircularNotchedRectangle(),
+              notchMargin: 4,
+              child: SizedBox(
+                height: 60,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(Icons.home_outlined, 'Home', false,
+                        onTap: () {
+                      Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const CustomerDashboardScreen()),
+                          (route) => false);
+                    }),
+                    _buildNavItem(Icons.description_outlined, 'Policies', true),
+                    const SizedBox(width: 48),
+                    _buildNavItem(Icons.assignment_outlined, 'Claims', false,
+                        onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const MyClaimsScreen()));
+                    }),
+                    _buildNavItem(Icons.person_outline, 'Profile', false,
+                        onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const CustomerProfileScreen()));
+                    }),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
@@ -406,23 +423,23 @@ class _QuoteScreenState extends State<QuoteScreen> {
         'sumInsured': int.tryParse(sumInsured) ?? 0,
       };
 
-      print('=== QUOTE API REQUEST ===');
-      print('URL: https://eportaltest.rexinsure.com/api/quote-enquiry');
-      print('Payload: ${json.encode(requestBody)}');
-      print('=========================');
+      debugPrint('=== QUOTE API REQUEST ===');
+      debugPrint('URL: https://eportal.rexinsure.com/api/quote-enquiry');
+      debugPrint('Payload: ${json.encode(requestBody)}');
+      debugPrint('=========================');
 
       final response = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/quote-enquiry'),
+            Uri.parse('https://eportal.rexinsure.com/api/quote-enquiry'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode(requestBody),
           )
           .timeout(const Duration(seconds: 15));
 
-      print('=== QUOTE API RESPONSE ===');
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
-      print('==========================');
+      debugPrint('=== QUOTE API RESPONSE ===');
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response Body: ${response.body}');
+      debugPrint('==========================');
 
       if (!mounted) return;
 

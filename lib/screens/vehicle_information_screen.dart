@@ -98,7 +98,7 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
     setState(() => _loadingVehicleList = true);
     try {
       final response = await http.get(
-        Uri.parse('https://eportaltest.rexinsure.com/api/vehicleList'),
+        Uri.parse('https://eportal.rexinsure.com/api/vehicleList'),
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 15));
 
@@ -152,12 +152,11 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
     try {
       final response = await http
           .post(
-            Uri.parse(
-                'https://eportaltest.rexinsure.com/api/vehicleVerification'),
+            Uri.parse('https://eportal.rexinsure.com/api/vehicleVerification'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode({
-              'Intcode': 'Testcode',
-              'Password': 'royal1234',
+              'Intcode': 'Kissflow',
+              'Password': '1lovetoeatcook1es',
               'RegNo': regNo
             }),
           )

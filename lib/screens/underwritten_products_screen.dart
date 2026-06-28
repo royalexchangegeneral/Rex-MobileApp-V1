@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../utils/app_theme.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'new_policy_screen.dart';
 import 'quote_screen.dart';
 import 'customer_dashboard_screen.dart';
@@ -28,7 +29,10 @@ class UnderwrittenProductsScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => UnderwrittenProductDescriptionScreen(product: product),
+        builder: (_) => UnderwrittenProductDescriptionScreen(
+          product: product,
+          isAgent: isAgent,
+        ),
       ),
     );
   }
@@ -83,8 +87,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const UnderwrittenProductDescriptionScreen(
-                        product: 'General Accident'),
+                    builder: (_) => UnderwrittenProductDescriptionScreen(
+                        product: 'General Accident', isAgent: isAgent),
                   )),
             ),
             const SizedBox(height: 12),
@@ -99,8 +103,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const UnderwrittenProductDescriptionScreen(
-                        product: 'Engineering Insurance'),
+                    builder: (_) => UnderwrittenProductDescriptionScreen(
+                        product: 'Engineering Insurance', isAgent: isAgent),
                   )),
             ),
             const SizedBox(height: 12),
@@ -114,8 +118,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const UnderwrittenProductDescriptionScreen(
-                        product: 'Marine Insurance'),
+                    builder: (_) => UnderwrittenProductDescriptionScreen(
+                        product: 'Marine Insurance', isAgent: isAgent),
                   )),
             ),
             const SizedBox(height: 12),
@@ -130,8 +134,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const UnderwrittenProductDescriptionScreen(
-                        product: 'Industrial All Risk'),
+                    builder: (_) => UnderwrittenProductDescriptionScreen(
+                        product: 'Industrial All Risk', isAgent: isAgent),
                   )),
             ),
             const SizedBox(height: 12),
@@ -145,8 +149,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const UnderwrittenProductDescriptionScreen(
-                        product: 'Energy Insurance'),
+                    builder: (_) => UnderwrittenProductDescriptionScreen(
+                        product: 'Energy Insurance', isAgent: isAgent),
                   )),
             ),
             const SizedBox(height: 12),
@@ -160,8 +164,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const UnderwrittenProductDescriptionScreen(
-                        product: 'Agriculture Insurance'),
+                    builder: (_) => UnderwrittenProductDescriptionScreen(
+                        product: 'Agriculture Insurance', isAgent: isAgent),
                   )),
             ),
             const SizedBox(height: 12),
@@ -175,8 +179,8 @@ class UnderwrittenProductsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const UnderwrittenProductDescriptionScreen(
-                        product: 'Bond Insurance'),
+                    builder: (_) => UnderwrittenProductDescriptionScreen(
+                        product: 'Bond Insurance', isAgent: isAgent),
                   )),
             ),
             const SizedBox(height: 20),
@@ -205,36 +209,7 @@ class UnderwrittenProductsScreen extends StatelessWidget {
       floatingActionButtonLocation:
           isAgent ? null : FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: isAgent
-          ? BottomNavigationBar(
-              type: BottomNavigationBarType.fixed,
-              selectedItemColor: AppTheme.bottomNavSelectedColor(context),
-              unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
-              currentIndex: 1,
-              selectedFontSize: 11,
-              unselectedFontSize: 11,
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home_outlined, size: 22),
-                  label: 'Home',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.description_outlined, size: 22),
-                  label: 'Policy',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.people_outline, size: 22),
-                  label: 'Clients',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.bar_chart_outlined, size: 22),
-                  label: 'Reports',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.person_outline, size: 22),
-                  label: 'Profile',
-                ),
-              ],
-            )
+          ? buildAgentBottomNav(context, currentIndex: 1)
           : BottomAppBar(
               color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),
@@ -380,9 +355,10 @@ class UnderwrittenProductsScreen extends StatelessWidget {
 
 class UnderwrittenProductDescriptionScreen extends StatelessWidget {
   final String product;
+  final bool isAgent;
 
   const UnderwrittenProductDescriptionScreen(
-      {super.key, required this.product});
+      {super.key, required this.product, this.isAgent = false});
 
   bool _isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
@@ -1279,7 +1255,10 @@ class UnderwrittenProductDescriptionScreen extends StatelessWidget {
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => QuoteScreen(insuranceType: product),
+                      builder: (_) => QuoteScreen(
+                        insuranceType: product,
+                        isAgentFlow: isAgent,
+                      ),
                     ),
                   ),
                   style: ElevatedButton.styleFrom(

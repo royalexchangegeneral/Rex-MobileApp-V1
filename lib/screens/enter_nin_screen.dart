@@ -312,20 +312,18 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
 
     try {
       final payload = {
-        'Intcode': 'TESTCODE',
-        'Password': 'royal1234',
+        'Intcode': 'Kissflow',
+        'Password': '1lovetoeatcook1es',
         'number': _ninController.text.trim(),
       };
 
       debugPrint('=== VERIFY NIN REQUEST ===');
-      debugPrint(
-          'URL: https://eportaltest.rexinsure.com/api/mobile/verify/nin');
+      debugPrint('URL: https://eportal.rexinsure.com/api/mobile/verify/nin');
       debugPrint('Payload: ${json.encode(payload)}');
 
       final response = await http
           .post(
-            Uri.parse(
-                'https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
+            Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
             headers: {
               'Content-Type': 'application/json',
             },
@@ -572,7 +570,10 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
     }
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('signup_nin', _ninController.text.trim());
+    final enteredNin = _ninController.text.trim();
+    await prefs.setString('signup_nin', enteredNin);
+    await prefs.setBool(
+        'signup_nin_skipped', _didSkipNin && enteredNin.length != 11);
     await prefs.setString(
         'signup_first_name', _firstNameController.text.trim());
     await prefs.setString('signup_last_name', _lastNameController.text.trim());
@@ -593,10 +594,31 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
       return;
     }
 
+    final isExploreFlow = await ExploreKycFlow.isActive();
+    if (!mounted) return;
+    if (isExploreFlow) {
+      final activeResumeScreen = await ExploreKycFlow.activeResumeScreen();
+      if (!mounted) return;
+      if (activeResumeScreen != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => activeResumeScreen),
+        );
+      } else {
+        Navigator.pushNamedAndRemoveUntil(
+            context, '/explore-services', (route) => false);
+      }
+      return;
+    }
+
     final hasExistingPolicy = prefs.getBool('has_existing_policy') ?? false;
+    final isSignupFlow = prefs.getBool('is_signup_flow') ?? false;
     final phoneAlreadyVerified =
         (prefs.getString('signup_phone') ?? '').trim().isNotEmpty;
-    if (!hasExistingPolicy && phoneAlreadyVerified) {
+    if (!isSignupFlow) {
+      Navigator.pushNamedAndRemoveUntil(
+          context, '/user-portal', (route) => false);
+    } else if (!hasExistingPolicy && phoneAlreadyVerified) {
       Navigator.pushNamed(context, '/create-password');
     } else {
       Navigator.pushNamed(

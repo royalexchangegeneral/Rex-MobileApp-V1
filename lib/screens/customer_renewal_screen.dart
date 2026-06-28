@@ -5,6 +5,7 @@ import '../providers/policy_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/renewal_guard.dart';
 import '../utils/theme_helper.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
@@ -137,52 +138,62 @@ class _CustomerRenewalScreenState extends State<CustomerRenewalScreen> {
           ],
         ),
       ),
-      floatingActionButton: Transform.translate(
-        offset: const Offset(0, 15),
-        child: SizedBox(
-          width: 52,
-          height: 52,
-          child: FloatingActionButton(
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const NewPolicyScreen())),
-            backgroundColor: AppTheme.accentOrange,
-            shape: const CircleBorder(),
-            elevation: 1,
-            child: const Icon(Icons.add, color: Colors.white, size: 30),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        color: AppTheme.bottomNavBackgroundColor(context),
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 4,
-        child: SizedBox(
-            height: 44,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(Icons.home_outlined, 'Home', false,
-                    onTap: () => Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const CustomerDashboardScreen()),
-                        (route) => false)),
-                _buildNavItem(Icons.description_outlined, 'Policies', true),
-                const SizedBox(width: 48),
-                _buildNavItem(Icons.assignment_outlined, 'Claims', false,
-                    onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const MyClaimsScreen()))),
-                _buildNavItem(Icons.person_outline, 'Profile', false,
-                    onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const CustomerProfileScreen()))),
-              ],
-            )),
-      ),
+      floatingActionButton: widget.isAgentFlow
+          ? null
+          : Transform.translate(
+              offset: const Offset(0, 15),
+              child: SizedBox(
+                width: 52,
+                height: 52,
+                child: FloatingActionButton(
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const NewPolicyScreen())),
+                  backgroundColor: AppTheme.accentOrange,
+                  shape: const CircleBorder(),
+                  elevation: 1,
+                  child: const Icon(Icons.add, color: Colors.white, size: 30),
+                ),
+              ),
+            ),
+      floatingActionButtonLocation:
+          widget.isAgentFlow ? null : FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: widget.isAgentFlow
+          ? buildAgentBottomNav(context, currentIndex: 1)
+          : BottomAppBar(
+              color: AppTheme.bottomNavBackgroundColor(context),
+              shape: const CircularNotchedRectangle(),
+              notchMargin: 4,
+              child: SizedBox(
+                  height: 44,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildNavItem(Icons.home_outlined, 'Home', false,
+                          onTap: () => Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      const CustomerDashboardScreen()),
+                              (route) => false)),
+                      _buildNavItem(
+                          Icons.description_outlined, 'Policies', true),
+                      const SizedBox(width: 48),
+                      _buildNavItem(Icons.assignment_outlined, 'Claims', false,
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const MyClaimsScreen()))),
+                      _buildNavItem(Icons.person_outline, 'Profile', false,
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      const CustomerProfileScreen()))),
+                    ],
+                  )),
+            ),
     );
   }
 
@@ -214,9 +225,23 @@ class _CustomerRenewalScreenState extends State<CustomerRenewalScreen> {
         ? context.read<AgentPolicyProvider>().policies
         : context.read<PolicyProvider>().policies;
     for (final policy in policies) {
-      final policyId = policy['policyId']?.toString().toLowerCase().trim();
-      final insured = policy['insured']?.toString().toLowerCase().trim();
-      if (policyId == query || insured == query) {
+      final searchableValues = [
+        'policyId',
+        'PolicyID',
+        'insured',
+        'Insured',
+        'RegNo',
+        'RegNumber',
+        'RegistrationNo',
+        'RegistrationNumber',
+        'VehicleRegNo',
+        'VehicleRegistrationNo',
+        'vehregno',
+        'registrationNo',
+        'regNumber',
+      ].map((key) => policy[key]?.toString().toLowerCase().trim());
+
+      if (searchableValues.any((value) => value == query)) {
         return policy;
       }
     }

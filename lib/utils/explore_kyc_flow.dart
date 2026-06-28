@@ -18,6 +18,7 @@ class ExploreKycFlow {
   static const _optionTitleKey = 'pending_explore_option_title';
   static const _priceKey = 'pending_explore_price';
   static const _productNameKey = 'pending_explore_product_name';
+  static const _isActiveKey = 'active_explore_buy_flow';
 
   static Future<void> start(
     BuildContext context, {
@@ -29,6 +30,7 @@ class ExploreKycFlow {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('is_signup_flow', true);
     await prefs.setBool('has_existing_policy', false);
+    await prefs.setBool(_isActiveKey, true);
     await prefs.setBool(_isPendingKey, true);
     await prefs.setString(_targetKey, target);
     await prefs.setString(_productNameKey, productName);
@@ -63,6 +65,25 @@ class ExploreKycFlow {
     final isPending = prefs.getBool(_isPendingKey) ?? false;
     if (!isPending) return null;
 
+    final screen = await _resumeScreenFromPrefs(prefs);
+    if (screen == null) return null;
+    await prefs.setBool('is_signup_flow', false);
+    await _clearPending(prefs);
+    return screen;
+  }
+
+  static Future<Widget?> activeResumeScreen() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isActive = prefs.getBool(_isActiveKey) ?? false;
+    if (!isActive) return null;
+
+    final screen = await _resumeScreenFromPrefs(prefs);
+    if (screen == null) return null;
+    await prefs.setBool('is_signup_flow', false);
+    return screen;
+  }
+
+  static Future<Widget?> _resumeScreenFromPrefs(SharedPreferences prefs) async {
     final target = prefs.getString(_targetKey) ?? '';
     final optionTitle = prefs.getString(_optionTitleKey) ?? '';
     final price = prefs.getString(_priceKey) ?? '';
@@ -96,9 +117,31 @@ class ExploreKycFlow {
       productName: productName,
     );
 
-    if (screen == null) return null;
-    await _clearPending(prefs);
     return screen;
+  }
+
+  static Future<bool> isPending() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_isPendingKey) ?? false;
+  }
+
+  static Future<bool> isActive() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_isActiveKey) ?? false;
+  }
+
+  static Future<void> complete() async {
+    final prefs = await SharedPreferences.getInstance();
+    for (final key in [
+      _isActiveKey,
+      _isPendingKey,
+      _targetKey,
+      _optionTitleKey,
+      _priceKey,
+      _productNameKey,
+    ]) {
+      await prefs.remove(key);
+    }
   }
 
   static Widget? _screenFor({
@@ -164,15 +207,7 @@ class ExploreKycFlow {
   }
 
   static Future<void> _clearPending(SharedPreferences prefs) async {
-    for (final key in [
-      _isPendingKey,
-      _targetKey,
-      _optionTitleKey,
-      _priceKey,
-      _productNameKey,
-    ]) {
-      await prefs.remove(key);
-    }
+    await prefs.remove(_isPendingKey);
   }
 }
 

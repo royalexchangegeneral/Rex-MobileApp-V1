@@ -44,15 +44,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           'ConfirmPassword': _confirmPasswordController.text,
         };
 
-        print('=== PASSWORD RESET API REQUEST ===');
-        print('URL: https://eportaltest.rexinsure.com/api/passwordreset');
-        print('Email being sent: ${widget.email}');
-        print('OTP being sent: ${widget.otp}');
-        print('Request Body: ${json.encode(requestBody)}');
+        debugPrint('=== PASSWORD RESET API REQUEST ===');
+        debugPrint('URL: https://eportal.rexinsure.com/api/passwordreset');
+        debugPrint('Email being sent: ${widget.email}');
+        debugPrint('OTP being sent: ${widget.otp}');
+        debugPrint('Request Body: ${json.encode(requestBody)}');
 
         final response = await http
             .post(
-          Uri.parse('https://eportaltest.rexinsure.com/api/passwordreset'),
+          Uri.parse('https://eportal.rexinsure.com/api/passwordreset'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(requestBody),
         )
@@ -63,10 +63,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           },
         );
 
-        print('=== PASSWORD RESET API RESPONSE ===');
-        print('Status Code: ${response.statusCode}');
-        print('Response Body: ${response.body}');
-        print('===================================');
+        debugPrint('=== PASSWORD RESET API RESPONSE ===');
+        debugPrint('Status Code: ${response.statusCode}');
+        debugPrint('Response Body: ${response.body}');
+        debugPrint('===================================');
 
         setState(() => _isLoading = false);
 
@@ -96,9 +96,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           }
         }
       } catch (e) {
-        print('=== PASSWORD RESET API ERROR ===');
-        print('Error: ${e.toString()}');
-        print('================================');
+        debugPrint('=== PASSWORD RESET API ERROR ===');
+        debugPrint('Error: ${e.toString()}');
+        debugPrint('================================');
 
         setState(() => _isLoading = false);
 

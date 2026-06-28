@@ -15,12 +15,14 @@ class ComprehensivePersonalInfoScreen extends StatefulWidget {
   final bool isLoggedIn;
   final bool isAgent;
   final bool isExploreFlow;
+  final Map<String, dynamic>? clientData;
   const ComprehensivePersonalInfoScreen(
       {super.key,
       this.vehicleType = 'Comprehensive Motor',
       this.isLoggedIn = false,
       this.isAgent = false,
-      this.isExploreFlow = false});
+      this.isExploreFlow = false,
+      this.clientData});
   @override
   State<ComprehensivePersonalInfoScreen> createState() =>
       _ComprehensivePersonalInfoScreenState();
@@ -36,6 +38,7 @@ class _ComprehensivePersonalInfoScreenState
   final _occupationController = TextEditingController();
   String? _selectedOccupation;
   final _addressController = TextEditingController();
+  String _selectedClientNin = '';
 
   String? _selectedState;
   String? _selectedLGA;
@@ -130,6 +133,25 @@ class _ComprehensivePersonalInfoScreenState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.isExploreFlow) {
         _continueWithExploreKyc();
+        return;
+      }
+      if (widget.isAgent && widget.clientData != null) {
+        final details = CustomerDetails.fromClientData(widget.clientData);
+        _selectedClientNin = details['nin'] ?? '';
+        _firstNameController.text = details['firstName'] ?? '';
+        _lastNameController.text = details['lastName'] ?? '';
+        _emailController.text = details['email'] ?? '';
+        _phoneController.text = details['phone'] ?? '';
+        _occupationController.text = details['occupation'] ?? '';
+        _selectedOccupation = _occupationController.text.isNotEmpty
+            ? _occupationController.text
+            : null;
+        _addressController.text = details['address'] ?? '';
+        _selectedState = details['state']?.isNotEmpty == true
+            ? details['state']
+            : _selectedState;
+        _selectedLGA =
+            details['lga']?.isNotEmpty == true ? details['lga'] : _selectedLGA;
         return;
       }
       final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -418,6 +440,7 @@ class _ComprehensivePersonalInfoScreenState
                           'lastName': _lastNameController.text.trim(),
                           'email': _emailController.text.trim(),
                           'phone': _phoneController.text.trim(),
+                          'nin': _selectedClientNin,
                           'occupation': _occupationController.text.trim(),
                           'address': _addressController.text.trim(),
                           'state': _selectedState ?? '',

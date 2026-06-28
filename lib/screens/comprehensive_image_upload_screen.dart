@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../utils/app_theme.dart';
+import '../utils/customer_details.dart';
 import '../utils/error_messages.dart';
 import 'comprehensive_nin_screen.dart';
+import 'comprehensive_summary_screen.dart';
 
 class ComprehensiveImageUploadScreen extends StatefulWidget {
   final String vehicleType;
@@ -108,6 +110,65 @@ class _ComprehensiveImageUploadScreenState
         if (_preLoss5 != null) _preLoss5!,
       ];
 
+  Future<void> _continue() async {
+    if (widget.isExploreFlow) {
+      final kycDetails = await CustomerDetails.signupKycDetails();
+      final ninWasSkipped = await CustomerDetails.signupNinWasSkipped();
+      if (!mounted) return;
+
+      final savedNin = kycDetails['nin'] ?? '';
+      if (!ninWasSkipped || savedNin.trim().length == 11) {
+        final personalInfo = Map<String, String>.from(widget.personalInfo);
+        for (final entry in kycDetails.entries) {
+          if ((personalInfo[entry.key] ?? '').isEmpty &&
+              entry.value.trim().isNotEmpty) {
+            personalInfo[entry.key] = entry.value;
+          }
+        }
+        if ((personalInfo['nin'] ?? '').isEmpty && savedNin.trim().isNotEmpty) {
+          personalInfo['nin'] = savedNin.trim();
+        }
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ComprehensiveSummaryScreen(
+              vehicleType: widget.vehicleType,
+              sumInsured: widget.sumInsured,
+              premium: widget.premium,
+              regNumber: widget.regNumber,
+              personalInfo: personalInfo,
+              vehicleData: widget.vehicleData,
+              imageFiles: _imageFiles,
+              isLoggedIn: widget.isLoggedIn,
+              isAgent: widget.isAgent,
+              isExploreFlow: widget.isExploreFlow,
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ComprehensiveNinScreen(
+          vehicleType: widget.vehicleType,
+          sumInsured: widget.sumInsured,
+          premium: widget.premium,
+          regNumber: widget.regNumber,
+          personalInfo: widget.personalInfo,
+          vehicleData: widget.vehicleData,
+          imageFiles: _imageFiles,
+          isLoggedIn: widget.isLoggedIn,
+          isAgent: widget.isAgent,
+          isExploreFlow: widget.isExploreFlow,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -119,6 +180,8 @@ class _ComprehensiveImageUploadScreenState
         isDark ? const Color(0xFF334155) : Colors.grey[300]!;
     final secondaryTextColor =
         isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+    final totalSteps = widget.isExploreFlow ? 4 : 5;
+    const currentStep = 3;
 
     return Scaffold(
       appBar: AppBar(
@@ -143,14 +206,14 @@ class _ComprehensiveImageUploadScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(children: [
-                    Text('Step 3 of 5',
-                        style: TextStyle(
+                  Row(children: [
+                    Text('Step $currentStep of $totalSteps',
+                        style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.primaryNavy)),
-                    Spacer(),
-                    Text('Image Upload',
+                    const Spacer(),
+                    const Text('Image Upload',
                         style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -159,13 +222,14 @@ class _ComprehensiveImageUploadScreenState
                   const SizedBox(height: 12),
                   Row(
                       children: List.generate(
-                          5,
+                          totalSteps,
                           (i) => Expanded(
                               child: Container(
                                   height: 4,
-                                  margin: EdgeInsets.only(right: i < 4 ? 4 : 0),
+                                  margin: EdgeInsets.only(
+                                      right: i < totalSteps - 1 ? 4 : 0),
                                   decoration: BoxDecoration(
-                                      color: i < 3
+                                      color: i < currentStep
                                           ? AppTheme.primaryNavy
                                           : inactiveTrackColor,
                                       borderRadius:
@@ -257,25 +321,7 @@ class _ComprehensiveImageUploadScreenState
                 SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _allRequiredUploaded
-                          ? () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => ComprehensiveNinScreen(
-                                            vehicleType: widget.vehicleType,
-                                            sumInsured: widget.sumInsured,
-                                            premium: widget.premium,
-                                            regNumber: widget.regNumber,
-                                            personalInfo: widget.personalInfo,
-                                            vehicleData: widget.vehicleData,
-                                            imageFiles: _imageFiles,
-                                            isLoggedIn: widget.isLoggedIn,
-                                            isAgent: widget.isAgent,
-                                            isExploreFlow: widget.isExploreFlow,
-                                          )));
-                            }
-                          : null,
+                      onPressed: _allRequiredUploaded ? _continue : null,
                       style: ElevatedButton.styleFrom(
                           backgroundColor:
                               Theme.of(context).brightness == Brightness.dark

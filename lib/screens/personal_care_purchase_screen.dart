@@ -19,13 +19,15 @@ class PersonalCarePurchaseScreen extends StatefulWidget {
   final String productName;
   final bool isCustomerFlow;
   final bool isExploreFlow;
+  final Map<String, dynamic>? clientData;
   const PersonalCarePurchaseScreen(
       {super.key,
       required this.optionTitle,
       required this.price,
       this.productName = 'Royal Personal Care',
       this.isCustomerFlow = false,
-      this.isExploreFlow = false});
+      this.isExploreFlow = false,
+      this.clientData});
   @override
   State<PersonalCarePurchaseScreen> createState() =>
       _PersonalCarePurchaseScreenState();
@@ -43,6 +45,10 @@ class _PersonalCarePurchaseScreenState
   bool _ninFailed = false;
   bool _ninVerified = false;
   bool _isCustomerNinLocked = false;
+  bool _returnToSummaryAfterNin = false;
+  bool _ninWasSkipped = false;
+  int? _agentSellingPremium;
+  bool _isLoadingAgentSellingPrice = false;
   // Personal info (populated after NIN verify)
   String _firstName = '';
   String _lastName = '';
@@ -159,13 +165,77 @@ class _PersonalCarePurchaseScreenState
     super.initState();
     if (widget.isExploreFlow) {
       _prefillExploreKyc();
+    } else if (!widget.isCustomerFlow && widget.clientData != null) {
+      _prefillAgentClientDetails();
     } else {
       _prefillCustomerNin();
     }
+    _loadAgentSellingPrice();
+  }
+
+  String get _productCode =>
+      widget.productName.toLowerCase().contains('driver') ? 'DP' : 'PC';
+
+  String get _subProductCode =>
+      PaymentService.subProductCodeForOption(_productCode, widget.optionTitle);
+
+  Future<void> _loadAgentSellingPrice() async {
+    if (widget.isCustomerFlow ||
+        widget.isExploreFlow ||
+        PaymentService.usesCalculatedAgentPremium(_productCode)) {
+      return;
+    }
+
+    final authProvider = context.read<AuthProvider>();
+    final agentCode = authProvider.userCode?.toString() ?? '';
+    if (agentCode.isEmpty) return;
+
+    setState(() => _isLoadingAgentSellingPrice = true);
+    final premium = await PaymentService.agentSellingNetPremium(
+      agentCode: agentCode,
+      productCode: _productCode,
+      subProductCode: _subProductCode,
+    );
+    if (!mounted) return;
+    setState(() {
+      _agentSellingPremium = premium;
+      _isLoadingAgentSellingPrice = false;
+    });
+  }
+
+  void _prefillAgentClientDetails() {
+    final details = CustomerDetails.fromClientData(widget.clientData);
+    setState(() {
+      _ninController.text = details['nin'] ?? '';
+      _firstName = details['firstName'] ?? '';
+      _lastName = details['lastName'] ?? '';
+      _email = details['email'] ?? '';
+      _emailController.text = _email;
+      _phone = details['phone'] ?? '';
+      _dob = details['dob'] ?? '';
+      _state = details['state'] ?? '';
+      _lga = details['lga'] ?? '';
+      _address = details['address'] ?? '';
+      _gender = details['gender'] ?? '';
+      _ninVerified = _ninController.text.trim().length == 11;
+      _isCustomerNinLocked = _ninVerified;
+      _manualFirstNameController.text = _firstName;
+      _manualLastNameController.text = _lastName;
+      _manualEmailController.text = _email;
+      _manualPhoneController.text = _phone;
+      _manualAddressController.text = _address;
+      _selectedManualState = _nigerianStates.cast<String?>().firstWhere(
+            (s) => s!.toLowerCase() == _state.trim().toLowerCase(),
+            orElse: () => null,
+          );
+      _occupationController.text = details['occupation'] ?? '';
+      _currentStep = 1;
+    });
   }
 
   Future<void> _prefillExploreKyc() async {
     final details = await CustomerDetails.signupKycDetails();
+    final ninWasSkipped = await CustomerDetails.signupNinWasSkipped();
     if (!mounted) return;
 
     setState(() {
@@ -179,7 +249,8 @@ class _PersonalCarePurchaseScreenState
       _address = details['address'] ?? '';
       _state = details['state'] ?? '';
       _lga = details['lga'] ?? '';
-      _ninVerified = true;
+      _ninVerified = _ninController.text.trim().length == 11;
+      _ninWasSkipped = ninWasSkipped;
       _manualFirstNameController.text = _firstName;
       _manualLastNameController.text = _lastName;
       _manualEmailController.text = _email;
@@ -236,18 +307,18 @@ class _PersonalCarePurchaseScreenState
     try {
       final response = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
+            Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode({
-              'Intcode': 'TESTCODE',
-              'Password': 'royal1234',
+              'Intcode': 'Kissflow',
+              'Password': '1lovetoeatcook1es',
               'number': nin,
             }),
           )
           .timeout(const Duration(seconds: 15));
 
-      print('=== NIN VERIFY RESPONSE: ${response.statusCode} ===');
-      print('Body: ${response.body}');
+      debugPrint('=== NIN VERIFY RESPONSE: ${response.statusCode} ===');
+      debugPrint('Body: ${response.body}');
 
       setState(() => _isVerifying = false);
 
@@ -329,8 +400,15 @@ class _PersonalCarePurchaseScreenState
     return double.tryParse(cleaned) ?? 0;
   }
 
+  double _getSummaryBaseAmount() =>
+      (_agentSellingPremium ?? _getBaseAmount()).toDouble();
+
+  String _summaryPriceText() => _isLoadingAgentSellingPrice
+      ? 'Loading...'
+      : _formatNaira(_getSummaryBaseAmount());
+
   double _getPaystackCharge() {
-    final base = _getBaseAmount();
+    final base = _getSummaryBaseAmount();
     // Paystack: 1.5% + ₦100, capped at ₦2,000
     double charge = (base * 0.015) + 100;
     if (charge > 2000) charge = 2000;
@@ -338,7 +416,7 @@ class _PersonalCarePurchaseScreenState
   }
 
   double _getTotalAmount() {
-    return _getBaseAmount() + _getPaystackCharge();
+    return _getSummaryBaseAmount() + _getPaystackCharge();
   }
 
   String _formatNaira(double amount) {
@@ -348,8 +426,17 @@ class _PersonalCarePurchaseScreenState
   Future<void> _initiatePayment() async {
     final email = _email.isNotEmpty ? _email : 'customer@rexinsure.com';
     final premiumAmount = _getBaseAmount();
-    final productCode =
-        widget.productName.toLowerCase().contains('driver') ? 'DP' : 'PC';
+    final productCode = _productCode;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final agentCode = (!widget.isCustomerFlow && !widget.isExploreFlow)
+        ? (authProvider.userCode?.toString() ?? '')
+        : '';
+    final agentUserType = agentCode.isNotEmpty
+        ? (authProvider.userTypeCode?.toString() ?? '')
+        : '';
+    final payerEmail = agentCode.isNotEmpty
+        ? (authProvider.userEmail ?? authProvider.loginEmail ?? '')
+        : '';
     setState(() => _isPayingNow = true);
     try {
       final result = await PaymentService.initiatePurchase(
@@ -358,10 +445,14 @@ class _PersonalCarePurchaseScreenState
         email: email,
         mobileno: _phone,
         premium: premiumAmount.toInt(),
+        agentCode: agentCode,
+        agentUserType: agentUserType,
+        payerEmail: payerEmail,
+        subProductCode: _subProductCode,
         extraFields: {
           'type': 'Individual',
           'gender': _gender,
-          'dob': _dob,
+          'dob': CustomerDetails.normalizeApiDate(_dob),
           'occupation': _occupationController.text.trim(),
           'businesssector': _selectedBusinessSector ?? '',
           'tin': _tinController.text.trim(),
@@ -392,6 +483,8 @@ class _PersonalCarePurchaseScreenState
             context,
             MaterialPageRoute(
               builder: (_) => PolicyPurchaseSuccessScreen(
+                isLoggedIn: !widget.isExploreFlow,
+                isAgent: !widget.isCustomerFlow && !widget.isExploreFlow,
                 reference: res.reference,
                 message: res.message,
                 isExploreFlow: widget.isExploreFlow,
@@ -664,7 +757,8 @@ class _PersonalCarePurchaseScreenState
                           _phone = _manualPhoneController.text.trim();
                           _address = _manualAddressController.text.trim();
                           _state = _selectedManualState ?? '';
-                          _currentStep = 1;
+                          _currentStep = _returnToSummaryAfterNin ? 3 : 1;
+                          _returnToSummaryAfterNin = false;
                         });
                       }
                     : null,
@@ -758,7 +852,8 @@ class _PersonalCarePurchaseScreenState
                           _phone = _manualPhoneController.text.trim();
                           _address = _manualAddressController.text.trim();
                           _state = _selectedManualState ?? '';
-                          _currentStep = 1;
+                          _currentStep = _returnToSummaryAfterNin ? 3 : 1;
+                          _returnToSummaryAfterNin = false;
                         });
                       }
                     : null,
@@ -955,7 +1050,16 @@ class _PersonalCarePurchaseScreenState
                       _nokPhoneController.text.trim().isNotEmpty &&
                       _selectedRelationship != null &&
                       _consentChecked
-                  ? () => setState(() => _currentStep = 3)
+                  ? () => setState(() {
+                        if (widget.isExploreFlow &&
+                            _ninWasSkipped &&
+                            _ninController.text.trim().length != 11) {
+                          _returnToSummaryAfterNin = true;
+                          _currentStep = 0;
+                        } else {
+                          _currentStep = 3;
+                        }
+                      })
                   : null,
               style: ElevatedButton.styleFrom(
                   backgroundColor:
@@ -1005,7 +1109,7 @@ class _PersonalCarePurchaseScreenState
         _summarySection('Payment Information', [
           _summaryRow('Product', '${widget.productName} ${widget.optionTitle}',
               singleLine: true),
-          _summaryRow('Price', widget.price),
+          _summaryRow('Price', _summaryPriceText()),
           _summaryRow('Paystack Charges', _formatNaira(_getPaystackCharge())),
           _summaryRow('Total', _formatNaira(_getTotalAmount())),
         ]),

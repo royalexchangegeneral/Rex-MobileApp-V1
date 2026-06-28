@@ -6,10 +6,8 @@ import '../providers/agent_policy_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/error_messages.dart';
-import 'agent_dashboard_screen.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'clients_list_screen.dart';
-import 'reports_screen.dart';
-import 'agent_profile_screen.dart';
 
 class ClientSummaryScreen extends StatefulWidget {
   final String clientType;
@@ -100,12 +98,12 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
       };
 
       debugPrint('=== CREATE CUSTOMER API REQUEST ===');
-      debugPrint('URL: https://eportaltest.rexinsure.com/api/createcustomer');
+      debugPrint('URL: https://eportal.rexinsure.com/api/createcustomer');
       debugPrint('Request Body: ${json.encode(requestBody)}');
 
       final response = await http
           .post(
-        Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
+        Uri.parse('https://eportal.rexinsure.com/api/createcustomer'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(requestBody),
       )
@@ -392,64 +390,7 @@ class _ClientSummaryScreenState extends State<ClientSummaryScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: AppTheme.bottomNavBackgroundColor(context),
-        selectedItemColor: AppTheme.bottomNavSelectedColor(context),
-        unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
-        currentIndex: 2,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const AgentDashboardScreen()),
-              (route) => false,
-            );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const ClientsListScreen()),
-            );
-          } else if (index == 3) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ReportsScreen()),
-            );
-          } else if (index == 4) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const AgentProfileScreen()),
-            );
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined, size: 22),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.description_outlined, size: 22),
-            label: 'Policy',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline, size: 22),
-            label: 'Clients',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined, size: 22),
-            label: 'Reports',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline, size: 22),
-            label: 'Profile',
-          ),
-        ],
-      ),
+      bottomNavigationBar: buildAgentBottomNav(context, currentIndex: 2),
     );
   }
 

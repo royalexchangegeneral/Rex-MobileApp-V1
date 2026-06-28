@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_theme.dart';
 import '../services/payment_service.dart';
 import '../widgets/paystack_webview.dart';
@@ -48,6 +50,15 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
     return '₦${amount.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+\.)'), (m) => '${m[1]},')}';
   }
 
+  Future<String> _resolveNin() async {
+    final fromPersonalInfo =
+        (personalInfo['NIN'] ?? personalInfo['nin'] ?? '').trim();
+    if (fromPersonalInfo.length == 11) return fromPersonalInfo;
+
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getString('signup_nin') ?? '').trim();
+  }
+
   Future<void> _submitProposalAndPay(BuildContext context) async {
     showDialog(
         context: context,
@@ -61,6 +72,37 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
             .trim();
     final email = personalInfo['email'] ?? 'customer@rexinsure.com';
     final mobileno = personalInfo['phone'] ?? '';
+    final nin = await _resolveNin();
+    final prefs = await SharedPreferences.getInstance();
+    final agentCode = isAgent ? (prefs.getString('userCode') ?? '') : '';
+    final payerEmail = agentCode.trim().isNotEmpty
+        ? (prefs.getString('userEmail') ?? prefs.getString('loginEmail') ?? '')
+        : '';
+    var agentUserType = '';
+    final userDataString = prefs.getString('userData');
+    if (isAgent && userDataString != null) {
+      try {
+        final decoded = json.decode(userDataString);
+        if (decoded is Map) {
+          agentUserType = (decoded['UserType'] ??
+                  decoded['userType'] ??
+                  decoded['usertype'] ??
+                  '')
+              .toString()
+              .trim();
+        }
+      } catch (_) {}
+    }
+    if (!context.mounted) return;
+
+    if (nin.length != 11) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('NIN is required for Comprehensive Motor purchase'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
 
     // Build fields for multipart proposal
     final fields = <String, String>{
@@ -70,6 +112,16 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
       'email': email,
       'mobileno': mobileno,
       'premium': premiumAmount.toString(),
+      'NIN': nin,
+      'Nin': nin,
+      'nin': nin,
+      'NINNo': nin,
+      'NationalID': nin,
+      'NationalIdentificationNumber': nin,
+      'NationalIdentificationNo': nin,
+      'national_id_no': nin,
+      'national_id_number': nin,
+      'cust_national_id_no': nin,
       'occupation': personalInfo['occupation'] ?? '',
       'state': personalInfo['state'] ?? '',
       'address': personalInfo['address'] ?? '',
@@ -97,6 +149,11 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
       'grosspremium': premiumAmount.toString(),
     };
 
+    debugPrint('=== CP PROPOSAL FIELDS BEFORE SUBMIT ===');
+    debugPrint('NIN: ${fields['NIN']}');
+    debugPrint('Fields: $fields');
+    debugPrint('=======================================');
+
     // Collect image file paths
     final imagePaths =
         imageFiles.where((f) => f.existsSync()).map((f) => f.path).toList();
@@ -108,6 +165,10 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
       email: email,
       mobileno: mobileno,
       premium: premiumAmount,
+      agentCode: agentCode,
+      agentUserType: agentUserType,
+      payerEmail: payerEmail,
+      subProductCode: 'CP',
       isExploreFlow: isExploreFlow,
     );
 
@@ -134,6 +195,7 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
                           'lastName': personalInfo['lastName'] ?? '',
                           'email': email,
                           'phone': mobileno,
+                          'nin': personalInfo['nin'] ?? '',
                           'occupation': personalInfo['occupation'] ?? '',
                           'state': personalInfo['state'] ?? '',
                           'address': personalInfo['address'] ?? '',
@@ -152,6 +214,9 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final totalSteps = isExploreFlow ? 4 : 5;
+    final currentStep = isExploreFlow ? 4 : 5;
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -175,14 +240,14 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(children: [
-                    Text('Step 5 of 5',
-                        style: TextStyle(
+                  Row(children: [
+                    Text('Step $currentStep of $totalSteps',
+                        style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.primaryNavy)),
-                    Spacer(),
-                    Text('Summary',
+                    const Spacer(),
+                    const Text('Summary',
                         style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -191,11 +256,12 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   Row(
                       children: List.generate(
-                          5,
+                          totalSteps,
                           (i) => Expanded(
                               child: Container(
                                   height: 4,
-                                  margin: EdgeInsets.only(right: i < 4 ? 4 : 0),
+                                  margin: EdgeInsets.only(
+                                      right: i < totalSteps - 1 ? 4 : 0),
                                   decoration: BoxDecoration(
                                       color: AppTheme.primaryNavy,
                                       borderRadius:

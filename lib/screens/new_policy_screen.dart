@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/app_theme.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'customer_motor_insurance_screen.dart';
 import 'protection_plans_screen.dart';
 import 'royal_care_screen.dart';
@@ -184,36 +185,7 @@ class NewPolicyScreen extends StatelessWidget {
       floatingActionButtonLocation:
           isAgent ? null : FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: isAgent
-          ? BottomNavigationBar(
-              type: BottomNavigationBarType.fixed,
-              selectedItemColor: _selectedNavColor(context),
-              unselectedItemColor: _unselectedNavColor(context),
-              currentIndex: 1,
-              selectedFontSize: 11,
-              unselectedFontSize: 11,
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home_outlined, size: 22),
-                  label: 'Home',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.description_outlined, size: 22),
-                  label: 'Policy',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.people_outline, size: 22),
-                  label: 'Clients',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.bar_chart_outlined, size: 22),
-                  label: 'Reports',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.person_outline, size: 22),
-                  label: 'Profile',
-                ),
-              ],
-            )
+          ? buildAgentBottomNav(context, currentIndex: 1)
           : BottomAppBar(
               color: AppTheme.bottomNavBackgroundColor(context),
               shape: const CircularNotchedRectangle(),
@@ -360,7 +332,8 @@ class NewPolicyScreen extends StatelessWidget {
               builder: (_) => ProtectionPlansScreen(
                   isAgent: isAgent,
                   isFromNewPolicy: true,
-                  isCustomerFlow: !isAgent))),
+                  isCustomerFlow: !isAgent,
+                  clientData: clientData))),
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
@@ -438,7 +411,8 @@ class NewPolicyScreen extends StatelessWidget {
               builder: (_) => RoyalCareScreen(
                   isAgent: isAgent,
                   isFromNewPolicy: true,
-                  isCustomerFlow: !isAgent))),
+                  isCustomerFlow: !isAgent,
+                  clientData: clientData))),
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(

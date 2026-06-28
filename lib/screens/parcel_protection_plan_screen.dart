@@ -9,11 +9,13 @@ class ParcelProtectionPlanScreen extends StatelessWidget {
   final bool isFromNewPolicy;
   final bool isCustomerFlow;
   final bool requiresKycOnBuy;
+  final Map<String, dynamic>? clientData;
   const ParcelProtectionPlanScreen(
       {super.key,
       this.isFromNewPolicy = false,
       this.isCustomerFlow = false,
-      this.requiresKycOnBuy = false});
+      this.requiresKycOnBuy = false,
+      this.clientData});
 
   final List<String> _cardImages = const [
     'assets/images/e9.png',
@@ -147,7 +149,9 @@ class ParcelProtectionPlanScreen extends StatelessWidget {
                                                             d['title']!,
                                                         price: d['price']!,
                                                         isCustomerFlow:
-                                                            isCustomerFlow))),
+                                                            isCustomerFlow,
+                                                        clientData:
+                                                            clientData))),
                                         style: ElevatedButton.styleFrom(
                                             backgroundColor:
                                                 _actionColor(context),
@@ -355,7 +359,8 @@ class ParcelProtectionPlanScreen extends StatelessWidget {
                                 builder: (_) => ParcelProtectionPurchaseScreen(
                                     optionTitle: data['title']!,
                                     price: data['price']!,
-                                    isCustomerFlow: isCustomerFlow)));
+                                    isCustomerFlow: isCustomerFlow,
+                                    clientData: clientData)));
                       },
                       style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.accentOrange,

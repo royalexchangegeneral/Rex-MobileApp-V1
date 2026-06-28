@@ -19,13 +19,15 @@ class ShopProtectionPurchaseScreen extends StatefulWidget {
   final String productName;
   final bool isCustomerFlow;
   final bool isExploreFlow;
+  final Map<String, dynamic>? clientData;
   const ShopProtectionPurchaseScreen(
       {super.key,
       required this.optionTitle,
       required this.price,
       this.productName = 'Shop Protection Plan',
       this.isCustomerFlow = false,
-      this.isExploreFlow = false});
+      this.isExploreFlow = false,
+      this.clientData});
   @override
   State<ShopProtectionPurchaseScreen> createState() =>
       _ShopProtectionPurchaseScreenState();
@@ -42,6 +44,10 @@ class _ShopProtectionPurchaseScreenState
   bool _ninFailed = false;
   bool _ninVerified = false;
   bool _isCustomerNinLocked = false;
+  bool _returnToSummaryAfterNin = false;
+  bool _ninWasSkipped = false;
+  int? _agentSellingPremium;
+  bool _isLoadingAgentSellingPrice = false;
 
   // Personal info from NIN
   String _firstName = '', _lastName = '', _email = '', _phone = '';
@@ -215,13 +221,78 @@ class _ShopProtectionPurchaseScreenState
     super.initState();
     if (widget.isExploreFlow) {
       _prefillExploreKyc();
+    } else if (!widget.isCustomerFlow && widget.clientData != null) {
+      _prefillAgentClientDetails();
     } else {
       _prefillCustomerNin();
     }
+    _loadAgentSellingPrice();
+  }
+
+  String get _productCode =>
+      widget.productName.toLowerCase().contains('home') ? 'HP' : 'SH';
+
+  String get _subProductCode =>
+      PaymentService.subProductCodeForOption(_productCode, widget.optionTitle);
+
+  Future<void> _loadAgentSellingPrice() async {
+    if (widget.isCustomerFlow ||
+        widget.isExploreFlow ||
+        PaymentService.usesCalculatedAgentPremium(_productCode)) {
+      return;
+    }
+
+    final authProvider = context.read<AuthProvider>();
+    final agentCode = authProvider.userCode?.toString() ?? '';
+    if (agentCode.isEmpty) return;
+
+    setState(() => _isLoadingAgentSellingPrice = true);
+    final premium = await PaymentService.agentSellingNetPremium(
+      agentCode: agentCode,
+      productCode: _productCode,
+      subProductCode: _subProductCode,
+    );
+    if (!mounted) return;
+    setState(() {
+      _agentSellingPremium = premium;
+      _isLoadingAgentSellingPrice = false;
+    });
+  }
+
+  void _prefillAgentClientDetails() {
+    final details = CustomerDetails.fromClientData(widget.clientData);
+    setState(() {
+      _ninController.text = details['nin'] ?? '';
+      _ninDisplayController.text = _ninController.text;
+      _firstName = details['firstName'] ?? '';
+      _lastName = details['lastName'] ?? '';
+      _email = details['email'] ?? '';
+      _emailController.text = _email;
+      _phone = details['phone'] ?? '';
+      _dob = details['dob'] ?? '';
+      _state = details['state'] ?? '';
+      _lga = details['lga'] ?? '';
+      _address = details['address'] ?? '';
+      _gender = details['gender'] ?? '';
+      _ninVerified = _ninController.text.trim().length == 11;
+      _isCustomerNinLocked = _ninVerified;
+      _manualFirstNameController.text = _firstName;
+      _manualLastNameController.text = _lastName;
+      _manualEmailController.text = _email;
+      _manualPhoneController.text = _phone;
+      _manualAddressController.text = _address;
+      _selectedManualState = _nigerianStates.cast<String?>().firstWhere(
+            (s) => s!.toLowerCase() == _state.trim().toLowerCase(),
+            orElse: () => null,
+          );
+      _occupationController.text = details['occupation'] ?? '';
+      _currentStep = 1;
+    });
   }
 
   Future<void> _prefillExploreKyc() async {
     final details = await CustomerDetails.signupKycDetails();
+    final ninWasSkipped = await CustomerDetails.signupNinWasSkipped();
     if (!mounted) return;
 
     setState(() {
@@ -236,7 +307,8 @@ class _ShopProtectionPurchaseScreenState
       _address = details['address'] ?? '';
       _state = details['state'] ?? '';
       _lga = details['lga'] ?? '';
-      _ninVerified = true;
+      _ninVerified = _ninController.text.trim().length == 11;
+      _ninWasSkipped = ninWasSkipped;
       _manualFirstNameController.text = _firstName;
       _manualLastNameController.text = _lastName;
       _manualEmailController.text = _email;
@@ -292,11 +364,11 @@ class _ShopProtectionPurchaseScreenState
     try {
       final response = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
+            Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode({
-              'Intcode': 'TESTCODE',
-              'Password': 'royal1234',
+              'Intcode': 'Kissflow',
+              'Password': '1lovetoeatcook1es',
               'number': _ninController.text.trim()
             }),
           )
@@ -422,20 +494,36 @@ class _ShopProtectionPurchaseScreenState
         : 0;
   }
 
+  double _getSummaryBaseAmount() =>
+      (_agentSellingPremium ?? _getBaseAmount()).toDouble();
+
+  String _summaryPriceText() => _isLoadingAgentSellingPrice
+      ? 'Loading...'
+      : _formatNaira(_getSummaryBaseAmount());
+
   double _getPaystackCharge() {
-    double c = (_getBaseAmount() * 0.015) + 100;
+    double c = (_getSummaryBaseAmount() * 0.015) + 100;
     return c > 2000 ? 2000 : c;
   }
 
-  double _getTotalAmount() => _getBaseAmount() + _getPaystackCharge();
+  double _getTotalAmount() => _getSummaryBaseAmount() + _getPaystackCharge();
   String _formatNaira(double a) =>
       '₦${a.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+\.)'), (m) => '${m[1]},')}';
 
   Future<void> _initiatePayment() async {
     final email = _email.isNotEmpty ? _email : 'customer@rexinsure.com';
     final premiumAmount = _getBaseAmount();
-    final productCode =
-        widget.productName.toLowerCase().contains('home') ? 'HP' : 'SH';
+    final productCode = _productCode;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final agentCode = (!widget.isCustomerFlow && !widget.isExploreFlow)
+        ? (authProvider.userCode?.toString() ?? '')
+        : '';
+    final agentUserType = agentCode.isNotEmpty
+        ? (authProvider.userTypeCode?.toString() ?? '')
+        : '';
+    final payerEmail = agentCode.isNotEmpty
+        ? (authProvider.userEmail ?? authProvider.loginEmail ?? '')
+        : '';
     setState(() => _isPayingNow = true);
     try {
       final result = await PaymentService.initiatePurchase(
@@ -444,10 +532,14 @@ class _ShopProtectionPurchaseScreenState
         email: email,
         mobileno: _phone,
         premium: premiumAmount.toInt(),
+        agentCode: agentCode,
+        agentUserType: agentUserType,
+        payerEmail: payerEmail,
+        subProductCode: _subProductCode,
         extraFields: {
           'type': 'Individual',
           'gender': _gender,
-          'dob': _dob,
+          'dob': CustomerDetails.normalizeApiDate(_dob),
           'occupation': _occupationController.text.trim(),
           'businesssector': _selectedBusinessSector ?? '',
           'tin': _tinController.text.trim(),
@@ -487,6 +579,8 @@ class _ShopProtectionPurchaseScreenState
             context,
             MaterialPageRoute(
               builder: (_) => PolicyPurchaseSuccessScreen(
+                isLoggedIn: !widget.isExploreFlow,
+                isAgent: !widget.isCustomerFlow && !widget.isExploreFlow,
                 reference: res.reference,
                 message: res.message,
                 isExploreFlow: widget.isExploreFlow,
@@ -578,15 +672,16 @@ class _ShopProtectionPurchaseScreenState
       'Summary'
     ];
     final stepNum = _currentStep + 1;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+    final inactiveTrack = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
     return Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
         child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('Step $stepNum of 4',
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primaryNavy)),
+                style: TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w600, color: accent)),
             Flexible(
                 child: Text(labels[_currentStep],
                     style: TextStyle(
@@ -604,9 +699,7 @@ class _ShopProtectionPurchaseScreenState
                           height: 3,
                           margin: EdgeInsets.only(right: i < 3 ? 4 : 0),
                           decoration: BoxDecoration(
-                              color: i < stepNum
-                                  ? AppTheme.primaryNavy
-                                  : Colors.grey[300],
+                              color: i < stepNum ? accent : inactiveTrack,
                               borderRadius: BorderRadius.circular(2)))))),
         ]));
   }
@@ -738,7 +831,8 @@ class _ShopProtectionPurchaseScreenState
                           _phone = _manualPhoneController.text.trim();
                           _address = _manualAddressController.text.trim();
                           _state = _selectedManualState ?? '';
-                          _currentStep = 1;
+                          _currentStep = _returnToSummaryAfterNin ? 3 : 1;
+                          _returnToSummaryAfterNin = false;
                         });
                       }
                     : null),
@@ -814,7 +908,8 @@ class _ShopProtectionPurchaseScreenState
                           _phone = _manualPhoneController.text.trim();
                           _address = _manualAddressController.text.trim();
                           _state = _selectedManualState ?? '';
-                          _currentStep = 1;
+                          _currentStep = _returnToSummaryAfterNin ? 3 : 1;
+                          _returnToSummaryAfterNin = false;
                         });
                       }
                     : null),
@@ -882,224 +977,249 @@ class _ShopProtectionPurchaseScreenState
         ]));
   }
 
-  Widget _riskStep() => Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _label('Address of the Shop to be Insured *'),
-        const SizedBox(height: 6),
-        _tf('enter shop address', _shopAddressController,
-            autofillHints: [AutofillHints.streetAddressLine1]),
-        const SizedBox(height: 16),
-        _label('State *'),
-        const SizedBox(height: 6),
-        _dd('select state', _selectedShopState, _nigerianStates, (v) {
-          setState(() => _selectedShopState = v);
-          if (v != null) _fetchShopLgas(v);
-        }),
-        const SizedBox(height: 16),
-        _label('LGA *'),
-        const SizedBox(height: 6),
-        _isLoadingShopLgas
-            ? const SizedBox(
-                height: 48, child: Center(child: CircularProgressIndicator()))
-            : _dd(
-                'select LGA',
-                _selectedShopLga,
-                _shopLgaList
-                    .map((lga) => lga['name']?.toString() ?? '')
-                    .where((name) => name.isNotEmpty)
-                    .toList(),
-                (v) => setState(() => _selectedShopLga = v)),
-        const SizedBox(height: 16),
-        _label('Shop Description *'),
-        const SizedBox(height: 6),
-        _dd('select the type of shop', _selectedShopDesc, _shopDescriptions,
-            (v) => setState(() => _selectedShopDesc = v)),
-        const SizedBox(height: 16),
-        _label('Type of Material - Roofing *'),
-        const SizedBox(height: 6),
-        _dd(
-            'select roofing material',
-            _selectedRoofing,
-            const ['Zinc', 'Aluminum', 'Concrete/Slab', 'Tiles'],
-            (v) => setState(() => _selectedRoofing = v)),
-        const SizedBox(height: 16),
-        _label('Construction Material *'),
-        const SizedBox(height: 6),
-        _dd(
-            'select construction material',
-            _selectedConstruction,
-            const ['Metal', 'Brick/Concrete'],
-            (v) => setState(() => _selectedConstruction = v)),
-        const SizedBox(height: 20),
-        Row(children: [
-          Text('ADD CATEGORIES OF ITEMS\nFOR INSURANCE *',
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface)),
-          const Spacer(),
-          GestureDetector(
-              onTap: _addCategory,
-              child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: AppTheme.accentOrange,
-                      borderRadius: BorderRadius.circular(16)),
-                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                    Text('Add ',
+  Widget _riskStep() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF111827) : Colors.grey[50]!;
+    final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[200]!;
+    final primaryText = Theme.of(context).colorScheme.onSurface;
+    final secondaryText = isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
+    final accent = isDark ? AppTheme.accentOrange : AppTheme.primaryNavy;
+
+    return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _label('Address of the Shop to be Insured *'),
+          const SizedBox(height: 6),
+          _tf('enter shop address', _shopAddressController,
+              autofillHints: [AutofillHints.streetAddressLine1]),
+          const SizedBox(height: 16),
+          _label('State *'),
+          const SizedBox(height: 6),
+          _dd('select state', _selectedShopState, _nigerianStates, (v) {
+            setState(() => _selectedShopState = v);
+            if (v != null) _fetchShopLgas(v);
+          }),
+          const SizedBox(height: 16),
+          _label('LGA *'),
+          const SizedBox(height: 6),
+          _isLoadingShopLgas
+              ? const SizedBox(
+                  height: 48, child: Center(child: CircularProgressIndicator()))
+              : _dd(
+                  'select LGA',
+                  _selectedShopLga,
+                  _shopLgaList
+                      .map((lga) => lga['name']?.toString() ?? '')
+                      .where((name) => name.isNotEmpty)
+                      .toList(),
+                  (v) => setState(() => _selectedShopLga = v)),
+          const SizedBox(height: 16),
+          _label('Shop Description *'),
+          const SizedBox(height: 6),
+          _dd('select the type of shop', _selectedShopDesc, _shopDescriptions,
+              (v) => setState(() => _selectedShopDesc = v)),
+          const SizedBox(height: 16),
+          _label('Type of Material - Roofing *'),
+          const SizedBox(height: 6),
+          _dd(
+              'select roofing material',
+              _selectedRoofing,
+              const ['Zinc', 'Aluminum', 'Concrete/Slab', 'Tiles'],
+              (v) => setState(() => _selectedRoofing = v)),
+          const SizedBox(height: 16),
+          _label('Construction Material *'),
+          const SizedBox(height: 6),
+          _dd(
+              'select construction material',
+              _selectedConstruction,
+              const ['Metal', 'Brick/Concrete'],
+              (v) => setState(() => _selectedConstruction = v)),
+          const SizedBox(height: 20),
+          Row(children: [
+            Text('ADD CATEGORIES OF ITEMS\nFOR INSURANCE *',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface)),
+            const Spacer(),
+            GestureDetector(
+                onTap: _addCategory,
+                child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                        color: AppTheme.accentOrange,
+                        borderRadius: BorderRadius.circular(16)),
+                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                      Text('Add ',
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600)),
+                      Icon(Icons.add_circle_outline,
+                          color: Colors.white, size: 16)
+                    ]))),
+          ]),
+          const SizedBox(height: 12),
+          Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: borderColor)),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('CATEGORY ${_itemCategories.length + 1}',
                         style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600)),
-                    Icon(Icons.add_circle_outline,
-                        color: Colors.white, size: 16)
-                  ]))),
-        ]),
-        const SizedBox(height: 12),
-        Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[200]!)),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('CATEGORY ${_itemCategories.length + 1}',
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
-                      letterSpacing: 1)),
-              const SizedBox(height: 8),
-              _label('Categories *'),
-              const SizedBox(height: 6),
-              _dd('furniture', _tempCategory, _categoryOptions,
-                  (v) => setState(() => _tempCategory = v)),
-              const SizedBox(height: 12),
-              _label('Total Amount *'),
-              const SizedBox(height: 6),
-              _tf('enter price', _tempAmountController,
-                  keyboardType: TextInputType.number),
-              const SizedBox(height: 12),
-              SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                      onPressed: _addCategory,
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.accentOrange,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8))),
-                      child: const Text('Add',
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600)))),
-            ])),
-        if (_itemCategories.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          ...List.generate(_itemCategories.length, (i) {
-            final item = _itemCategories[i];
-            return Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey[200]!)),
-                child: Row(children: [
-                  Expanded(
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                        Text('ITEMS CATEGORY ${i + 1}',
-                            style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1)),
-                        const SizedBox(height: 6),
-                        Row(children: [
-                          Expanded(
-                              flex: 2,
-                              child: Text('Category',
-                                  style: TextStyle(
-                                      fontSize: 11, color: Colors.grey[600]))),
-                          Expanded(
-                              flex: 3,
-                              child: Text(item['category']!,
-                                  style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500),
-                                  textAlign: TextAlign.right))
-                        ]),
-                        const SizedBox(height: 4),
-                        Row(children: [
-                          Expanded(
-                              flex: 2,
-                              child: Text('Total Amount',
-                                  style: TextStyle(
-                                      fontSize: 11, color: Colors.grey[600]))),
-                          Expanded(
-                              flex: 3,
-                              child: Text('₦${item['amount']}',
-                                  style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500),
-                                  textAlign: TextAlign.right))
-                        ]),
-                      ])),
-                  GestureDetector(
-                      onTap: () => setState(() => _itemCategories.removeAt(i)),
-                      child: const Icon(Icons.cancel,
-                          color: Colors.grey, size: 20)),
-                ]));
-          }),
-        ],
-        const SizedBox(height: 20),
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(
-              width: 24,
-              height: 24,
-              child: Checkbox(
-                  value: _consentChecked,
-                  onChanged: (v) =>
-                      setState(() => _consentChecked = v ?? false),
-                  activeColor: AppTheme.primaryNavy)),
-          const SizedBox(width: 8),
-          Expanded(
-              child: Text(
-                  'I hereby consent to the collection, processing, use and the transfer of personal data to third parties (within or outside Nigeria), for the performance of this contract and any other data processing activities which may arise therefrom between myself and Rex Insurance Limited (Rex Insurance). I affirm that I am aware and take cognizance of my rights under the relevant Data Protection Laws in Nigeria and other terms detailed in the Data Protection and Privacy Policy of Rex Insurance available on our policy.\nI authorize and consent that any person who may be in possession of, or hereafter acquire, any information pertaining to my records may disclose such information to Rex Insurance.',
-                  style: TextStyle(
-                      fontSize: 10,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFFCBD5E1)
-                          : Colors.grey[700],
-                      height: 1.4))),
-        ]),
-        const SizedBox(height: 24),
-        _btn(
-            'Continue',
-            _shopAddressController.text.trim().isNotEmpty &&
-                    _selectedShopState != null &&
-                    _selectedShopLga != null &&
-                    _selectedShopDesc != null &&
-                    _selectedRoofing != null &&
-                    _selectedConstruction != null &&
-                    _itemCategories.isNotEmpty &&
-                    _consentChecked
-                ? () => setState(() => _currentStep = 3)
-                : null),
-        const SizedBox(height: 12),
-        _outBtn('Back', () => setState(() => _currentStep = 1)),
-      ]));
+                            fontWeight: FontWeight.bold,
+                            color: primaryText,
+                            letterSpacing: 1)),
+                    const SizedBox(height: 8),
+                    _label('Categories *'),
+                    const SizedBox(height: 6),
+                    _dd('furniture', _tempCategory, _categoryOptions,
+                        (v) => setState(() => _tempCategory = v)),
+                    const SizedBox(height: 12),
+                    _label('Total Amount *'),
+                    const SizedBox(height: 6),
+                    _tf('enter price', _tempAmountController,
+                        keyboardType: TextInputType.number),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                            onPressed: _addCategory,
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.accentOrange,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8))),
+                            child: const Text('Add',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600)))),
+                  ])),
+          if (_itemCategories.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            ...List.generate(_itemCategories.length, (i) {
+              final item = _itemCategories[i];
+              return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: borderColor)),
+                  child: Row(children: [
+                    Expanded(
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                          Text('ITEMS CATEGORY ${i + 1}',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryText,
+                                  letterSpacing: 1)),
+                          const SizedBox(height: 6),
+                          Row(children: [
+                            Expanded(
+                                flex: 2,
+                                child: Text('Category',
+                                    style: TextStyle(
+                                        fontSize: 11, color: secondaryText))),
+                            Expanded(
+                                flex: 3,
+                                child: Text(item['category']!,
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: primaryText),
+                                    textAlign: TextAlign.right))
+                          ]),
+                          const SizedBox(height: 4),
+                          Row(children: [
+                            Expanded(
+                                flex: 2,
+                                child: Text('Total Amount',
+                                    style: TextStyle(
+                                        fontSize: 11, color: secondaryText))),
+                            Expanded(
+                                flex: 3,
+                                child: Text('₦${item['amount']}',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: primaryText),
+                                    textAlign: TextAlign.right))
+                          ]),
+                        ])),
+                    GestureDetector(
+                        onTap: () =>
+                            setState(() => _itemCategories.removeAt(i)),
+                        child: const Icon(Icons.cancel,
+                            color: Colors.grey, size: 20)),
+                  ]));
+            }),
+          ],
+          const SizedBox(height: 20),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            SizedBox(
+                width: 24,
+                height: 24,
+                child: Checkbox(
+                    value: _consentChecked,
+                    onChanged: (v) =>
+                        setState(() => _consentChecked = v ?? false),
+                    activeColor: accent)),
+            const SizedBox(width: 8),
+            Expanded(
+                child: Text(
+                    'I hereby consent to the collection, processing, use and the transfer of personal data to third parties (within or outside Nigeria), for the performance of this contract and any other data processing activities which may arise therefrom between myself and Rex Insurance Limited (Rex Insurance). I affirm that I am aware and take cognizance of my rights under the relevant Data Protection Laws in Nigeria and other terms detailed in the Data Protection and Privacy Policy of Rex Insurance available on our policy.\nI authorize and consent that any person who may be in possession of, or hereafter acquire, any information pertaining to my records may disclose such information to Rex Insurance.',
+                    style: TextStyle(
+                        fontSize: 10,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFCBD5E1)
+                            : Colors.grey[700],
+                        height: 1.4))),
+          ]),
+          const SizedBox(height: 24),
+          _btn(
+              'Continue',
+              _shopAddressController.text.trim().isNotEmpty &&
+                      _selectedShopState != null &&
+                      _selectedShopLga != null &&
+                      _selectedShopDesc != null &&
+                      _selectedRoofing != null &&
+                      _selectedConstruction != null &&
+                      _itemCategories.isNotEmpty &&
+                      _consentChecked
+                  ? () => setState(() {
+                        if (widget.isExploreFlow &&
+                            _ninWasSkipped &&
+                            _ninController.text.trim().length != 11) {
+                          _returnToSummaryAfterNin = true;
+                          _currentStep = 0;
+                        } else {
+                          _currentStep = 3;
+                        }
+                      })
+                  : null),
+          const SizedBox(height: 12),
+          _outBtn('Back', () => setState(() => _currentStep = 1)),
+        ]));
+  }
 
   Widget _summaryStep() => Padding(
       padding: const EdgeInsets.all(24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _sec('Payment Information', [
           _sRow('Product', '${widget.productName} ${widget.optionTitle}'),
-          _sRow('Price', widget.price),
+          _sRow('Price', _summaryPriceText()),
           _sRow('Paystack Charges', _formatNaira(_getPaystackCharge())),
           _sRow('Total', _formatNaira(_getTotalAmount()))
         ]),

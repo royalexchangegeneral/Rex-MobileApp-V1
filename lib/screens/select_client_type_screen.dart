@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import '../utils/app_theme.dart';
+import '../widgets/agent_bottom_nav.dart';
 import 'add_client_screen.dart';
 import 'add_corporate_client_screen.dart';
-import 'agent_dashboard_screen.dart';
-import 'clients_list_screen.dart';
-import 'reports_screen.dart';
-import 'agent_profile_screen.dart';
 
 class SelectClientTypeScreen extends StatelessWidget {
   const SelectClientTypeScreen({super.key});
@@ -104,64 +100,7 @@ class SelectClientTypeScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: AppTheme.bottomNavBackgroundColor(context),
-        selectedItemColor: AppTheme.bottomNavSelectedColor(context),
-        unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
-        currentIndex: 2,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const AgentDashboardScreen()),
-              (route) => false,
-            );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const ClientsListScreen()),
-            );
-          } else if (index == 3) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ReportsScreen()),
-            );
-          } else if (index == 4) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const AgentProfileScreen()),
-            );
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined, size: 22),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.description_outlined, size: 22),
-            label: 'Policy',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline, size: 22),
-            label: 'Clients',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined, size: 22),
-            label: 'Reports',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline, size: 22),
-            label: 'Profile',
-          ),
-        ],
-      ),
+      bottomNavigationBar: buildAgentBottomNav(context, currentIndex: 2),
     );
   }
 

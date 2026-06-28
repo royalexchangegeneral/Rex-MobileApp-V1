@@ -94,7 +94,7 @@ class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
       }
       final pos = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.medium);
-      print('=== GOT POSITION: ${pos.latitude}, ${pos.longitude} ===');
+      debugPrint('=== GOT POSITION: ${pos.latitude}, ${pos.longitude} ===');
       _closestIdx = _findClosest(pos.latitude, pos.longitude);
       try {
         final placemarks =
@@ -118,7 +118,7 @@ class _OfficeLocationsScreenState extends State<OfficeLocationsScreen> {
       _mapController.loadHtmlString(_mapHtml());
       setState(() {});
     } catch (e) {
-      print('=== LOCATION ERROR: $e ===');
+      debugPrint('=== LOCATION ERROR: $e ===');
       if (mounted)
         setState(() => _currentAddress = 'Could not get location: $e');
     }

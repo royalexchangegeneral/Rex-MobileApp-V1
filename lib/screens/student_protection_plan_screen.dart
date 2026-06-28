@@ -7,8 +7,12 @@ import 'customer_renewal_screen.dart';
 class StudentProtectionPlanScreen extends StatelessWidget {
   final bool isFromNewPolicy;
   final bool isCustomerFlow;
+  final Map<String, dynamic>? clientData;
   const StudentProtectionPlanScreen(
-      {super.key, this.isFromNewPolicy = false, this.isCustomerFlow = false});
+      {super.key,
+      this.isFromNewPolicy = false,
+      this.isCustomerFlow = false,
+      this.clientData});
 
   final List<String> _cardImages = const [
     'assets/images/e8.png',
@@ -157,7 +161,9 @@ class StudentProtectionPlanScreen extends StatelessWidget {
                                                             d['title']!,
                                                         price: d['price']!,
                                                         isCustomerFlow:
-                                                            isCustomerFlow))),
+                                                            isCustomerFlow,
+                                                        clientData:
+                                                            clientData))),
                                         style: ElevatedButton.styleFrom(
                                             backgroundColor:
                                                 _actionColor(context),
@@ -354,7 +360,8 @@ class StudentProtectionPlanScreen extends StatelessWidget {
                               builder: (_) => StudentProtectionPurchaseScreen(
                                   optionTitle: data['title']!,
                                   price: data['price']!,
-                                  isCustomerFlow: isCustomerFlow))),
+                                  isCustomerFlow: isCustomerFlow,
+                                  clientData: clientData))),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.accentOrange,
                           foregroundColor: Colors.white,

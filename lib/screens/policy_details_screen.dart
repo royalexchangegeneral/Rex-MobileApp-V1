@@ -601,7 +601,7 @@ class PolicyDetailsScreen extends StatelessWidget {
 
   Uri _certificateUri() {
     return Uri.https(
-      'eportaltest.rexinsure.com',
+      'eportal.rexinsure.com',
       _getCertType(),
       {'policy': policyNumber},
     );

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../utils/app_theme.dart';
@@ -14,7 +13,6 @@ class EnterBvnScreen extends StatefulWidget {
 class _EnterBvnScreenState extends State<EnterBvnScreen> {
   final _bvnController = TextEditingController();
   bool _hasDocument = false;
-  File? _capturedImage;
 
   @override
   void dispose() {
@@ -29,7 +27,6 @@ class _EnterBvnScreenState extends State<EnterBvnScreen> {
     if (image != null) {
       setState(() {
         _hasDocument = true;
-        _capturedImage = File(image.path);
       });
     }
   }

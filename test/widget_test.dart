@@ -8,7 +8,8 @@ void main() {
     SharedPreferences.setMockInitialValues({});
 
     await tester.pumpWidget(MyApp());
-    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
 
     expect(find.text('Into a Future Built on Security and Confidence'),
         findsOneWidget);

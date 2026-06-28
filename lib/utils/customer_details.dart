@@ -20,6 +20,97 @@ class CustomerDetails {
     };
   }
 
+  static Future<bool> signupNinWasSkipped() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('signup_nin_skipped') ?? false;
+  }
+
+  static String normalizeApiDate(String? value) {
+    final text = value?.trim() ?? '';
+    if (text.isEmpty) return '';
+
+    final dateOnly = text.split(RegExp(r'\s+|T')).first;
+    final normalized = dateOnly.replaceAll('/', '-');
+    final parts = normalized.split('-');
+
+    if (parts.length == 3) {
+      if (parts[0].length == 4) {
+        return '${parts[0]}-${parts[1].padLeft(2, '0')}-${parts[2].padLeft(2, '0')}';
+      }
+      if (parts[2].length == 4) {
+        return '${parts[2]}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}';
+      }
+    }
+
+    return normalized;
+  }
+
+  static Map<String, String> fromClientData(Map<String, dynamic>? data) {
+    if (data == null) return const {};
+
+    return {
+      'nin': ninFrom(data),
+      'firstName': valueFrom(data, const [
+        'firstName',
+        'FirstName',
+        'Firstname',
+        'cust_first_name',
+        'cust_firstname',
+      ]),
+      'lastName': valueFrom(data, const [
+        'lastName',
+        'LastName',
+        'Lastname',
+        'Surname',
+        'cust_last_name',
+        'cust_lastname',
+      ]),
+      'email': valueFrom(data, const ['email', 'Email', 'cust_email']),
+      'phone': valueFrom(data, const [
+        'phone',
+        'Phone',
+        'PhoneNo',
+        'MobileNo',
+        'mobileno',
+        'cust_phone',
+        'cust_phone_no',
+      ]),
+      'dob': valueFrom(data, const ['dob', 'DOB', 'DateOfBirth', 'cust_dob']),
+      'state': valueFrom(data, const ['state', 'State', 'cust_state']),
+      'lga': valueFrom(data, const ['lga', 'LGA', 'cust_lga']),
+      'address': valueFrom(data, const [
+        'address',
+        'Address',
+        'ResidentialAddress',
+        'cust_address',
+      ]),
+      'occupation': valueFrom(data, const [
+        'occupation',
+        'Occupation',
+        'cust_occupation',
+      ]),
+      'gender': valueFrom(data, const ['gender', 'Gender', 'cust_gender']),
+    };
+  }
+
+  static String valueFrom(Map<String, dynamic>? data, List<String> keys) {
+    if (data == null) return '';
+
+    for (final key in keys) {
+      final value = data[key]?.toString().trim() ?? '';
+      if (value.isNotEmpty) return value;
+    }
+
+    final lowerKeys = keys.map((key) => key.toLowerCase()).toSet();
+    for (final entry in data.entries) {
+      if (!lowerKeys.contains(entry.key.toLowerCase())) continue;
+      final value = entry.value?.toString().trim() ?? '';
+      if (value.isNotEmpty) return value;
+    }
+
+    return '';
+  }
+
   static Future<String> ninFromAuth(AuthProvider authProvider) async {
     final inMemoryNin = ninFrom(authProvider.userData);
     if (inMemoryNin.isNotEmpty) return inMemoryNin;

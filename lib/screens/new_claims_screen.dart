@@ -122,10 +122,8 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           '${userData?['FirstName'] ?? ''} ${userData?['LastName'] ?? userData?['Lastname'] ?? ''}'
               .trim();
 
-      final request = http.MultipartRequest(
-          'POST',
-          Uri.parse(
-              'https://eportaltest.rexinsure.com/api/claim_notification'));
+      final request = http.MultipartRequest('POST',
+          Uri.parse('https://eportal.rexinsure.com/api/claim_notification'));
       request.headers['Accept'] = 'application/json';
       request.headers['User-Agent'] = 'RexMobileApp/1.0';
 
@@ -147,15 +145,15 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
 
       for (final photo in _photos) {
         final length = await photo.length();
-        print(
+        debugPrint(
             '=== UPLOADING PHOTO: ${photo.path} (${(length / (1024 * 1024)).toStringAsFixed(2)} MB)');
         request.files
             .add(await http.MultipartFile.fromPath('Files[]', photo.path));
       }
 
-      print('=== CLAIM SUBMISSION ===');
-      print('Fields: ${request.fields}');
-      print('Files: ${request.files.length}');
+      debugPrint('=== CLAIM SUBMISSION ===');
+      debugPrint('Fields: ${request.fields}');
+      debugPrint('Files: ${request.files.length}');
 
       final streamed = await request.send().timeout(_claimUploadTimeout);
       final response =
@@ -164,10 +162,10 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
       final errorMessage =
           'Failed to submit claim: ${response.statusCode} ${response.reasonPhrase ?? ''}'
               .trim();
-      print(
+      debugPrint(
           '=== CLAIM RESPONSE: ${response.statusCode} ${response.reasonPhrase ?? ''} ===');
-      print('Response body: ${response.body}');
-      print('Exact API error: $errorMessage');
+      debugPrint('Response body: ${response.body}');
+      debugPrint('Exact API error: $errorMessage');
 
       if (mounted) {
         if (response.statusCode == 200 || response.statusCode == 201) {
@@ -184,7 +182,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
         }
       }
     } on TimeoutException catch (e) {
-      print('Claim submission timeout: $e');
+      debugPrint('Claim submission timeout: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text(
@@ -192,7 +190,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
             backgroundColor: Colors.red));
       }
     } catch (e) {
-      print('Claim submission error: $e');
+      debugPrint('Claim submission error: $e');
       if (mounted) {
         final message = e is SocketException
             ? 'Network error. Please check your connection.'
@@ -225,13 +223,13 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
     setState(() => _verifying = true);
     try {
       final url =
-          'https://eportaltest.rexinsure.com/api/getpolicy?IntCode=TESTCODE&Password=royal1234&PolicyNo=$policyNo';
-      print('=== VERIFY POLICY: $url ===');
+          'https://eportal.rexinsure.com/api/getpolicy?Intcode=Kissflow&Password=1lovetoeatcook1es&PolicyNo=$policyNo';
+      debugPrint('=== VERIFY POLICY: $url ===');
       final r = await http.get(Uri.parse(url), headers: {
         'Accept': 'application/json'
       }).timeout(const Duration(seconds: 15));
-      print('=== POLICY RESPONSE: ${r.statusCode} ===');
-      print('Body: ${r.body}');
+      debugPrint('=== POLICY RESPONSE: ${r.statusCode} ===');
+      debugPrint('Body: ${r.body}');
 
       if (r.statusCode == 200 || r.statusCode == 201) {
         final d = json.decode(r.body);
@@ -252,8 +250,8 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           }
         }
 
-        print('=== POLICY KEYS: ${pd.keys.toList()} ===');
-        print(
+        debugPrint('=== POLICY KEYS: ${pd.keys.toList()} ===');
+        debugPrint(
             '=== Insured: ${pd['Insured']}, ProductClass: ${pd['ProductClass']}, ProductCover: ${pd['ProductCover']} ===');
 
         _claimantNameController.text = (pd['Insured'] ?? '').toString();
@@ -280,7 +278,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
           _itemCodes = items;
           _selectedItemCode = items.first;
         }
-        print('=== ITEM CODES: $_itemCodes ===');
+        debugPrint('=== ITEM CODES: $_itemCodes ===');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -296,7 +294,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
               backgroundColor: Colors.red));
       }
     } catch (e) {
-      print('Verify policy error: $e');
+      debugPrint('Verify policy error: $e');
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(ErrorMessages.fromException(e,
@@ -849,7 +847,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
                       }
                     }
                   } catch (e) {
-                    print('Camera error: $e');
+                    debugPrint('Camera error: $e');
                   }
                 },
               ),
@@ -872,7 +870,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
                       }
                     }
                   } catch (e) {
-                    print('Gallery error: $e');
+                    debugPrint('Gallery error: $e');
                   }
                 },
               ),

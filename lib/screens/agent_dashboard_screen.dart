@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
+import '../widgets/agent_bottom_nav.dart';
 import '../providers/auth_provider.dart';
 import '../providers/agent_policy_provider.dart';
 import '../providers/notifications_provider.dart';
 import 'select_client_type_screen.dart';
 import 'buy_new_policy_screen.dart';
 import 'clients_list_screen.dart';
-import 'agent_profile_screen.dart';
 import 'reports_screen.dart';
 import 'agent_policies_screen.dart';
 import 'policy_details_screen.dart';
@@ -577,69 +577,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: AppTheme.bottomNavBackgroundColor(context),
-        selectedItemColor: AppTheme.bottomNavSelectedColor(context),
-        unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
-        currentIndex: 0,
-        onTap: (index) {
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AgentPoliciesScreen(),
-              ),
-            );
-          } else if (index == 2) {
-            // Navigate to Clients screen
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ClientsListScreen(),
-              ),
-            );
-          } else if (index == 3) {
-            // Navigate to Reports screen
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ReportsScreen(),
-              ),
-            );
-          } else if (index == 4) {
-            // Navigate to Profile screen
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AgentProfileScreen(),
-              ),
-            );
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.description_outlined),
-            label: 'Policy',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: 'Clients',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            label: 'Reports',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Profile',
-          ),
-        ],
-      ),
+      bottomNavigationBar: buildAgentBottomNav(context, currentIndex: 0),
     );
   }
 

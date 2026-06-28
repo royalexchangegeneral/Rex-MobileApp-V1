@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -9,12 +8,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../utils/app_theme.dart';
 import '../utils/error_messages.dart';
-import 'agent_dashboard_screen.dart';
-import 'clients_list_screen.dart';
-import 'agent_profile_screen.dart';
-import 'agent_policies_screen.dart';
+import '../widgets/agent_bottom_nav.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -120,20 +115,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     try {
       final url =
-          'https://eportaltest.rexinsure.com/api/fetch-policy-report?agentcode=$agentCode&period=$period&startdate=$startDate&enddate=$endDate';
-      print('=== FETCH REPORT ===');
-      print(
+          'https://eportal.rexinsure.com/api/fetch-policy-report?agentcode=$agentCode&period=$period&startdate=$startDate&enddate=$endDate';
+      debugPrint('=== FETCH REPORT ===');
+      debugPrint(
           'Payload: agentcode=$agentCode, period=$period, startdate=$startDate, enddate=$endDate');
-      print('URL: $url');
+      debugPrint('URL: $url');
       final r = await http.get(Uri.parse(url), headers: {
         'Accept': 'application/json'
       }).timeout(const Duration(seconds: 20));
-      print('=== REPORT RESPONSE: ${r.statusCode} ===');
-      print('Body: ${r.body}');
+      debugPrint('=== REPORT RESPONSE: ${r.statusCode} ===');
+      debugPrint('Body: ${r.body}');
 
       if (r.statusCode == 200 || r.statusCode == 201) {
         final d = json.decode(r.body);
-        print('=== PARSED RESPONSE TYPE: ${d.runtimeType} ===');
+        debugPrint('=== PARSED RESPONSE TYPE: ${d.runtimeType} ===');
 
         // Parse grouped policy class data nested under 'data' key
         // Response: {status, message, period, data: {TP: {count, data}, PC: {count, data}, ...}}
@@ -159,7 +154,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           });
         }
 
-        print(
+        debugPrint(
             '=== POLICY CLASSES: ${grouped.keys.toList()}, TOTAL RECORDS: $totalRecords ===');
 
         if (grouped.isEmpty || totalRecords == 0) {
@@ -174,7 +169,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         final fileName = 'RexVerse_Report_${period}_$startDate.$ext';
         final file = File('${dir.path}/$fileName');
 
-        print('=== GENERATING $ext FILE: ${file.path} ===');
+        debugPrint('=== GENERATING $ext FILE: ${file.path} ===');
 
         if (_selectedFormat == 0) {
           await _generateGroupedCsv(file, grouped);
@@ -184,7 +179,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           await _generateGroupedCsv(file, grouped);
         }
 
-        print(
+        debugPrint(
             '=== FILE CREATED: ${await file.exists()}, SIZE: ${await file.length()} bytes ===');
 
         if (mounted) {
@@ -203,7 +198,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ErrorMessages.fromResponse(r, fallback: 'Failed to fetch report'));
       }
     } catch (e) {
-      print('Report error: $e');
+      debugPrint('Report error: $e');
       _snack(ErrorMessages.fromException(e,
           fallback: 'Unable to generate report'));
     }
@@ -572,48 +567,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 )),
             const SizedBox(height: 60),
           ])),
-      bottomNavigationBar: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: AppTheme.bottomNavSelectedColor(context),
-          unselectedItemColor: AppTheme.bottomNavUnselectedColor(context),
-          currentIndex: 3,
-          selectedFontSize: 11,
-          unselectedFontSize: 11,
-          onTap: (i) {
-            if (i == 0)
-              Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const AgentDashboardScreen()),
-                  (r) => false);
-            if (i == 1)
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const AgentPoliciesScreen()));
-            if (i == 2)
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const ClientsListScreen()));
-            if (i == 4)
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const AgentProfileScreen()));
-          },
-          items: const [
-            BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined, size: 22), label: 'Home'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.description_outlined, size: 22),
-                label: 'Policy'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.people_outline, size: 22), label: 'Clients'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.bar_chart_outlined, size: 22),
-                label: 'Reports'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline, size: 22), label: 'Profile'),
-          ]),
+      bottomNavigationBar: buildAgentBottomNav(context, currentIndex: 3),
     );
   }
 

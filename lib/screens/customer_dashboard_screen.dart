@@ -170,7 +170,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
 
   Future<Map<String, dynamic>> _fetchClaimStatus(String claimNo) async {
     final uri = Uri.https(
-      'eportaltest.rexinsure.com',
+      'eportal.rexinsure.com',
       '/api/getclaim-status',
       {'claim_num': claimNo},
     );
@@ -236,7 +236,11 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                           context,
                           MaterialPageRoute(
                               builder: (_) => const NotificationsScreen()))
-                      .then((_) => notifProvider.fetchNotifications(context))),
+                      .then((_) {
+                    if (context.mounted) {
+                      notifProvider.fetchNotifications(context);
+                    }
+                  })),
               if (notifProvider.unreadCount > 0)
                 Positioned(
                     right: 8,

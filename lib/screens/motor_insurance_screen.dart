@@ -244,7 +244,7 @@ class MotorInsuranceScreen extends StatelessWidget {
       },
       {
         'title': 'Royal Auto Silver',
-        'price': 'Premium – 3% + N15,000/m',
+        'price': 'Premium – 3.5% + N15,000/m',
         'description': 'Coverage up to N3,000,000',
         'height': 220.0
       },

@@ -17,7 +17,7 @@ class DeviceSecurityService {
       final isRealDevice = await SafeDevice.isRealDevice;
       return isRooted || !isRealDevice;
     } catch (e) {
-      if (kDebugMode) print('Device security check error: $e');
+      if (kDebugMode) debugPrint('Device security check error: $e');
       return false;
     }
   }
@@ -66,7 +66,7 @@ class DeviceSecurityService {
     } on MissingPluginException {
       // Native screenshot protection is only registered on supported builds.
     } catch (e) {
-      if (kDebugMode) print('Enable secure screen error: $e');
+      if (kDebugMode) debugPrint('Enable secure screen error: $e');
     }
   }
 
@@ -79,7 +79,7 @@ class DeviceSecurityService {
     } on MissingPluginException {
       // Native screenshot protection is only registered on supported builds.
     } catch (e) {
-      if (kDebugMode) print('Disable secure screen error: $e');
+      if (kDebugMode) debugPrint('Disable secure screen error: $e');
     }
   }
 }

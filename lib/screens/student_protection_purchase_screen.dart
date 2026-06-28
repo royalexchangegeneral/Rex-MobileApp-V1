@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../providers/auth_provider.dart';
@@ -17,11 +16,13 @@ class StudentProtectionPurchaseScreen extends StatefulWidget {
   final String optionTitle;
   final String price;
   final bool isCustomerFlow;
+  final Map<String, dynamic>? clientData;
   const StudentProtectionPurchaseScreen(
       {super.key,
       required this.optionTitle,
       required this.price,
-      this.isCustomerFlow = false});
+      this.isCustomerFlow = false,
+      this.clientData});
   @override
   State<StudentProtectionPurchaseScreen> createState() =>
       _StudentProtectionPurchaseScreenState();
@@ -34,6 +35,8 @@ class _StudentProtectionPurchaseScreenState
   bool _ninFailed = false;
   bool _ninVerified = false;
   bool _isCustomerNinLocked = false;
+  int? _agentSellingPremium;
+  bool _isLoadingAgentSellingPrice = false;
 
   final _ninController = TextEditingController();
   String _firstName = '',
@@ -142,7 +145,67 @@ class _StudentProtectionPurchaseScreenState
   @override
   void initState() {
     super.initState();
-    _prefillCustomerNin();
+    if (!widget.isCustomerFlow && widget.clientData != null) {
+      _prefillAgentClientDetails();
+    } else {
+      _prefillCustomerNin();
+    }
+    _loadAgentSellingPrice();
+  }
+
+  String get _productCode => 'SP';
+
+  String get _subProductCode =>
+      PaymentService.subProductCodeForOption(_productCode, widget.optionTitle);
+
+  Future<void> _loadAgentSellingPrice() async {
+    if (widget.isCustomerFlow) return;
+
+    final authProvider = context.read<AuthProvider>();
+    final agentCode = authProvider.userCode?.toString() ?? '';
+    if (agentCode.isEmpty) return;
+
+    setState(() => _isLoadingAgentSellingPrice = true);
+    final premium = await PaymentService.agentSellingNetPremium(
+      agentCode: agentCode,
+      productCode: _productCode,
+      subProductCode: _subProductCode,
+    );
+    if (!mounted) return;
+    setState(() {
+      _agentSellingPremium = premium;
+      _isLoadingAgentSellingPrice = false;
+    });
+  }
+
+  void _prefillAgentClientDetails() {
+    final details = CustomerDetails.fromClientData(widget.clientData);
+    setState(() {
+      _ninController.text = details['nin'] ?? '';
+      _firstName = details['firstName'] ?? '';
+      _lastName = details['lastName'] ?? '';
+      _email = details['email'] ?? '';
+      _emailController.text = _email;
+      _phone = details['phone'] ?? '';
+      _dob = details['dob'] ?? '';
+      _state = details['state'] ?? '';
+      _lga = details['lga'] ?? '';
+      _address = details['address'] ?? '';
+      _gender = details['gender'] ?? '';
+      _ninVerified = _ninController.text.trim().length == 11;
+      _isCustomerNinLocked = _ninVerified;
+      _manualFirstNameController.text = _firstName;
+      _manualLastNameController.text = _lastName;
+      _manualEmailController.text = _email;
+      _manualPhoneController.text = _phone;
+      _manualAddressController.text = _address;
+      _selectedManualState = _nigerianStates.cast<String?>().firstWhere(
+            (s) => s!.toLowerCase() == _state.trim().toLowerCase(),
+            orElse: () => null,
+          );
+      _occupationController.text = details['occupation'] ?? '';
+      _currentStep = 1;
+    });
   }
 
   Future<void> _prefillCustomerNin() async {
@@ -185,11 +248,12 @@ class _StudentProtectionPurchaseScreenState
     setState(() => _isVerifying = true);
     try {
       final r = await http
-          .post(Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
+          .post(
+              Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
               headers: {'Content-Type': 'application/json'},
               body: json.encode({
-                'Intcode': 'TESTCODE',
-                'Password': 'royal1234',
+                'Intcode': 'Kissflow',
+                'Password': '1lovetoeatcook1es',
                 'number': _ninController.text.trim()
               }))
           .timeout(const Duration(seconds: 15));
@@ -265,18 +329,32 @@ class _StudentProtectionPurchaseScreenState
         : 0;
   }
 
+  double _getSummaryBase() => (_agentSellingPremium ?? _getBase()).toDouble();
+
+  String _summaryPriceText() =>
+      _isLoadingAgentSellingPrice ? 'Loading...' : _fmtN(_getSummaryBase());
+
   double _getCharge() {
-    double c = (_getBase() * 0.015) + 100;
+    double c = (_getSummaryBase() * 0.015) + 100;
     return c > 2000 ? 2000 : c;
   }
 
-  double _getTotal() => _getBase() + _getCharge();
+  double _getTotal() => _getSummaryBase() + _getCharge();
   String _fmtN(double a) =>
       '₦${a.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+\.)'), (m) => '${m[1]},')}';
 
   Future<void> _pay() async {
     final email = _email.isNotEmpty ? _email : 'customer@rexinsure.com';
     final premiumAmount = _getBase();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final agentCode =
+        !widget.isCustomerFlow ? (authProvider.userCode?.toString() ?? '') : '';
+    final agentUserType = agentCode.isNotEmpty
+        ? (authProvider.userTypeCode?.toString() ?? '')
+        : '';
+    final payerEmail = agentCode.isNotEmpty
+        ? (authProvider.userEmail ?? authProvider.loginEmail ?? '')
+        : '';
     setState(() => _isPayingNow = true);
     try {
       final result = await PaymentService.initiatePurchase(
@@ -285,10 +363,14 @@ class _StudentProtectionPurchaseScreenState
         email: email,
         mobileno: _phone,
         premium: premiumAmount.toInt(),
+        agentCode: agentCode,
+        agentUserType: agentUserType,
+        payerEmail: payerEmail,
+        subProductCode: _subProductCode,
         extraFields: {
           'type': 'Individual',
           'gender': _gender,
-          'dob': _dob,
+          'dob': CustomerDetails.normalizeApiDate(_dob),
           'occupation': _occupationController.text.trim(),
           'businesssector': _selectedBusinessSector ?? '',
           'tin': _tinController.text.trim(),
@@ -323,6 +405,8 @@ class _StudentProtectionPurchaseScreenState
             context,
             MaterialPageRoute(
               builder: (_) => PolicyPurchaseSuccessScreen(
+                isLoggedIn: true,
+                isAgent: !widget.isCustomerFlow,
                 reference: res.reference,
                 message: res.message,
                 accountData: {
@@ -887,7 +971,7 @@ class _StudentProtectionPurchaseScreenState
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _sec('Payment Information', [
           _sRow('Product', 'Student Protection Plan ${widget.optionTitle}'),
-          _sRow('Price', widget.price),
+          _sRow('Price', _summaryPriceText()),
           _sRow('Paystack Charges', _fmtN(_getCharge())),
           _sRow('Total', _fmtN(_getTotal()))
         ]),

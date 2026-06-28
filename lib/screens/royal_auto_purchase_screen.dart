@@ -42,6 +42,8 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
   String? _selectedIdType;
   final _ninController = TextEditingController();
   bool _isCustomerNinLocked = false;
+  bool _returnToSummaryAfterNin = false;
+  bool _ninWasSkipped = false;
   String _firstName = '',
       _lastName = '',
       _email = '',
@@ -229,6 +231,7 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
 
   Future<void> _prefillExploreKyc() async {
     final details = await CustomerDetails.signupKycDetails();
+    final ninWasSkipped = await CustomerDetails.signupNinWasSkipped();
     if (!mounted) return;
 
     setState(() {
@@ -242,6 +245,7 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
       _state = details['state'] ?? '';
       _lga = details['lga'] ?? '';
       _address = details['address'] ?? '';
+      _ninWasSkipped = ninWasSkipped;
       _manualFirstNameController.text = _firstName;
       _manualLastNameController.text = _lastName;
       _manualEmailController.text = _email;
@@ -254,7 +258,7 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
     setState(() => _loadingVehicleList = true);
     try {
       final response = await http.get(
-        Uri.parse('https://eportaltest.rexinsure.com/api/vehicleList'),
+        Uri.parse('https://eportal.rexinsure.com/api/vehicleList'),
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 15));
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -295,11 +299,12 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
     setState(() => _isVerifying = true);
     try {
       final r = await http
-          .post(Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
+          .post(
+              Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
               headers: {'Content-Type': 'application/json'},
               body: json.encode({
-                'Intcode': 'TESTCODE',
-                'Password': 'royal1234',
+                'Intcode': 'Kissflow',
+                'Password': '1lovetoeatcook1es',
                 'number': _ninController.text.trim()
               }))
           .timeout(const Duration(seconds: 15));
@@ -321,7 +326,8 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
             _address = k['residence_address']?.toString() ?? '';
             _state = k['residence_state']?.toString() ?? '';
             _lga = k['residence_lga']?.toString() ?? '';
-            _step = 1;
+            _step = _returnToSummaryAfterNin ? 4 : 1;
+            _returnToSummaryAfterNin = false;
           });
           if (mounted)
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -361,16 +367,16 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
       final r = await http
           .post(
               Uri.parse(
-                  'https://eportaltest.rexinsure.com/api/vehicleVerification'),
+                  'https://eportal.rexinsure.com/api/vehicleVerification'),
               headers: {'Content-Type': 'application/json'},
               body: json.encode({
-                'Intcode': 'Testcode',
-                'Password': 'royal1234',
+                'Intcode': 'Kissflow',
+                'Password': '1lovetoeatcook1es',
                 'RegNo': _regNumberController.text.trim()
               }))
           .timeout(const Duration(seconds: 15));
-      print('=== VEHICLE VERIFY: ${r.statusCode} ===');
-      print('Body: ${r.body}');
+      debugPrint('=== VEHICLE VERIFY: ${r.statusCode} ===');
+      debugPrint('Body: ${r.body}');
       setState(() => _isVerifyingReg = false);
       if (r.statusCode == 200 || r.statusCode == 201) {
         final d = json.decode(r.body);
@@ -432,7 +438,9 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
           _estimatedValueController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
       0;
 
-  double _getBase() => (_getEstimatedValue() * 0.03) + 15000;
+  double _getPremiumRate() => _productCode == 'RAS' ? 0.035 : 0.03;
+
+  double _getBase() => (_getEstimatedValue() * _getPremiumRate()) + 15000;
 
   double _getCharge() {
     double c = (_getBase() * 0.015) + 100;
@@ -446,6 +454,15 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
   Future<void> _pay() async {
     setState(() => _isPayingNow = true);
     final email = _email.isNotEmpty ? _email : 'customer@rexinsure.com';
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final agentCode =
+        widget.isAgent ? (authProvider.userCode?.toString() ?? '') : '';
+    final agentUserType = agentCode.isNotEmpty
+        ? (authProvider.userTypeCode?.toString() ?? '')
+        : '';
+    final payerEmail = agentCode.isNotEmpty
+        ? (authProvider.userEmail ?? authProvider.loginEmail ?? '')
+        : '';
 
     final result = await PaymentService.initiatePurchase(
       productCode: _productCode,
@@ -453,6 +470,10 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
       email: email,
       mobileno: _phone,
       premium: _getBase().round(),
+      agentCode: agentCode,
+      agentUserType: agentUserType,
+      payerEmail: payerEmail,
+      subProductCode: _productCode,
       includeCredentials: false,
       extraFields: {
         'type': 'Individual',
@@ -488,6 +509,8 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
           context,
           MaterialPageRoute(
             builder: (_) => PolicyPurchaseSuccessScreen(
+              isLoggedIn: !widget.isExploreFlow,
+              isAgent: widget.isAgent,
               reference: res.reference,
               message: res.message,
               isExploreFlow: widget.isExploreFlow,
@@ -717,7 +740,8 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
                         _lastName = _manualLastNameController.text.trim();
                         _email = _manualEmailController.text.trim();
                         _phone = _manualPhoneController.text.trim();
-                        _step = 1;
+                        _step = _returnToSummaryAfterNin ? 4 : 1;
+                        _returnToSummaryAfterNin = false;
                       });
                     }
                   : null),
@@ -1023,7 +1047,16 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
                     _backView != null &&
                     _rightView != null &&
                     _leftView != null
-                ? () => setState(() => _step = 4)
+                ? () => setState(() {
+                      if (widget.isExploreFlow &&
+                          _ninWasSkipped &&
+                          _ninController.text.trim().length != 11) {
+                        _returnToSummaryAfterNin = true;
+                        _step = 0;
+                      } else {
+                        _step = 4;
+                      }
+                    })
                 : null),
         const SizedBox(height: 12),
         _outBtn('Back', () => setState(() => _step = 2)),

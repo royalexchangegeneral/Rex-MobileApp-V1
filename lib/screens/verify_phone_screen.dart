@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../utils/app_theme.dart';
 import '../utils/error_messages.dart';
+import '../utils/explore_kyc_flow.dart';
 
 class VerifyPhoneScreen extends StatefulWidget {
   final String email;
@@ -108,16 +109,33 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
 
   bool _isSendingOtp = false;
 
+  Future<String> _signupEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('signup_email')?.trim() ?? '';
+    final routeEmail = widget.email.trim();
+    final email = savedEmail.isNotEmpty ? savedEmail : routeEmail;
+
+    if (savedEmail.isEmpty && routeEmail.isNotEmpty) {
+      await prefs.setString('signup_email', routeEmail);
+    }
+
+    return email;
+  }
+
   Future<bool> _sendOtp(String phone) async {
-    final payload = {'mobileNo': phone};
+    final email = await _signupEmail();
+    final payload = {
+      'mobileNo': phone,
+      'email': email,
+    };
 
     debugPrint('=== SEND PHONE OTP REQUEST ===');
-    debugPrint('URL: https://eportaltest.rexinsure.com/api/send-otp');
+    debugPrint('URL: https://eportal.rexinsure.com/api/send-otp');
     debugPrint('Payload: ${json.encode(payload)}');
 
     final response = await http
         .post(
-          Uri.parse('https://eportaltest.rexinsure.com/api/send-otp'),
+          Uri.parse('https://eportal.rexinsure.com/api/send-otp'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(payload),
         )
@@ -143,13 +161,13 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
     setState(() => _isSendingOtp = true);
 
     try {
-      await _sendOtp(fullPhone);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('signup_phone', fullPhone);
       if ((prefs.getString('signup_email') ?? '').isEmpty &&
           widget.email.trim().isNotEmpty) {
         await prefs.setString('signup_email', widget.email.trim());
       }
+      await _sendOtp(fullPhone);
       TextInput.finishAutofillContext(shouldSave: false);
       if (!mounted) return;
       setState(() {
@@ -225,18 +243,20 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
   bool _isVerifyingOtp = false;
 
   Future<bool> _verifyOtp(String phone, String otp) async {
+    final email = await _signupEmail();
     final payload = {
       'mobileNo': phone,
+      'email': email,
       'otp': otp,
     };
 
     debugPrint('=== VERIFY PHONE OTP REQUEST ===');
-    debugPrint('URL: https://eportaltest.rexinsure.com/mobile/verify-otp');
+    debugPrint('URL: https://eportal.rexinsure.com/mobile/verify-otp');
     debugPrint('Payload: ${json.encode(payload)}');
 
     final response = await http
         .post(
-          Uri.parse('https://eportaltest.rexinsure.com/mobile/verify-otp'),
+          Uri.parse('https://eportal.rexinsure.com/mobile/verify-otp'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(payload),
         )
@@ -299,9 +319,19 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
           backgroundColor: Colors.green));
       final isSignupFlow = prefs.getBool('is_signup_flow') ?? false;
       final hasExistingPolicy = prefs.getBool('has_existing_policy') ?? false;
-      final nextRoute = isSignupFlow && !hasExistingPolicy
-          ? '/enter-nin'
-          : '/create-password';
+      final isExploreFlow = await ExploreKycFlow.isActive();
+      if (!mounted) return;
+      if (isExploreFlow) {
+        Navigator.pushReplacementNamed(context, '/enter-nin');
+        return;
+      }
+      if (!isSignupFlow) {
+        Navigator.pushNamedAndRemoveUntil(
+            context, '/user-portal', (route) => false);
+        return;
+      }
+
+      final nextRoute = hasExistingPolicy ? '/create-password' : '/enter-nin';
       Navigator.pushNamed(context, nextRoute);
     } catch (e) {
       if (!mounted) return;
@@ -314,12 +344,16 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
   }
 
   Future<void> _resendCode() async {
-    var phone = _phoneController.text.trim();
-    if (phone.startsWith('0')) phone = phone.substring(1);
-    final fullPhone = '$_selectedCountryCode$phone';
-
     setState(() => _isSendingOtp = true);
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedPhone = prefs.getString('signup_phone') ?? '';
+      var fullPhone = savedPhone.trim();
+      if (fullPhone.isEmpty) {
+        var phone = _phoneController.text.trim();
+        if (phone.startsWith('0')) phone = phone.substring(1);
+        fullPhone = '$_selectedCountryCode$phone';
+      }
       await _sendOtp(fullPhone);
       if (!mounted) return;
       setState(() => _isSendingOtp = false);

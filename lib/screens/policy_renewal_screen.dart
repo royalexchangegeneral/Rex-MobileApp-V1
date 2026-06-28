@@ -37,7 +37,17 @@ class PolicyRenewalScreen extends StatelessWidget {
     final cleaned = premium.replaceAll(RegExp(r'[^0-9.]'), '');
     final amount = double.tryParse(cleaned) ?? 0;
     final productCode = _renewalProductCode();
+    final subProductCode = _renewalSubProductCode(productCode);
     final endDate = _renewalEndDate();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final agentCode =
+        isAgentFlow ? (authProvider.userCode?.toString() ?? '') : '';
+    final agentUserType = agentCode.isNotEmpty
+        ? (authProvider.userTypeCode?.toString() ?? '')
+        : '';
+    final payerEmail = agentCode.isNotEmpty
+        ? (authProvider.userEmail ?? authProvider.loginEmail ?? '')
+        : '';
 
     showDialog(
         context: context,
@@ -53,6 +63,10 @@ class PolicyRenewalScreen extends StatelessWidget {
       mobileno: phone,
       productCode: productCode,
       endDate: endDate,
+      agentCode: agentCode,
+      agentUserType: agentUserType,
+      payerEmail: payerEmail,
+      subProductCode: subProductCode,
     );
 
     if (!context.mounted) return;
@@ -83,6 +97,53 @@ class PolicyRenewalScreen extends StatelessWidget {
           content: Text(result.message ?? 'Payment failed'),
           backgroundColor: Colors.red));
     }
+  }
+
+  int _moneyToInt(String value) {
+    final cleaned = value.replaceAll(RegExp(r'[^0-9.]'), '');
+    return (double.tryParse(cleaned) ?? 0).round();
+  }
+
+  Future<int?> _agentRenewalSellingPremium(BuildContext context) async {
+    if (!isAgentFlow) return null;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final agentCode = authProvider.userCode?.toString() ?? '';
+    if (agentCode.isEmpty) return null;
+
+    final productCode = _renewalProductCode();
+    if (PaymentService.usesCalculatedAgentPremium(productCode)) return null;
+
+    return PaymentService.agentSellingNetPremium(
+      agentCode: agentCode,
+      productCode: productCode,
+      subProductCode: _renewalSubProductCode(productCode),
+    );
+  }
+
+  Widget _buildRenewalPremiumRows(
+    BuildContext context,
+    String displayPremium, {
+    int? agentPremium,
+    bool loading = false,
+  }) {
+    if (!isAgentFlow) {
+      return _buildInfoRow(context, 'Premium', displayPremium);
+    }
+
+    if (loading) {
+      return _buildInfoRow(context, 'Premium', 'Loading...');
+    }
+
+    final base = agentPremium ?? _moneyToInt(displayPremium);
+    final charge = PaymentService.calculatePaystackCharge(base);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _buildInfoRow(context, 'Premium', _formatMoneyValue(base.toString())),
+      _buildInfoRow(
+          context, 'Paystack Charges', _formatMoneyValue(charge.toString())),
+      _buildInfoRow(
+          context, 'Total', _formatMoneyValue((base + charge).toString())),
+    ]);
   }
 
   String _renewalProductCode() {
@@ -149,6 +210,18 @@ class PolicyRenewalScreen extends StatelessWidget {
     return null;
   }
 
+  String _renewalSubProductCode(String productCode) {
+    final directCode = policyData?['subproductcode'] ??
+        policyData?['subProductCode'] ??
+        policyData?['SubProductCode'] ??
+        policyData?['sub_product_code'] ??
+        policyData?['SubProduct'] ??
+        policyData?['PlanCode'] ??
+        policyData?['planCode'];
+    final code = directCode?.toString().trim() ?? '';
+    return code.isNotEmpty ? code : productCode;
+  }
+
   String _formatApiDate(DateTime date) {
     final year = date.year.toString().padLeft(4, '0');
     final month = date.month.toString().padLeft(2, '0');
@@ -195,6 +268,21 @@ class PolicyRenewalScreen extends StatelessWidget {
     final value = _readPolicyValue(policyData, keys);
     final text = value?.toString().trim() ?? '';
     return text.isEmpty ? '-' : text;
+  }
+
+  String _policyOrFallback(List<String> keys, String fallback) {
+    final value = _policyValue(keys);
+    if (value != '-') return value;
+    return fallback.trim().isEmpty ? '-' : fallback.trim();
+  }
+
+  String _formatMoneyValue(String value) {
+    final text = value.trim();
+    if (text.isEmpty || text == '-') return '-';
+    if (text.startsWith('₦') || text.toLowerCase().startsWith('ngn')) {
+      return text;
+    }
+    return '₦$text';
   }
 
   dynamic _readPolicyValue(dynamic source, List<String> keys) {
@@ -349,6 +437,57 @@ class PolicyRenewalScreen extends StatelessWidget {
         userData?['Telephone']?.toString() ??
         '';
     final showVehicleInformation = _isMotorRelatedPolicy();
+    final displayPolicyNumber = _policyOrFallback(
+      ['policyId', 'PolicyID', 'PolicyNo', 'PolicyNumber', 'policyNumber'],
+      policyNumber,
+    );
+    final displayProduct = _policyOrFallback(
+      [
+        'policyClass',
+        'PolicyClass',
+        'ProductClass',
+        'ProductCover',
+        'productName',
+        'ProductName',
+      ],
+      policyType,
+    );
+    final displayPremium = _formatMoneyValue(_policyOrFallback(
+      ['premium', 'Premium', 'GrossPremium', 'grosspremium'],
+      premium,
+    ));
+    final displayStartDate = _policyOrFallback(
+      ['startDate', 'PolicyStartDate', 'StartDate', 'policyStartDate'],
+      '-',
+    );
+    final displayEndDate = _policyOrFallback(
+      ['endDate', 'PolicyEndDate', 'EndDate', 'policyEndDate'],
+      '-',
+    );
+    final displayInsured = _policyOrFallback(
+      ['insured', 'Insured', 'customerName', 'CustomerName'],
+      names,
+    );
+    final displayEmail = _policyOrFallback(
+      ['customerEmail', 'Email', 'email', 'CustEmail', 'CustomerEmail'],
+      email,
+    );
+    final displayPhone = _policyOrFallback(
+      [
+        'customerPhone',
+        'MobileNo',
+        'Phone',
+        'PhoneNo',
+        'Phoneno',
+        'PhoneNumber',
+        'Telephone',
+      ],
+      phone,
+    );
+    final displaySumInsured = _formatMoneyValue(_policyOrFallback(
+      ['sumInsured', 'SumInsured', 'Sum_Insured', 'sum_insured'],
+      '0',
+    ));
 
     return Scaffold(
       appBar: AppBar(
@@ -421,11 +560,23 @@ class PolicyRenewalScreen extends StatelessWidget {
                                 color:
                                     Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 14),
-                        _buildInfoRow(context, 'Policy Number', policyNumber),
-                        _buildInfoRow(context, 'Product', policyType),
-                        _buildInfoRow(context, 'Premium', '₦$premium'),
-                        _buildInfoRow(context, 'Start Date', '2/04/2025'),
-                        _buildInfoRow(context, 'End Date', '2/04/2026'),
+                        _buildInfoRow(
+                            context, 'Policy Number', displayPolicyNumber),
+                        _buildInfoRow(context, 'Product', displayProduct),
+                        FutureBuilder<int?>(
+                          future: _agentRenewalSellingPremium(context),
+                          builder: (context, snapshot) =>
+                              _buildRenewalPremiumRows(
+                            context,
+                            displayPremium,
+                            agentPremium: snapshot.data,
+                            loading: snapshot.connectionState ==
+                                    ConnectionState.waiting &&
+                                isAgentFlow,
+                          ),
+                        ),
+                        _buildInfoRow(context, 'Start Date', displayStartDate),
+                        _buildInfoRow(context, 'End Date', displayEndDate),
                       ],
                     ),
                   ),
@@ -448,21 +599,14 @@ class PolicyRenewalScreen extends StatelessWidget {
                                 color:
                                     Theme.of(context).colorScheme.onSurface)),
                         const SizedBox(height: 14),
-                        if (isAgentFlow && policyData != null) ...[
+                        if (policyData != null) ...[
+                          _buildInfoRow(context, 'Insured', displayInsured),
+                          _buildInfoRow(context, 'Email', displayEmail),
+                          _buildInfoRow(context, 'Phone Number', displayPhone),
                           _buildInfoRow(
-                              context,
-                              'Insured',
-                              policyData!['insured']?.toString() ??
-                                  policyData!['customerName']?.toString() ??
-                                  '-'),
-                          _buildInfoRow(context, 'Policy Class',
-                              policyData!['policyClass']?.toString() ?? '-'),
-                          _buildInfoRow(context, 'Sum Insured',
-                              '₦${policyData!['sumInsured']?.toString() ?? '0'}'),
-                          _buildInfoRow(context, 'Start Date',
-                              policyData!['startDate']?.toString() ?? '-'),
-                          _buildInfoRow(context, 'End Date',
-                              policyData!['endDate']?.toString() ?? '-'),
+                              context, 'Policy Class', displayProduct),
+                          _buildInfoRow(
+                              context, 'Sum Insured', displaySumInsured),
                         ] else ...[
                           _buildInfoRow(context, 'First Name',
                               userData?['FirstName']?.toString() ?? '-'),
@@ -550,12 +694,13 @@ class PolicyRenewalScreen extends StatelessWidget {
                               Navigator.pop(ctx);
                               _initiatePayment(
                                 context,
-                                email: email,
-                                names: names.isNotEmpty
-                                    ? names
-                                    : policyData?['customerName']?.toString() ??
-                                        'Customer Name',
-                                phone: phone,
+                                email: displayEmail == '-'
+                                    ? 'customer@rexinsure.com'
+                                    : displayEmail,
+                                names: displayInsured == '-'
+                                    ? 'Customer Name'
+                                    : displayInsured,
+                                phone: displayPhone == '-' ? '' : displayPhone,
                               );
                             },
                             child: Container(

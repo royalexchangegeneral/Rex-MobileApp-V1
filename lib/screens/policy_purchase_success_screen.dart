@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/app_theme.dart';
 import '../utils/error_messages.dart';
+import '../utils/explore_kyc_flow.dart';
 import 'create_password_screen.dart';
 import 'customer_dashboard_screen.dart';
 import 'agent_dashboard_screen.dart';
@@ -32,6 +33,14 @@ class PolicyPurchaseSuccessScreen extends StatefulWidget {
 class _PolicyPurchaseSuccessScreenState
     extends State<PolicyPurchaseSuccessScreen> {
   bool _creatingCustomer = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isExploreFlow) {
+      ExploreKycFlow.complete();
+    }
+  }
 
   String _value(String key, {String fallback = ''}) {
     final value = widget.accountData[key]?.trim() ?? '';
@@ -82,12 +91,12 @@ class _PolicyPurchaseSuccessScreenState
 
     try {
       debugPrint('=== CREATE CUSTOMER BEFORE PASSWORD SCREEN ===');
-      debugPrint('URL: https://eportaltest.rexinsure.com/api/createcustomer');
+      debugPrint('URL: https://eportal.rexinsure.com/api/createcustomer');
       debugPrint('Request Body: ${json.encode(requestBody)}');
 
       final response = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
+            Uri.parse('https://eportal.rexinsure.com/api/createcustomer'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode(requestBody),
           )
@@ -257,21 +266,18 @@ class _PolicyPurchaseSuccessScreenState
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    if (widget.isLoggedIn) {
-                      if (widget.isAgent) {
-                        Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const AgentDashboardScreen()),
-                            (route) => false);
-                      } else {
-                        Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) =>
-                                    const CustomerDashboardScreen()),
-                            (route) => false);
-                      }
+                    if (widget.isAgent) {
+                      Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const AgentDashboardScreen()),
+                          (route) => false);
+                    } else if (widget.isLoggedIn) {
+                      Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const CustomerDashboardScreen()),
+                          (route) => false);
                     } else {
                       Navigator.pushNamedAndRemoveUntil(
                           context, '/user-portal', (route) => false);
@@ -301,7 +307,9 @@ class _PolicyPurchaseSuccessScreenState
               const SizedBox(height: 12),
 
               // Create Account button (only for non-logged-in users)
-              if (!widget.isLoggedIn && !widget.isExploreFlow)
+              if (!widget.isLoggedIn &&
+                  !widget.isAgent &&
+                  !widget.isExploreFlow)
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(

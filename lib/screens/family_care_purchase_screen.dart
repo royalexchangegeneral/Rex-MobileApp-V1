@@ -22,12 +22,14 @@ class FamilyCarePurchaseScreen extends StatefulWidget {
   final String price;
   final bool isCustomerFlow;
   final bool isExploreFlow;
+  final Map<String, dynamic>? clientData;
   const FamilyCarePurchaseScreen(
       {super.key,
       required this.optionTitle,
       required this.price,
       this.isCustomerFlow = false,
-      this.isExploreFlow = false});
+      this.isExploreFlow = false,
+      this.clientData});
   @override
   State<FamilyCarePurchaseScreen> createState() =>
       _FamilyCarePurchaseScreenState();
@@ -44,6 +46,10 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
   bool _ninFailed = false;
   bool _ninVerified = false;
   bool _isCustomerNinLocked = false;
+  bool _returnToSummaryAfterNin = false;
+  bool _ninWasSkipped = false;
+  int? _agentSellingPremium;
+  bool _isLoadingAgentSellingPrice = false;
 
   // Personal info from NIN
   String _firstName = '', _lastName = '', _email = '', _phone = '';
@@ -166,13 +172,72 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
     super.initState();
     if (widget.isExploreFlow) {
       _prefillExploreKyc();
+    } else if (!widget.isCustomerFlow && widget.clientData != null) {
+      _prefillAgentClientDetails();
     } else {
       _prefillCustomerNin();
     }
+    _loadAgentSellingPrice();
+  }
+
+  String get _productCode => 'FC';
+
+  String get _subProductCode =>
+      PaymentService.subProductCodeForOption(_productCode, widget.optionTitle);
+
+  Future<void> _loadAgentSellingPrice() async {
+    if (widget.isCustomerFlow || widget.isExploreFlow) return;
+
+    final authProvider = context.read<AuthProvider>();
+    final agentCode = authProvider.userCode?.toString() ?? '';
+    if (agentCode.isEmpty) return;
+
+    setState(() => _isLoadingAgentSellingPrice = true);
+    final premium = await PaymentService.agentSellingNetPremium(
+      agentCode: agentCode,
+      productCode: _productCode,
+      subProductCode: _subProductCode,
+    );
+    if (!mounted) return;
+    setState(() {
+      _agentSellingPremium = premium;
+      _isLoadingAgentSellingPrice = false;
+    });
+  }
+
+  void _prefillAgentClientDetails() {
+    final details = CustomerDetails.fromClientData(widget.clientData);
+    setState(() {
+      _ninController.text = details['nin'] ?? '';
+      _firstName = details['firstName'] ?? '';
+      _lastName = details['lastName'] ?? '';
+      _email = details['email'] ?? '';
+      _emailController.text = _email;
+      _phone = details['phone'] ?? '';
+      _dob = details['dob'] ?? '';
+      _state = details['state'] ?? '';
+      _lga = details['lga'] ?? '';
+      _address = details['address'] ?? '';
+      _gender = details['gender'] ?? '';
+      _ninVerified = _ninController.text.trim().length == 11;
+      _isCustomerNinLocked = _ninVerified;
+      _manualFirstNameController.text = _firstName;
+      _manualLastNameController.text = _lastName;
+      _manualEmailController.text = _email;
+      _manualPhoneController.text = _phone;
+      _manualAddressController.text = _address;
+      _selectedManualState = _nigerianStates.cast<String?>().firstWhere(
+            (s) => s!.toLowerCase() == _state.trim().toLowerCase(),
+            orElse: () => null,
+          );
+      _occupationController.text = details['occupation'] ?? '';
+      _currentStep = 1;
+    });
   }
 
   Future<void> _prefillExploreKyc() async {
     final details = await CustomerDetails.signupKycDetails();
+    final ninWasSkipped = await CustomerDetails.signupNinWasSkipped();
     if (!mounted) return;
 
     setState(() {
@@ -186,7 +251,8 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
       _address = details['address'] ?? '';
       _state = details['state'] ?? '';
       _lga = details['lga'] ?? '';
-      _ninVerified = true;
+      _ninVerified = _ninController.text.trim().length == 11;
+      _ninWasSkipped = ninWasSkipped;
       _manualFirstNameController.text = _firstName;
       _manualLastNameController.text = _lastName;
       _manualEmailController.text = _email;
@@ -243,17 +309,17 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
     try {
       final response = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/verify/nin'),
+            Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode({
-              'Intcode': 'TESTCODE',
-              'Password': 'royal1234',
+              'Intcode': 'Kissflow',
+              'Password': '1lovetoeatcook1es',
               'number': _ninController.text.trim()
             }),
           )
           .timeout(const Duration(seconds: 15));
-      print('=== NIN VERIFY RESPONSE: ${response.statusCode} ===');
-      print('Body: ${response.body}');
+      debugPrint('=== NIN VERIFY RESPONSE: ${response.statusCode} ===');
+      debugPrint('Body: ${response.body}');
       setState(() => _isVerifying = false);
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = json.decode(response.body);
@@ -346,14 +412,21 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
     return prices[0];
   }
 
+  double _getSummaryBaseAmount() =>
+      (_agentSellingPremium ?? _getBaseAmount()).toDouble();
+
+  String _summaryPriceText() => _isLoadingAgentSellingPrice
+      ? 'Loading...'
+      : _formatNaira(_getSummaryBaseAmount());
+
   double _getPaystackCharge() {
-    final base = _getBaseAmount();
+    final base = _getSummaryBaseAmount();
     double charge = (base * 0.015) + 100;
     if (charge > 2000) charge = 2000;
     return charge;
   }
 
-  double _getTotalAmount() => _getBaseAmount() + _getPaystackCharge();
+  double _getTotalAmount() => _getSummaryBaseAmount() + _getPaystackCharge();
 
   String _formatNaira(double amount) {
     return '₦${amount.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+\.)'), (m) => '${m[1]},')}';
@@ -373,6 +446,16 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
         ? (double.tryParse(priceMatches[1].group(0)!.replaceAll(',', '')) ?? 0)
             .toInt()
         : 0;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final agentCode = (!widget.isCustomerFlow && !widget.isExploreFlow)
+        ? (authProvider.userCode?.toString() ?? '')
+        : '';
+    final agentUserType = agentCode.isNotEmpty
+        ? (authProvider.userTypeCode?.toString() ?? '')
+        : '';
+    final payerEmail = agentCode.isNotEmpty
+        ? (authProvider.userEmail ?? authProvider.loginEmail ?? '')
+        : '';
 
     setState(() => _isPayingNow = true);
     try {
@@ -382,12 +465,15 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
         email: email,
         mobileno: _phone,
         premium: premiumAmount.toInt(),
+        agentCode: agentCode,
+        agentUserType: agentUserType,
+        payerEmail: payerEmail,
+        subProductCode: _subProductCode,
         extraFields: {
           'type': 'Individual',
-          'agent_code': '',
           'premium2': childPremium,
           'gender': _gender,
-          'dob': _dob,
+          'dob': CustomerDetails.normalizeApiDate(_dob),
           'occupation': _occupationController.text.trim(),
           'businesssector': _selectedBusinessSector ?? '',
           'tin': _tinController.text.trim(),
@@ -432,6 +518,8 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
             context,
             MaterialPageRoute(
               builder: (_) => PolicyPurchaseSuccessScreen(
+                isLoggedIn: !widget.isExploreFlow,
+                isAgent: !widget.isCustomerFlow && !widget.isExploreFlow,
                 reference: res.reference,
                 message: res.message,
                 isExploreFlow: widget.isExploreFlow,
@@ -778,7 +866,8 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
                           _phone = _manualPhoneController.text.trim();
                           _address = _manualAddressController.text.trim();
                           _state = _selectedManualState ?? '';
-                          _currentStep = 1;
+                          _currentStep = _returnToSummaryAfterNin ? 4 : 1;
+                          _returnToSummaryAfterNin = false;
                         });
                       }
                     : null,
@@ -872,7 +961,8 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
                           _phone = _manualPhoneController.text.trim();
                           _address = _manualAddressController.text.trim();
                           _state = _selectedManualState ?? '';
-                          _currentStep = 1;
+                          _currentStep = _returnToSummaryAfterNin ? 4 : 1;
+                          _returnToSummaryAfterNin = false;
                         });
                       }
                     : null,
@@ -1277,7 +1367,16 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
               onPressed:
                   (_coverMembers.isNotEmpty || _uploadedFileName != null) &&
                           _consentChecked
-                      ? () => setState(() => _currentStep = 4)
+                      ? () => setState(() {
+                            if (widget.isExploreFlow &&
+                                _ninWasSkipped &&
+                                _ninController.text.trim().length != 11) {
+                              _returnToSummaryAfterNin = true;
+                              _currentStep = 0;
+                            } else {
+                              _currentStep = 4;
+                            }
+                          })
                       : null,
               style: ElevatedButton.styleFrom(
                   backgroundColor:
@@ -1347,7 +1446,7 @@ class _FamilyCarePurchaseScreenState extends State<FamilyCarePurchaseScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _summarySection('Payment Information', [
           _summaryRow('Product', 'Royal Family Care ${widget.optionTitle}'),
-          _summaryRow('Price', widget.price),
+          _summaryRow('Price', _summaryPriceText()),
           _summaryRow('Paystack Charges', _formatNaira(_getPaystackCharge())),
           _summaryRow('Total', _formatNaira(_getTotalAmount())),
         ]),

@@ -97,7 +97,7 @@ class _ComprehensiveVehicleInfoScreenState
     setState(() => _loadingVehicleList = true);
     try {
       final response = await http.get(
-        Uri.parse('https://eportaltest.rexinsure.com/api/vehicleList'),
+        Uri.parse('https://eportal.rexinsure.com/api/vehicleList'),
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 15));
 
@@ -161,15 +161,14 @@ class _ComprehensiveVehicleInfoScreenState
 
     try {
       final requestBody = {
-        'Intcode': 'Testcode',
-        'Password': 'royal1234',
+        'Intcode': 'Kissflow',
+        'Password': '1lovetoeatcook1es',
         'RegNo': _regNumberController.text.trim(),
       };
 
       final response = await http
           .post(
-            Uri.parse(
-                'https://eportaltest.rexinsure.com/api/vehicleVerification'),
+            Uri.parse('https://eportal.rexinsure.com/api/vehicleVerification'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode(requestBody),
           )
@@ -275,6 +274,8 @@ class _ComprehensiveVehicleInfoScreenState
     final onSurface = Theme.of(context).colorScheme.onSurface;
     final fillColor = isDark ? const Color(0xFF111827) : Colors.white;
     final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[300]!;
+    final totalSteps = widget.isExploreFlow ? 4 : 5;
+    const currentStep = 2;
 
     return Scaffold(
       appBar: AppBar(
@@ -301,8 +302,8 @@ class _ComprehensiveVehicleInfoScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(children: [
-                    const Text('Step 2 of 5',
-                        style: TextStyle(
+                    Text('Step $currentStep of $totalSteps',
+                        style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.primaryNavy)),
@@ -316,14 +317,16 @@ class _ComprehensiveVehicleInfoScreenState
                   const SizedBox(height: 12),
                   Row(
                     children: List.generate(
-                      5,
+                      totalSteps,
                       (i) => Expanded(
                         child: Container(
                           height: 4,
-                          margin: EdgeInsets.only(right: i < 4 ? 4 : 0),
+                          margin: EdgeInsets.only(
+                              right: i < totalSteps - 1 ? 4 : 0),
                           decoration: BoxDecoration(
-                            color:
-                                i < 2 ? AppTheme.primaryNavy : Colors.grey[300],
+                            color: i < currentStep
+                                ? AppTheme.primaryNavy
+                                : Colors.grey[300],
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),

@@ -8,7 +8,7 @@ class WebViewSecurity {
     'standard.paystack.co',
     'checkout.paystack.com',
     'rexinsure.com',
-    'eportaltest.rexinsure.com',
+    'eportal.rexinsure.com',
     'eportal.rexinsure.com',
   ];
 

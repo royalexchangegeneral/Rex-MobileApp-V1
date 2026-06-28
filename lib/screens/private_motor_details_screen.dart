@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/auth_provider.dart';
 import '../utils/app_theme.dart';
 import '../services/payment_service.dart';
 import '../widgets/paystack_webview.dart';
@@ -35,26 +37,56 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
     return double.tryParse(cleaned) ?? 0;
   }
 
-  double _getPaystackCharge() {
-    final base = _getBaseAmount();
+  double _getPaystackChargeFor(double base) {
     double charge = (base * 0.015) + 100;
     if (charge > 2000) charge = 2000;
     return charge;
   }
 
-  double _getTotalAmount() => _getBaseAmount() + _getPaystackCharge();
+  Future<int?> _agentSellingPremium(BuildContext context) async {
+    if (!isAgent) return null;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final resolvedAgentCode = agentCode.trim().isNotEmpty
+        ? agentCode.trim()
+        : (authProvider.userCode?.toString() ?? '');
+    if (resolvedAgentCode.isEmpty) return null;
+
+    return PaymentService.agentSellingNetPremium(
+      agentCode: resolvedAgentCode,
+      productCode: _getProductCode(),
+      subProductCode: _getSubProductCode(),
+    );
+  }
+
+  Widget _buildPaymentInfoRows(BuildContext context, int? agentPremium,
+      {bool loading = false}) {
+    final base = (agentPremium ?? _getBaseAmount()).toDouble();
+    final charge = _getPaystackChargeFor(base);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _buildInfoRow(context, 'Product', vehicleType),
+      _buildInfoRow(
+          context, 'Price', loading ? 'Loading...' : _formatNaira(base)),
+      _buildInfoRow(context, 'Paystack Charges', _formatNaira(charge)),
+      _buildInfoRow(context, 'Total', _formatNaira(base + charge)),
+    ]);
+  }
 
   String _formatNaira(double amount) {
     return '₦${amount.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+\.)'), (m) => '${m[1]},')}';
   }
 
   String _getProductCode() {
+    return 'TP';
+  }
+
+  String _getSubProductCode() {
     final vt = vehicleType.toLowerCase();
-    if (vt.contains('commercial') && vt.contains('bus')) return 'TPCB';
+    if (vt.contains('commercial')) return 'TPCB';
     if (vt.contains('private') && vt.contains('bus')) return 'TPPB';
     if (vt.contains('motorcycle')) return 'TPMC';
     if (vt.contains('tricycle') || vt.contains('keke')) return 'TPTCL';
-    return 'TP'; // default: Private Car / Commercial Vehicle
+    return 'TP';
   }
 
   String _getVehicleType() {
@@ -78,8 +110,20 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
     final email = personalInfo['email'] ?? 'customer@rexinsure.com';
     final mobileno = personalInfo['phone'] ?? '';
     final premium = _getBaseAmount().toInt();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final resolvedAgentCode = isAgent
+        ? (agentCode.trim().isNotEmpty
+            ? agentCode.trim()
+            : (authProvider.userCode?.toString() ?? ''))
+        : '';
+    final agentUserType = resolvedAgentCode.isNotEmpty
+        ? (authProvider.userTypeCode?.toString() ?? '')
+        : '';
+    final payerEmail = resolvedAgentCode.isNotEmpty
+        ? (authProvider.userEmail ?? authProvider.loginEmail ?? '')
+        : '';
     final extraFields = {
-      'agent_code': agentCode,
+      'agent_code': resolvedAgentCode,
       'title': '',
       'occupation': personalInfo['occupation'] ?? '',
       'address': personalInfo['address'] ?? '',
@@ -109,9 +153,10 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
 
     if (kDebugMode) {
       final motorPayload = {
-        'IntCode': 'TESTCODE',
-        'Password': 'royal1234',
+        'Intcode': 'Kissflow',
+        'Password': '1lovetoeatcook1es',
         'product_code': _getProductCode(),
+        'subproductcode': _getSubProductCode(),
         'names': names,
         'email': email,
         'mobileno': mobileno,
@@ -132,6 +177,10 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
       email: email,
       mobileno: mobileno,
       premium: premium,
+      agentCode: resolvedAgentCode,
+      agentUserType: agentUserType,
+      payerEmail: payerEmail,
+      subProductCode: _getSubProductCode(),
       extraFields: extraFields,
       isExploreFlow: isExploreFlow,
     );
@@ -239,12 +288,16 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.onSurface)),
                   SizedBox(height: 16),
-                  _buildInfoRow(context, 'Product', vehicleType),
-                  _buildInfoRow(context, 'Price', price),
-                  _buildInfoRow(context, 'Paystack Charges',
-                      _formatNaira(_getPaystackCharge())),
-                  _buildInfoRow(
-                      context, 'Total', _formatNaira(_getTotalAmount())),
+                  FutureBuilder<int?>(
+                    future: _agentSellingPremium(context),
+                    builder: (context, snapshot) => _buildPaymentInfoRows(
+                      context,
+                      snapshot.data,
+                      loading:
+                          snapshot.connectionState == ConnectionState.waiting &&
+                              isAgent,
+                    ),
+                  ),
                   SizedBox(height: 24),
                   Text('Vehicle Information',
                       style: TextStyle(

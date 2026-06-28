@@ -20,7 +20,6 @@ class ExploreServicesScreen extends StatefulWidget {
 
 class _ExploreServicesScreenState extends State<ExploreServicesScreen> {
   final PageController _pageController = PageController();
-  int _currentPage = 0;
 
   final List<Map<String, String>> _services = [
     {
@@ -85,12 +84,6 @@ class _ExploreServicesScreenState extends State<ExploreServicesScreen> {
     super.dispose();
   }
 
-  void _onPageChanged(int page) {
-    setState(() {
-      _currentPage = page;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,7 +93,6 @@ class _ExploreServicesScreenState extends State<ExploreServicesScreen> {
           // PageView with service cards
           PageView.builder(
             controller: _pageController,
-            onPageChanged: _onPageChanged,
             itemCount: _services.length,
             itemBuilder: (context, index) {
               return _buildServiceCard(_services[index]);
