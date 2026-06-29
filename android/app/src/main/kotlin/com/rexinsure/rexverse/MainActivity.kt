@@ -1,4 +1,4 @@
-package com.rexinsurance.rex_insurance
+package com.rexinsure.rexverse
 
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterFragmentActivity

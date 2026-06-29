@@ -8,12 +8,16 @@ plugins {
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file("key.properties")
 def hasReleaseKeystore = keystorePropertiesFile.exists()
+def isReleaseBuild = gradle.startParameter.taskNames.any {
+    def taskName = it.toLowerCase()
+    taskName.contains("release") || taskName.contains("bundle")
+}
 if (hasReleaseKeystore) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
 android {
-    namespace = "com.rexinsurance.rex_insurance"
+    namespace = "com.rexinsure.rexverse"
     compileSdk = 36
     ndkVersion "27.0.12077973"
 
@@ -27,7 +31,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.rexinsurance.rex_insurance"
+        applicationId = "com.rexinsure.rexverse"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdkVersion = 29
@@ -38,7 +42,7 @@ android {
 
     signingConfigs {
         release {
-            if (keystorePropertiesFile.exists()) {
+            if (hasReleaseKeystore) {
                 keyAlias = keystoreProperties["keyAlias"]
                 keyPassword = keystoreProperties["keyPassword"]
                 storeFile = file(keystoreProperties["storeFile"])
@@ -49,7 +53,10 @@ android {
 
     buildTypes {
         release {
-            signingConfig = hasReleaseKeystore ? signingConfigs.release : signingConfigs.debug
+            if (!hasReleaseKeystore && isReleaseBuild) {
+                throw new GradleException("Missing android/key.properties. Release builds must be signed with a production upload keystore.")
+            }
+            signingConfig = signingConfigs.release
             
             // Enable code shrinking and obfuscation
             minifyEnabled true
