@@ -367,6 +367,59 @@ class AuthProvider with ChangeNotifier {
     return false;
   }
 
+  Future<AccountDeletionResult> deleteAccount() async {
+    final userId = (_loginEmail ??
+            _userEmail ??
+            _read(_userData ?? <String, dynamic>{}, 'Email')?.toString() ??
+            _userId ??
+            '')
+        .trim();
+
+    if (userId.isEmpty) {
+      return AccountDeletionResult(
+        success: false,
+        message: 'Unable to identify your account. Please log in again.',
+      );
+    }
+
+    try {
+      final requestBody = {'userid': userId};
+      final response = await http
+          .post(
+            Uri.parse('https://eportal.rexinsure.com/api/disable-user-account'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(requestBody),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      final data = _decodeResponseBody(response.body);
+      final apiMessage = _messageFrom(data);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return AccountDeletionResult(success: true, message: apiMessage);
+      }
+
+      return AccountDeletionResult(
+        success: false,
+        message: apiMessage.isEmpty
+            ? ErrorMessages.fromResponse(response,
+                fallback: 'Unable to delete account. Please try again.')
+            : apiMessage,
+      );
+    } on TimeoutException {
+      return AccountDeletionResult(
+        success: false,
+        message: 'Account deletion request timed out. Please try again.',
+      );
+    } catch (e) {
+      debugPrint('Delete account error: $e');
+      return AccountDeletionResult(
+        success: false,
+        message: 'Connection error. Please check your internet.',
+      );
+    }
+  }
+
   // Logout
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
@@ -399,4 +452,10 @@ class LoginResult {
   final bool success;
   final String? message;
   LoginResult({required this.success, this.message});
+}
+
+class AccountDeletionResult {
+  final bool success;
+  final String? message;
+  AccountDeletionResult({required this.success, this.message});
 }

@@ -36,6 +36,8 @@
 	<string>We need camera access to take photos for claims and documents.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>We use Face ID to securely log you into your RexVerse account.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We use your location to help find nearby Rex Insurance offices and provide location-based support when needed.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We need your location to find the nearest Rex Insurance office.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

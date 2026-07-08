@@ -20,6 +20,8 @@ class CustomerProfileScreen extends StatefulWidget {
 }
 
 class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
+  bool _isDeletingAccount = false;
+
   bool get _isDark => Theme.of(context).brightness == Brightness.dark;
 
   Color get _cardColor => _isDark ? const Color(0xFF111827) : Colors.white;
@@ -285,6 +287,57 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               ),
             ),
 
+            const SizedBox(height: 20),
+
+            // Account
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text('Account',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface)),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: _cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _borderColor),
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                enabled: !_isDeletingAccount,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                      color: Color(0xFFFFEBEE), shape: BoxShape.circle),
+                  child: _isDeletingAccount
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.red,
+                          ),
+                        )
+                      : const Icon(Icons.delete_outline,
+                          color: Colors.red, size: 20),
+                ),
+                title: const Text('Delete account',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.red)),
+                subtitle: Text(
+                  'Permanently remove your Rex Insurance account.',
+                  style: TextStyle(fontSize: 10, color: _secondaryTextColor),
+                ),
+                onTap: _confirmDeleteAccount,
+              ),
+            ),
+
             // Log out
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -377,6 +430,66 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDeleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete account?'),
+        content: const Text(
+          'This will permanently delete your account and remove access to your profile in this app.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete account'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+    await _deleteAccount();
+  }
+
+  Future<void> _deleteAccount() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    setState(() => _isDeletingAccount = true);
+
+    final result = await authProvider.deleteAccount();
+    if (!mounted) return;
+
+    setState(() => _isDeletingAccount = false);
+
+    if (!result.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message ?? 'Unable to delete account.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    clearSessionCaches(context);
+    await authProvider.logout();
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(result.message?.isNotEmpty == true
+            ? result.message!
+            : 'Account deleted.'),
+        backgroundColor: Colors.green,
+      ),
+    );
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   Widget _buildInfoItem(BuildContext context, String label, String value,
