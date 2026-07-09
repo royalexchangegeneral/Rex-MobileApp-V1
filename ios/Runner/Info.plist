@@ -40,6 +40,8 @@
 	<string>We use your location to help find nearby Rex Insurance offices and provide location-based support when needed.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We need your location to find the nearest Rex Insurance office.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need microphone access when recording videos for chat attachments.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need photo library access to upload documents for claims.</string>
 	<key>UIApplicationSceneManifest</key>

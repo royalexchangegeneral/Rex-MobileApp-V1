@@ -28,6 +28,7 @@ dependencies:
   youtube_player_flutter: ^9.1.1
   flutter_paystack_plus: ^1.1.3
   webview_flutter: ^4.4.2
+  webview_flutter_android: ^4.10.15
   geolocator: ^11.0.0
   geocoding: ^3.0.0
   local_auth: ^2.1.8
