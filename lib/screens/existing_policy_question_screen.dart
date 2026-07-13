@@ -36,6 +36,12 @@ class _ExistingPolicyQuestionScreenState
     } else {
       await prefs.setBool('has_existing_policy', false);
       if (mounted) {
+        final savedEmail = prefs.getString('signup_email')?.trim() ?? '';
+        if (savedEmail.isNotEmpty) {
+          Navigator.pushNamed(context, '/verify-phone', arguments: savedEmail);
+          return;
+        }
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -65,8 +71,7 @@ class _ExistingPolicyQuestionScreenState
         isDark ? const Color(0xFF2F3B52) : const Color(0xFFE3F2FD);
     final helpTitleColor =
         isDark ? const Color(0xFFA7C7FF) : AppTheme.primaryNavy;
-    final adviceLinkColor =
-        isDark ? AppTheme.accentOrange : selectedColor;
+    final adviceLinkColor = isDark ? AppTheme.accentOrange : selectedColor;
     const buttonForegroundColor = Colors.white;
     final disabledButtonColor = AppTheme.disabledButtonColor(context);
     final disabledButtonTextColor = AppTheme.disabledButtonTextColor(context);

@@ -124,8 +124,9 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
 
   Future<bool> _sendOtp(String phone) async {
     final email = await _signupEmail();
+    final normalizedPhone = _phoneNumberForOtpApi(phone);
     final payload = {
-      'mobileNo': phone,
+      'mobileNo': normalizedPhone,
       'email': email,
     };
 
@@ -155,9 +156,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
 
   Future<void> _submitPhone() async {
     if (_phoneController.text.isEmpty) return;
-    var phone = _phoneController.text.trim();
-    if (phone.startsWith('0')) phone = phone.substring(1);
-    final fullPhone = '$_selectedCountryCode$phone';
+    final fullPhone = _phoneNumberForOtpApi(_phoneController.text);
     setState(() => _isSendingOtp = true);
 
     try {
@@ -244,19 +243,20 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
 
   Future<bool> _verifyOtp(String phone, String otp) async {
     final email = await _signupEmail();
+    final normalizedPhone = _phoneNumberForOtpApi(phone);
     final payload = {
-      'mobileNo': phone,
+      'mobileNo': normalizedPhone,
       'email': email,
       'otp': otp,
     };
 
     debugPrint('=== VERIFY PHONE OTP REQUEST ===');
-    debugPrint('URL: https://eportal.rexinsure.com/mobile/verify-otp');
+    debugPrint('URL: https://eportal.rexinsure.com/api/mobile/verify-otp');
     debugPrint('Payload: ${json.encode(payload)}');
 
     final response = await http
         .post(
-          Uri.parse('https://eportal.rexinsure.com/mobile/verify-otp'),
+          Uri.parse('https://eportal.rexinsure.com/api/mobile/verify-otp'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(payload),
         )
@@ -271,20 +271,13 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
           fallback: 'OTP verification failed'));
     }
 
-    final data = json.decode(response.body);
-    final status = data['Status']?.toString().toLowerCase() ??
-        data['status']?.toString().toLowerCase() ??
-        '';
-    final statusCode = data['StatusCode']?.toString() ??
-        data['Statuscode']?.toString() ??
-        data['statusCode']?.toString() ??
-        data['statuscode']?.toString() ??
-        '';
+    final data = _decodeJsonMap(response.body);
+    if (data == null) {
+      throw Exception(ErrorMessages.fromResponse(response,
+          fallback: 'OTP verification failed'));
+    }
 
-    if (status == 'success' ||
-        status.contains('success') ||
-        statusCode == '200' ||
-        statusCode == '201') {
+    if (_isSuccessfulOtpResponse(data)) {
       return true;
     }
 
@@ -305,9 +298,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
       final savedPhone = prefs.getString('signup_phone') ?? '';
       var phone = savedPhone.trim();
       if (phone.isEmpty) {
-        var rawPhone = _phoneController.text.trim();
-        if (rawPhone.startsWith('0')) rawPhone = rawPhone.substring(1);
-        phone = '$_selectedCountryCode$rawPhone';
+        phone = _phoneNumberForOtpApi(_phoneController.text);
       }
 
       await _verifyOtp(phone, otp);
@@ -350,9 +341,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
       final savedPhone = prefs.getString('signup_phone') ?? '';
       var fullPhone = savedPhone.trim();
       if (fullPhone.isEmpty) {
-        var phone = _phoneController.text.trim();
-        if (phone.startsWith('0')) phone = phone.substring(1);
-        fullPhone = '$_selectedCountryCode$phone';
+        fullPhone = _phoneNumberForOtpApi(_phoneController.text);
       }
       await _sendOtp(fullPhone);
       if (!mounted) return;
@@ -367,6 +356,91 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
               fallback: 'Failed to resend code')),
           backgroundColor: Colors.red));
     }
+  }
+
+  String _phoneNumberForOtpApi(String value) {
+    var phone = value.trim().replaceAll(RegExp(r'[\s()-]'), '');
+
+    if (phone.startsWith('00')) {
+      phone = phone.substring(2);
+    }
+
+    if (phone.startsWith('+')) {
+      phone = phone.substring(1);
+    }
+
+    if (_selectedCountryCode == '+234') {
+      if (phone.startsWith('234')) {
+        phone = phone.substring(3);
+      }
+      if (!phone.startsWith('0')) {
+        phone = '0$phone';
+      }
+      return phone;
+    }
+
+    if (phone.startsWith('0')) {
+      phone = phone.substring(1);
+    }
+
+    final countryDigits = _selectedCountryCode.replaceAll('+', '');
+    if (phone.startsWith(countryDigits)) {
+      return '+$phone';
+    }
+
+    return '$_selectedCountryCode$phone';
+  }
+
+  Map<String, dynamic>? _decodeJsonMap(String body) {
+    try {
+      final decoded = json.decode(body);
+      return decoded is Map ? Map<String, dynamic>.from(decoded) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _isSuccessfulOtpResponse(Map<String, dynamic> data) {
+    final values = <String>[
+      _field(data, 'Status'),
+      _field(data, 'status'),
+      _field(data, 'StatusCode'),
+      _field(data, 'Statuscode'),
+      _field(data, 'statusCode'),
+      _field(data, 'statuscode'),
+      _field(data, 'message'),
+      _field(data, 'Message'),
+      _field(data, 'StatusMessage'),
+      _field(data, 'statusMessage'),
+    ]
+        .where((value) => value.isNotEmpty)
+        .map((value) => value.toLowerCase())
+        .toList();
+
+    if (values.any((value) =>
+        value == 'true' ||
+        value == '1' ||
+        value == '200' ||
+        value == '201' ||
+        value == 'success' ||
+        value == 'successful' ||
+        value == 'valid' ||
+        value.contains('success') ||
+        value.contains('verified'))) {
+      return true;
+    }
+
+    final nestedData = data['data'] ?? data['Data'];
+    if (nestedData is Map) {
+      return _isSuccessfulOtpResponse(Map<String, dynamic>.from(nestedData));
+    }
+
+    return false;
+  }
+
+  String _field(Map<String, dynamic> data, String key) {
+    final value = data[key];
+    return value?.toString().trim() ?? '';
   }
 
   @override

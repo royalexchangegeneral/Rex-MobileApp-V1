@@ -111,7 +111,15 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       if (!mounted) return;
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = json.decode(response.body);
+        final data = _decodeJsonMap(response.body);
+        if (data == null) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Unable to create account. Please try again.'),
+              backgroundColor: Colors.red));
+          return;
+        }
+
         final status = data['Status']?.toString().toLowerCase() ?? '';
         final statusCode = data['StatusCode']?.toString() ??
             data['Statuscode']?.toString() ??
@@ -247,7 +255,13 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
           return;
         }
 
-        final customerData = json.decode(customerResponse.body);
+        final customerData = _decodeJsonMap(customerResponse.body);
+        if (customerData == null) {
+          await _showSignupApiError(customerResponse.body,
+              fallback: 'Customer creation failed');
+          return;
+        }
+
         final status = customerData['Status']?.toString().toLowerCase();
         final statusCode = customerData['StatusCode']?.toString() ??
             customerData['Statuscode']?.toString();
@@ -290,7 +304,13 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
         return;
       }
 
-      final loginData = json.decode(loginResponse.body);
+      final loginData = _decodeJsonMap(loginResponse.body);
+      if (loginData == null) {
+        await _showSignupApiError(loginResponse.body,
+            fallback: 'Login creation failed');
+        return;
+      }
+
       final loginStatus = loginData['Status']?.toString().toLowerCase();
       final loginStatusCode = loginData['StatusCode']?.toString() ??
           loginData['Statuscode']?.toString();
@@ -407,6 +427,15 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       }
     }
     return normalized;
+  }
+
+  Map<String, dynamic>? _decodeJsonMap(String body) {
+    try {
+      final decoded = json.decode(body);
+      return decoded is Map ? Map<String, dynamic>.from(decoded) : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   @override

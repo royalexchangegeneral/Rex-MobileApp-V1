@@ -70,8 +70,15 @@ class _EnterPolicyDetailsScreenState extends State<EnterPolicyDetailsScreen> {
     try {
       final r = await http
           .get(
-            Uri.parse(
-                'https://eportal.rexinsure.com/api/getpolicy?Intcode=Kissflow&Password=1lovetoeatcook1es&PolicyNo=${Uri.encodeComponent(policyNo)}'),
+            Uri.https(
+              'eportal.rexinsure.com',
+              '/api/getpolicy',
+              {
+                'IntCode': 'Kissflow',
+                'Password': '1lovetoeatcook1es',
+                'PolicyNo': policyNo,
+              },
+            ),
           )
           .timeout(const Duration(seconds: 15));
       debugPrint('=== GET POLICY: ${r.statusCode} ===');

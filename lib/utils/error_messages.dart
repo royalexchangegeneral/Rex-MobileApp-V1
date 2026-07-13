@@ -9,12 +9,18 @@ class ErrorMessages {
   static String fromResponse(http.Response response, {String fallback = ''}) {
     final body = response.body.trim();
     if (body.isNotEmpty) {
+      if (_looksLikeHtml(body)) {
+        return clean(fallback.isNotEmpty
+            ? fallback
+            : 'Server unavailable. Please try again later.');
+      }
+
       try {
         final decoded = json.decode(body);
         final parsed = fromDecodedJson(decoded);
         if (parsed.isNotEmpty) return clean(parsed);
       } catch (_) {
-        return clean(body);
+        return clean(fallback.isNotEmpty ? fallback : body);
       }
     }
 
@@ -66,7 +72,14 @@ class ErrorMessages {
     if (error is SocketException) {
       return 'Network error. Please check your connection.';
     }
+
     final cleaned = clean(error.toString());
+    if (_looksLikeHtml(cleaned)) {
+      return fallback.isNotEmpty
+          ? fallback
+          : 'Server unavailable. Please try again later.';
+    }
+
     return cleaned.isNotEmpty
         ? cleaned
         : (fallback.isNotEmpty ? fallback : 'Something went wrong');
@@ -84,5 +97,14 @@ class ErrorMessages {
     text = text.replaceAll(RegExp(r'\s+'), ' ').trim();
 
     return text;
+  }
+
+  static bool _looksLikeHtml(String text) {
+    final lower = text.toLowerCase();
+    return lower.contains('<!doctype html') ||
+        lower.contains('<html') ||
+        lower.contains('<head') ||
+        lower.contains('<body') ||
+        lower.contains('server error</title>');
   }
 }
