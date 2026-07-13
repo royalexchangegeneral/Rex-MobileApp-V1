@@ -155,7 +155,7 @@ class _VehicleInformationScreenState extends State<VehicleInformationScreen> {
             Uri.parse('https://eportal.rexinsure.com/api/vehicleVerification'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode({
-              'Intcode': 'Kissflow',
+              'IntCode': 'Kissflow',
               'Password': '1lovetoeatcook1es',
               'RegNo': regNo
             }),

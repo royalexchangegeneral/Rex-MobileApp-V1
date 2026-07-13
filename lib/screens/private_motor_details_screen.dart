@@ -153,7 +153,7 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
 
     if (kDebugMode) {
       final motorPayload = {
-        'Intcode': 'Kissflow',
+        'IntCode': 'Kissflow',
         'Password': '1lovetoeatcook1es',
         'product_code': _getProductCode(),
         'subproductcode': _getSubProductCode(),

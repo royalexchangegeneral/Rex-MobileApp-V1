@@ -327,7 +327,7 @@ class _ParcelProtectionPurchaseScreenState
               Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
               headers: {'Content-Type': 'application/json'},
               body: json.encode({
-                'Intcode': 'Kissflow',
+                'IntCode': 'Kissflow',
                 'Password': '1lovetoeatcook1es',
                 'number': _ninController.text.trim()
               }))

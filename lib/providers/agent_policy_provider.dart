@@ -35,7 +35,7 @@ class AgentPolicyProvider with ChangeNotifier {
       debugPrint('AgencyCode: $agencyCode');
 
       final url =
-          'https://eportal.rexinsure.com/api/getcustomerpolicytest?Intcode=Kissflow&Password=1lovetoeatcook1es&AgencyCode=$agencyCode';
+          'https://eportal.rexinsure.com/api/getcustomerpolicytest?IntCode=Kissflow&Password=1lovetoeatcook1es&AgencyCode=$agencyCode';
       final r = await http.get(
         Uri.parse(url),
         headers: {'Accept': 'application/json'},

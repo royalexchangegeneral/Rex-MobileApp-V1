@@ -161,7 +161,7 @@ class _ComprehensiveVehicleInfoScreenState
 
     try {
       final requestBody = {
-        'Intcode': 'Kissflow',
+        'IntCode': 'Kissflow',
         'Password': '1lovetoeatcook1es',
         'RegNo': _regNumberController.text.trim(),
       };

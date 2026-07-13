@@ -17,6 +17,44 @@ class PaymentService {
   static const String _agentSellingPriceUrl =
       'https://eportal.rexinsure.com/api/mobile/agent-selling-price';
 
+  static void _logPaymentError(
+    String stage,
+    String message, {
+    http.Response? response,
+    Object? error,
+    String? responseBody,
+    int? statusCode,
+  }) {
+    debugPrint('================ PAYMENT ERROR ================');
+    debugPrint('Stage: $stage');
+    debugPrint('Message: $message');
+    final status = response?.statusCode ?? statusCode;
+    if (status != null) debugPrint('Status: $status');
+    final body = response?.body ?? responseBody;
+    if (body != null && body.isNotEmpty) debugPrint('Body: $body');
+    if (error != null) debugPrint('Exception: $error');
+    debugPrint('===============================================');
+  }
+
+  static PaymentResult _failure(
+    String stage,
+    String message, {
+    http.Response? response,
+    Object? error,
+    String? responseBody,
+    int? statusCode,
+  }) {
+    _logPaymentError(
+      stage,
+      message,
+      response: response,
+      error: error,
+      responseBody: responseBody,
+      statusCode: statusCode,
+    );
+    return PaymentResult(success: false, message: message);
+  }
+
   /// Calculate Paystack charge: 1.5% + ₦100, capped at ₦2,000.
   static int calculatePaystackCharge(int premium) {
     double charge = (premium * 0.015) + 100;
@@ -127,7 +165,7 @@ class PaymentService {
     if (normalizedAgentCode.isEmpty) return null;
 
     final payload = {
-      'Intcode': 'Kissflow',
+      'IntCode': 'Kissflow',
       'Password': '1lovetoeatcook1es',
       'agentcode': normalizedAgentCode,
       'productcode': productCode.trim().toUpperCase(),
@@ -158,13 +196,22 @@ class PaymentService {
       }
 
       if (response.statusCode != 200 && response.statusCode != 201) {
+        _logPaymentError(
+          'Agent selling price',
+          'Unable to get agent selling price',
+          response: response,
+        );
         return null;
       }
 
       final data = json.decode(response.body);
       return _findNetPremium(data);
     } catch (e) {
-      if (kDebugMode) debugPrint('Agent selling price error: $e');
+      _logPaymentError(
+        'Agent selling price',
+        'Unable to get agent selling price',
+        error: e,
+      );
       return null;
     }
   }
@@ -221,13 +268,15 @@ class PaymentService {
             )
           : null;
       if (shouldUseAgentSellingPrice && agentNetPremium == null) {
-        return PaymentResult(
-            success: false, message: 'Unable to get agent selling price');
+        return _failure(
+          'Agent selling price',
+          'Unable to get agent selling price',
+        );
       }
       // Step 1: Submit product proposal
       final proposalPayload = {
         if (includeCredentials) ...{
-          'Intcode': 'Kissflow',
+          'IntCode': 'Kissflow',
           'Password': '1lovetoeatcook1es',
         },
         'product_code': productCode,
@@ -268,18 +317,24 @@ class PaymentService {
 
       if (proposalResponse.statusCode != 200 &&
           proposalResponse.statusCode != 201) {
-        return PaymentResult(
-            success: false,
-            message: ErrorMessages.fromResponse(proposalResponse,
-                fallback: 'Failed to submit proposal'));
+        final message = ErrorMessages.fromResponse(proposalResponse,
+            fallback: 'Failed to submit proposal');
+        return _failure(
+          'Submit proposal',
+          message,
+          response: proposalResponse,
+        );
       }
 
       final proposalData = json.decode(proposalResponse.body);
       if (proposalData['status'] != true) {
-        return PaymentResult(
-            success: false,
-            message: proposalData['message']?.toString() ??
-                'Proposal submission failed');
+        final message = proposalData['message']?.toString() ??
+            'Proposal submission failed';
+        return _failure(
+          'Submit proposal',
+          message,
+          response: proposalResponse,
+        );
       }
 
       // Extract reference from proposal response. Some motor proposal responses
@@ -293,8 +348,11 @@ class PaymentService {
           proposalData['debit_no']?.toString() ??
           '';
       if (proposalRef.isEmpty) {
-        return PaymentResult(
-            success: false, message: 'No reference returned from proposal');
+        return _failure(
+          'Submit proposal',
+          'No reference returned from proposal',
+          response: proposalResponse,
+        );
       }
 
       // Step 2: Initiate purchase with the proposal reference
@@ -362,26 +420,36 @@ class PaymentService {
             return PaymentResult(
                 success: true, authorizationUrl: authUrl, reference: respRef);
           } else {
-            return PaymentResult(
-                success: false, message: 'No payment URL returned from server');
+            return _failure(
+              'Initiate purchase',
+              'No payment URL returned from server',
+              response: purchaseResponse,
+            );
           }
         } else {
-          return PaymentResult(
-              success: false,
-              message: data['message']?.toString() ??
-                  'Purchase initialization failed');
+          final message = data['message']?.toString() ??
+              'Purchase initialization failed';
+          return _failure(
+            'Initiate purchase',
+            message,
+            response: purchaseResponse,
+          );
         }
       } else {
-        return PaymentResult(
-            success: false,
-            message: ErrorMessages.fromResponse(purchaseResponse,
-                fallback: 'Unable to initiate payment'));
+        final message = ErrorMessages.fromResponse(purchaseResponse,
+            fallback: 'Unable to initiate payment');
+        return _failure(
+          'Initiate purchase',
+          message,
+          response: purchaseResponse,
+        );
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('Payment error: $e');
-      return PaymentResult(
-          success: false,
-          message: 'Connection error. Please check your internet.');
+      return _failure(
+        'Payment flow',
+        'Connection error. Please check your internet.',
+        error: e,
+      );
     }
   }
 
@@ -415,8 +483,10 @@ class PaymentService {
             )
           : null;
       if (shouldUseAgentSellingPrice && agentNetPremium == null) {
-        return PaymentResult(
-            success: false, message: 'Unable to get agent selling price');
+        return _failure(
+          'Agent selling price',
+          'Unable to get agent selling price',
+        );
       }
       final payablePremium = agentNetPremium ?? premium;
       final charge = calculatePaystackCharge(payablePremium);
@@ -478,25 +548,35 @@ class PaymentService {
             return PaymentResult(
                 success: true, authorizationUrl: authUrl, reference: respRef);
           } else {
-            return PaymentResult(
-                success: false, message: 'No payment URL returned');
+            return _failure(
+              'Initiate renewal',
+              'No payment URL returned',
+              response: response,
+            );
           }
         } else {
-          return PaymentResult(
-              success: false,
-              message: data['message']?.toString() ?? 'Renewal failed');
+          final message = data['message']?.toString() ?? 'Renewal failed';
+          return _failure(
+            'Initiate renewal',
+            message,
+            response: response,
+          );
         }
       } else {
-        return PaymentResult(
-            success: false,
-            message: ErrorMessages.fromResponse(response,
-                fallback: 'Unable to initiate renewal'));
+        final message = ErrorMessages.fromResponse(response,
+            fallback: 'Unable to initiate renewal');
+        return _failure(
+          'Initiate renewal',
+          message,
+          response: response,
+        );
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('Renewal error: $e');
-      return PaymentResult(
-          success: false,
-          message: 'Connection error. Please check your internet.');
+      return _failure(
+        'Renewal flow',
+        'Connection error. Please check your internet.',
+        error: e,
+      );
     }
   }
 
@@ -525,7 +605,7 @@ class PaymentService {
       // Step 1: Submit CP proposal as multipart with images
       final request = http.MultipartRequest('POST', Uri.parse(_proposalUrl));
       request.fields.addAll(fields);
-      request.fields['Intcode'] = 'Kissflow';
+      request.fields['IntCode'] = 'Kissflow';
       request.fields['Password'] = '1lovetoeatcook1es';
       _addAgentStringFields(
           request.fields, normalizedAgentCode, normalizedAgentUserType);
@@ -589,14 +669,24 @@ class PaymentService {
               d['Status']?.toString() ??
               errorMsg;
         } catch (_) {}
-        return PaymentResult(success: false, message: errorMsg);
+        return _failure(
+          'Submit comprehensive proposal',
+          errorMsg,
+          responseBody: proposalBody,
+          statusCode: proposalStreamResponse.statusCode,
+        );
       }
 
       final proposalData = json.decode(proposalBody);
       if (proposalData['status'] != true) {
-        return PaymentResult(
-            success: false,
-            message: proposalData['message']?.toString() ?? 'Proposal failed');
+        final message =
+            proposalData['message']?.toString() ?? 'Proposal failed';
+        return _failure(
+          'Submit comprehensive proposal',
+          message,
+          responseBody: proposalBody,
+          statusCode: proposalStreamResponse.statusCode,
+        );
       }
 
       final proposalRef = proposalData['data']?['reference']?.toString() ??
@@ -608,8 +698,12 @@ class PaymentService {
           proposalData['debit_no']?.toString() ??
           '';
       if (proposalRef.isEmpty) {
-        return PaymentResult(
-            success: false, message: 'No reference returned from proposal');
+        return _failure(
+          'Submit comprehensive proposal',
+          'No reference returned from proposal',
+          responseBody: proposalBody,
+          statusCode: proposalStreamResponse.statusCode,
+        );
       }
 
       // Step 2: Initiate purchase with the proposal reference
@@ -675,25 +769,35 @@ class PaymentService {
             return PaymentResult(
                 success: true, authorizationUrl: authUrl, reference: respRef);
           } else {
-            return PaymentResult(
-                success: false, message: 'No payment URL returned');
+            return _failure(
+              'Initiate comprehensive purchase',
+              'No payment URL returned',
+              response: purchaseResponse,
+            );
           }
         } else {
-          return PaymentResult(
-              success: false,
-              message: data['message']?.toString() ?? 'Purchase failed');
+          final message = data['message']?.toString() ?? 'Purchase failed';
+          return _failure(
+            'Initiate comprehensive purchase',
+            message,
+            response: purchaseResponse,
+          );
         }
       } else {
-        return PaymentResult(
-            success: false,
-            message: ErrorMessages.fromResponse(purchaseResponse,
-                fallback: 'Unable to initiate payment'));
+        final message = ErrorMessages.fromResponse(purchaseResponse,
+            fallback: 'Unable to initiate payment');
+        return _failure(
+          'Initiate comprehensive purchase',
+          message,
+          response: purchaseResponse,
+        );
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('CP payment error: $e');
-      return PaymentResult(
-          success: false,
-          message: 'Connection error. Please check your internet.');
+      return _failure(
+        'Comprehensive payment flow',
+        'Connection error. Please check your internet.',
+        error: e,
+      );
     }
   }
 }

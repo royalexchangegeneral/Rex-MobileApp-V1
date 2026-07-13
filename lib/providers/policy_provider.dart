@@ -49,7 +49,7 @@ class PolicyProvider with ChangeNotifier {
 
   Future<void> _fetchPoliciesForPhone(String phone) async {
     final requestBody = {
-      'Intcode': 'Kissflow',
+      'IntCode': 'Kissflow',
       'Password': '1lovetoeatcook1es',
       'MobileNo': phone,
     };
@@ -62,7 +62,7 @@ class PolicyProvider with ChangeNotifier {
       'eportal.rexinsure.com',
       '/api/getcustomerpolicy',
       {
-        'Intcode': 'Kissflow',
+        'IntCode': 'Kissflow',
         'Password': '1lovetoeatcook1es',
         'MobileNo': phone,
       },

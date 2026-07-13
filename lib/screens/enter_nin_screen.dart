@@ -312,7 +312,7 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
 
     try {
       final payload = {
-        'Intcode': 'Kissflow',
+        'IntCode': 'Kissflow',
         'Password': '1lovetoeatcook1es',
         'number': _ninController.text.trim(),
       };

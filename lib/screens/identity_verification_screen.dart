@@ -44,7 +44,7 @@ class _IdentityVerificationScreenState
     setState(() => _isVerifying = true);
     try {
       final payload = {
-        'Intcode': 'Kissflow',
+        'IntCode': 'Kissflow',
         'Password': '1lovetoeatcook1es',
         'number': nin,
       };
