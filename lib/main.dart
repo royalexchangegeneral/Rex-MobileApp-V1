@@ -33,6 +33,7 @@ import 'providers/notifications_provider.dart';
 import 'providers/policy_provider.dart';
 import 'providers/agent_policy_provider.dart';
 import 'services/inactivity_service.dart';
+import 'widgets/app_update_gate.dart';
 
 void main() {
   runZoned(
@@ -89,7 +90,7 @@ class MyApp extends StatelessWidget {
                 child: InactivityService(
                   timeout: const Duration(minutes: 3),
                   navigatorKey: _navigatorKey,
-                  child: child!,
+                  child: AppUpdateGate(child: child!),
                 ),
               );
             },
