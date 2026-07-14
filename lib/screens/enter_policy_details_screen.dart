@@ -68,17 +68,22 @@ class _EnterPolicyDetailsScreenState extends State<EnterPolicyDetailsScreen> {
     }
     setState(() => _isVerifying = true);
     try {
+      final url = Uri.parse('https://eportal.rexinsure.com/api/getpolicy');
+      final payload = {
+        'PolicyNo': policyNo,
+        'IntCode': 'Kissflow',
+        'Password': '1lovetoeatcook1es',
+      };
+      debugPrint('=== GET POLICY REQUEST: $url ===');
+      debugPrint('Payload: ${json.encode(payload)}');
       final r = await http
-          .get(
-            Uri.https(
-              'eportal.rexinsure.com',
-              '/api/getpolicy',
-              {
-                'IntCode': 'Kissflow',
-                'Password': '1lovetoeatcook1es',
-                'PolicyNo': policyNo,
-              },
-            ),
+          .post(
+            url,
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: json.encode(payload),
           )
           .timeout(const Duration(seconds: 15));
       debugPrint('=== GET POLICY: ${r.statusCode} ===');

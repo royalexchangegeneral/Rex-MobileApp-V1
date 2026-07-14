@@ -503,7 +503,8 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
       final res = await Navigator.push<PaymentVerifyResult>(
           context,
           MaterialPageRoute(
-              builder: (_) => PaystackWebView(url: result.authorizationUrl!)));
+              builder: (_) => PaystackWebView(
+                  url: result.authorizationUrl!, reference: result.reference)));
       if (res != null && res.success && mounted) {
         Navigator.push(
           context,

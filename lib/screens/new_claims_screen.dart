@@ -222,19 +222,24 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
 
     setState(() => _verifying = true);
     try {
-      final url = Uri.https(
-        'eportal.rexinsure.com',
-        '/api/getpolicy',
-        {
-          'IntCode': 'Kissflow',
-          'Password': '1lovetoeatcook1es',
-          'PolicyNo': policyNo,
-        },
-      );
+      final url = Uri.parse('https://eportal.rexinsure.com/api/getpolicy');
+      final payload = {
+        'PolicyNo': policyNo,
+        'IntCode': 'Kissflow',
+        'Password': '1lovetoeatcook1es',
+      };
       debugPrint('=== VERIFY POLICY: $url ===');
-      final r = await http.get(url, headers: {
-        'Accept': 'application/json'
-      }).timeout(const Duration(seconds: 15));
+      debugPrint('Payload: ${json.encode(payload)}');
+      final r = await http
+          .post(
+            url,
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: json.encode(payload),
+          )
+          .timeout(const Duration(seconds: 15));
       debugPrint('=== POLICY RESPONSE: ${r.statusCode} ===');
       debugPrint('Body: ${r.body}');
 

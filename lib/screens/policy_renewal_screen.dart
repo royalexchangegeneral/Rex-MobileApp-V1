@@ -76,7 +76,8 @@ class PolicyRenewalScreen extends StatelessWidget {
       final payResult = await Navigator.push<PaymentVerifyResult>(
           context,
           MaterialPageRoute(
-              builder: (_) => PaystackWebView(url: result.authorizationUrl!)));
+              builder: (_) => PaystackWebView(
+                  url: result.authorizationUrl!, reference: result.reference)));
       if (payResult != null && payResult.success && context.mounted) {
         Navigator.pushAndRemoveUntil(
             context,

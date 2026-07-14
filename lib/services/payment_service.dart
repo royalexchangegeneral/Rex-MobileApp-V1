@@ -10,12 +10,74 @@ import '../utils/error_messages.dart';
 class PaymentService {
   PaymentService._();
 
+  static const String _paymentBaseUrl = 'https://eportal.rexinsure.com';
   static const String _proposalUrl =
-      'https://eportal.rexinsure.com/api/submit-product-proposal';
+      '$_paymentBaseUrl/api/submit-product-proposal';
   static const String _purchaseUrl =
-      'https://eportal.rexinsure.com/api/mobile/initiate-purchase';
+      '$_paymentBaseUrl/api/mobile/initiate-purchase';
   static const String _agentSellingPriceUrl =
-      'https://eportal.rexinsure.com/api/mobile/agent-selling-price';
+      '$_paymentBaseUrl/api/mobile/agent-selling-price';
+  static const JsonEncoder _prettyJson = JsonEncoder.withIndent('  ');
+
+  static void _logLong(String value) {
+    const chunkSize = 900;
+    if (value.length <= chunkSize) {
+      debugPrint(value);
+      return;
+    }
+
+    for (var start = 0; start < value.length; start += chunkSize) {
+      final end = (start + chunkSize).clamp(0, value.length);
+      debugPrint(value.substring(start, end));
+    }
+  }
+
+  static String _formatPayload(dynamic payload) {
+    try {
+      return _prettyJson.convert(payload);
+    } catch (_) {
+      return payload.toString();
+    }
+  }
+
+  static void _logPaymentRequest(
+    String journey,
+    String stage, {
+    required String method,
+    required String url,
+    dynamic payload,
+    dynamic files,
+  }) {
+    debugPrint('================ PAYMENT REQUEST ================');
+    debugPrint('Journey: $journey');
+    debugPrint('Stage: $stage');
+    debugPrint('Method: $method');
+    debugPrint('URL: $url');
+    if (payload != null) {
+      debugPrint('Payload:');
+      _logLong(_formatPayload(payload));
+    }
+    if (files != null) {
+      debugPrint('Files:');
+      _logLong(_formatPayload(files));
+    }
+    debugPrint('=================================================');
+  }
+
+  static void _logPaymentResponse(
+    String journey,
+    String stage, {
+    required int statusCode,
+    required String body,
+  }) {
+    debugPrint('================ PAYMENT RESPONSE ===============');
+    debugPrint('Journey: $journey');
+    debugPrint('Stage: $stage');
+    debugPrint('Status: $statusCode');
+    debugPrint('Body:');
+    _logLong(body);
+    debugPrint('=================================================');
+  }
 
   static void _logPaymentError(
     String stage,
@@ -178,6 +240,13 @@ class PaymentService {
       debugPrint('Payload: ${json.encode(payload)}');
       debugPrint('===================================');
     }
+    _logPaymentRequest(
+      'Buy/Renewal',
+      'Agent selling price',
+      method: 'POST application/json',
+      url: _agentSellingPriceUrl,
+      payload: payload,
+    );
 
     try {
       final response = await http
@@ -194,6 +263,12 @@ class PaymentService {
         debugPrint('Body: ${response.body}');
         debugPrint('====================================');
       }
+      _logPaymentResponse(
+        'Buy/Renewal',
+        'Agent selling price',
+        statusCode: response.statusCode,
+        body: response.body,
+      );
 
       if (response.statusCode != 200 && response.statusCode != 201) {
         _logPaymentError(
@@ -297,6 +372,13 @@ class PaymentService {
         debugPrint('Payload: ${json.encode(proposalPayload)}');
         debugPrint('================================');
       }
+      _logPaymentRequest(
+        isExploreFlow ? 'Explore buy' : 'Buy',
+        'Submit proposal',
+        method: 'POST application/json',
+        url: _proposalUrl,
+        payload: proposalPayload,
+      );
 
       final proposalResponse = await http
           .post(
@@ -314,6 +396,12 @@ class PaymentService {
         debugPrint('Body: ${proposalResponse.body}');
         debugPrint('=========================');
       }
+      _logPaymentResponse(
+        isExploreFlow ? 'Explore buy' : 'Buy',
+        'Submit proposal',
+        statusCode: proposalResponse.statusCode,
+        body: proposalResponse.body,
+      );
 
       if (proposalResponse.statusCode != 200 &&
           proposalResponse.statusCode != 201) {
@@ -328,8 +416,8 @@ class PaymentService {
 
       final proposalData = json.decode(proposalResponse.body);
       if (proposalData['status'] != true) {
-        final message = proposalData['message']?.toString() ??
-            'Proposal submission failed';
+        final message =
+            proposalData['message']?.toString() ?? 'Proposal submission failed';
         return _failure(
           'Submit proposal',
           message,
@@ -371,6 +459,8 @@ class PaymentService {
       }
 
       final purchasePayload = {
+        'IntCode': 'Kissflow',
+        'Password': '1lovetoeatcook1es',
         'product_code': productCode,
         'names': names,
         'email': paymentEmail,
@@ -389,6 +479,13 @@ class PaymentService {
         debugPrint('Payload: ${json.encode(purchasePayload)}');
         debugPrint('=================================');
       }
+      _logPaymentRequest(
+        isExploreFlow ? 'Explore buy' : 'Buy',
+        'Initiate purchase',
+        method: 'POST application/json',
+        url: _purchaseUrl,
+        payload: purchasePayload,
+      );
 
       final purchaseResponse = await http
           .post(
@@ -406,6 +503,12 @@ class PaymentService {
         debugPrint('Body: ${purchaseResponse.body}');
         debugPrint('=========================');
       }
+      _logPaymentResponse(
+        isExploreFlow ? 'Explore buy' : 'Buy',
+        'Initiate purchase',
+        statusCode: purchaseResponse.statusCode,
+        body: purchaseResponse.body,
+      );
 
       if (purchaseResponse.statusCode == 200 ||
           purchaseResponse.statusCode == 201) {
@@ -427,8 +530,8 @@ class PaymentService {
             );
           }
         } else {
-          final message = data['message']?.toString() ??
-              'Purchase initialization failed';
+          final message =
+              data['message']?.toString() ?? 'Purchase initialization failed';
           return _failure(
             'Initiate purchase',
             message,
@@ -504,6 +607,8 @@ class PaymentService {
       }
 
       final payload = {
+        'IntCode': 'Kissflow',
+        'Password': '1lovetoeatcook1es',
         'product_code': productCode,
         'names': names,
         'email': paymentEmail,
@@ -521,6 +626,13 @@ class PaymentService {
         debugPrint('Payload: ${json.encode(payload)}');
         debugPrint('========================');
       }
+      _logPaymentRequest(
+        'Renewal',
+        'Initiate renewal',
+        method: 'POST application/json',
+        url: _purchaseUrl,
+        payload: payload,
+      );
 
       final response = await http
           .post(
@@ -536,6 +648,12 @@ class PaymentService {
         debugPrint('Body: ${response.body}');
         debugPrint('========================');
       }
+      _logPaymentResponse(
+        'Renewal',
+        'Initiate renewal',
+        statusCode: response.statusCode,
+        body: response.body,
+      );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
@@ -646,6 +764,22 @@ class PaymentService {
             .toList()));
         debugPrint('=====================================================');
       }
+      final fileSummary = request.files
+          .map((file) => {
+                'field': file.field,
+                'filename': file.filename,
+                'contentType': file.contentType.toString(),
+                'length': file.length,
+              })
+          .toList();
+      _logPaymentRequest(
+        isExploreFlow ? 'Explore comprehensive buy' : 'Comprehensive buy',
+        'Submit comprehensive proposal',
+        method: 'POST multipart/form-data',
+        url: _proposalUrl,
+        payload: request.fields,
+        files: fileSummary,
+      );
 
       final proposalStreamResponse =
           await request.send().timeout(const Duration(seconds: 45));
@@ -657,6 +791,12 @@ class PaymentService {
         debugPrint('Body: $proposalBody');
         debugPrint('=====================================================');
       }
+      _logPaymentResponse(
+        isExploreFlow ? 'Explore comprehensive buy' : 'Comprehensive buy',
+        'Submit comprehensive proposal',
+        statusCode: proposalStreamResponse.statusCode,
+        body: proposalBody,
+      );
 
       if (proposalStreamResponse.statusCode != 200 &&
           proposalStreamResponse.statusCode != 201) {
@@ -720,6 +860,8 @@ class PaymentService {
       }
 
       final purchasePayload = {
+        'IntCode': 'Kissflow',
+        'Password': '1lovetoeatcook1es',
         'product_code': 'CP',
         'names': names,
         'email': paymentEmail,
@@ -740,6 +882,13 @@ class PaymentService {
         debugPrint(encoder.convert(purchasePayload));
         debugPrint('=====================================================');
       }
+      _logPaymentRequest(
+        isExploreFlow ? 'Explore comprehensive buy' : 'Comprehensive buy',
+        'Initiate comprehensive purchase',
+        method: 'POST application/json',
+        url: _purchaseUrl,
+        payload: purchasePayload,
+      );
 
       final purchaseResponse = await http
           .post(
@@ -755,6 +904,12 @@ class PaymentService {
         debugPrint('Body: ${purchaseResponse.body}');
         debugPrint('=====================================================');
       }
+      _logPaymentResponse(
+        isExploreFlow ? 'Explore comprehensive buy' : 'Comprehensive buy',
+        'Initiate comprehensive purchase',
+        statusCode: purchaseResponse.statusCode,
+        body: purchaseResponse.body,
+      );
 
       if (purchaseResponse.statusCode == 200 ||
           purchaseResponse.statusCode == 201) {
