@@ -23,6 +23,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
   String _selectedCountryCode = '+234';
   String _selectedCountryFlag = '🇳🇬';
   bool _isPhoneValid = false;
+  bool _showExistingPolicyPhoneNote = false;
 
   final List<Map<String, String>> _countries = [
     {'code': '+234', 'flag': '🇳🇬', 'name': 'Nigeria'},
@@ -48,6 +49,17 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
   void initState() {
     super.initState();
     _phoneController.addListener(_validatePhone);
+    _loadExistingPolicyPhoneNoteState();
+  }
+
+  Future<void> _loadExistingPolicyPhoneNoteState() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _showExistingPolicyPhoneNote =
+          (prefs.getBool('is_signup_flow') ?? false) &&
+              (prefs.getBool('has_existing_policy') ?? false);
+    });
   }
 
   @override
@@ -510,6 +522,49 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                     height: 1.5,
                   ),
                 ),
+                if (_showExistingPolicyPhoneNote) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF0F172A)
+                          : const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isDark
+                            ? const Color(0xFF334155)
+                            : const Color(0xFFBFDBFE),
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 18,
+                          color: isDark
+                              ? const Color(0xFF93C5FD)
+                              : AppTheme.primaryBlue,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Use the phone number attached to the policy you have with us.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              height: 1.4,
+                              color: isDark
+                                  ? const Color(0xFFCBD5E1)
+                                  : AppTheme.primaryNavy,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 32),
                 AutofillGroup(
                   child: Row(

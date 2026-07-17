@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -39,7 +40,9 @@ void main() {
   runZoned(
     () {
       WidgetsFlutterBinding.ensureInitialized();
-      debugPrint = (String? message, {int? wrapWidth}) {};
+      if (kReleaseMode) {
+        debugPrint = (String? message, {int? wrapWidth}) {};
+      }
 
       // Set system UI overlay style
       SystemChrome.setSystemUIOverlayStyle(

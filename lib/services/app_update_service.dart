@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:package_info_plus/package_info_plus.dart';
 
 class AppUpdateInfo {
   final bool updateAvailable;
@@ -24,10 +25,6 @@ class AppUpdateInfo {
 class AppUpdateService {
   AppUpdateService._();
 
-  static const String currentVersion =
-      String.fromEnvironment('APP_VERSION', defaultValue: '1.1.1');
-  static const int currentBuildNumber =
-      int.fromEnvironment('APP_BUILD_NUMBER', defaultValue: 18);
   static const String _configUrl = String.fromEnvironment(
     'APP_UPDATE_CONFIG_URL',
     defaultValue: 'https://eportal.rexinsure.com/api/mobile/app-version',
@@ -40,6 +37,11 @@ class AppUpdateService {
 
   static Future<AppUpdateInfo?> checkForUpdate() async {
     try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentVersion = packageInfo.version;
+      final currentBuildNumber =
+          int.tryParse(packageInfo.buildNumber.trim()) ?? 0;
+
       final response = await http.get(
         Uri.parse(_configUrl),
         headers: {'Accept': 'application/json'},

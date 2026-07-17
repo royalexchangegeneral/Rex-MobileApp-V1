@@ -211,6 +211,95 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
     }
   }
 
+  Future<http.Response> _fetchPolicyWithPost(String policyNo) {
+    final url = Uri.parse('https://eportal.rexinsure.com/api/getpolicy');
+    final payload = {
+      'PolicyNo': policyNo,
+      'IntCode': 'Kissflow',
+      'Password': '1lovetoeatcook1es',
+    };
+
+    debugPrint('=== VERIFY POLICY POST: $url ===');
+    debugPrint('Payload: ${json.encode(payload)}');
+    return http
+        .post(
+          url,
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: json.encode(payload),
+        )
+        .timeout(const Duration(seconds: 15));
+  }
+
+  Future<http.Response> _fetchPolicyWithQuery(String policyNo) {
+    final url = Uri.https(
+      'eportal.rexinsure.com',
+      '/api/getpolicy',
+      {
+        'PolicyNo': policyNo,
+        'IntCode': 'Kissflow',
+        'Password': '1lovetoeatcook1es',
+      },
+    );
+
+    debugPrint('=== VERIFY POLICY FALLBACK GET: $url ===');
+    return http.get(url, headers: {
+      'Accept': 'application/json',
+    }).timeout(const Duration(seconds: 15));
+  }
+
+  Map<String, dynamic> _policyDataFromResponse(http.Response response) {
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(ErrorMessages.fromResponse(response,
+          fallback: 'Policy lookup failed. Please try again.'));
+    }
+
+    final decoded = json.decode(response.body);
+    if (decoded is! Map) {
+      throw Exception('Policy lookup returned an invalid response.');
+    }
+
+    final status = (decoded['Status'] ?? decoded['status'] ?? '')
+        .toString()
+        .toLowerCase()
+        .trim();
+    if (status.isNotEmpty && status != 'success') {
+      final message = ErrorMessages.fromDecodedJson(decoded);
+      throw Exception(_friendlyPolicyMessage(message));
+    }
+
+    final data = decoded['Data'] ?? decoded['data'];
+    if (data is List && data.isNotEmpty && data.first is Map) {
+      return Map<String, dynamic>.from(data.first as Map);
+    }
+    if (data is Map) return Map<String, dynamic>.from(data);
+
+    throw Exception('Policy not found. Please confirm the policy number.');
+  }
+
+  bool _shouldTryPolicyFallback(http.Response response) {
+    if (response.statusCode >= 500) return true;
+
+    final message = ErrorMessages.fromResponse(response).toLowerCase();
+    return message.contains('something went wrong') ||
+        message.contains('invalid userid') ||
+        message.contains('invalid user id') ||
+        message.contains('invalid password');
+  }
+
+  String _friendlyPolicyMessage(String message) {
+    final lower = message.toLowerCase();
+    if (lower.contains('something went wrong') ||
+        lower.contains('invalid userid') ||
+        lower.contains('invalid user id') ||
+        lower.contains('invalid password')) {
+      return 'Policy lookup failed. Please confirm the policy number and try again.';
+    }
+    return message.isNotEmpty ? message : 'Policy not found.';
+  }
+
   Future<void> _verifyPolicy() async {
     final policyNo = _policyNoController.text.trim();
     if (policyNo.isEmpty) {
@@ -222,88 +311,55 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
 
     setState(() => _verifying = true);
     try {
-      final url = Uri.parse('https://eportal.rexinsure.com/api/getpolicy');
-      final payload = {
-        'PolicyNo': policyNo,
-        'IntCode': 'Kissflow',
-        'Password': '1lovetoeatcook1es',
-      };
-      debugPrint('=== VERIFY POLICY: $url ===');
-      debugPrint('Payload: ${json.encode(payload)}');
-      final r = await http
-          .post(
-            url,
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: json.encode(payload),
-          )
-          .timeout(const Duration(seconds: 15));
+      var r = await _fetchPolicyWithPost(policyNo);
       debugPrint('=== POLICY RESPONSE: ${r.statusCode} ===');
       debugPrint('Body: ${r.body}');
 
-      if (r.statusCode == 200 || r.statusCode == 201) {
-        final d = json.decode(r.body);
-        // Response: {"Status":"success","Data":[{Insured, PolicyNo, ProductClass, ProductCover, items:[{item_code}]}]}
-        Map<String, dynamic> pd = {};
-        if (d is Map) {
-          // Data is capital D, and it's a List
-          if (d['Data'] is List && (d['Data'] as List).isNotEmpty) {
-            pd = Map<String, dynamic>.from((d['Data'] as List).first);
-          } else if (d['data'] is List && (d['data'] as List).isNotEmpty) {
-            pd = Map<String, dynamic>.from((d['data'] as List).first);
-          } else if (d['Data'] is Map) {
-            pd = Map<String, dynamic>.from(d['Data']);
-          } else if (d['data'] is Map) {
-            pd = Map<String, dynamic>.from(d['data']);
-          } else {
-            pd = Map<String, dynamic>.from(d);
+      if (_shouldTryPolicyFallback(r)) {
+        final fallback = await _fetchPolicyWithQuery(policyNo);
+        debugPrint('=== POLICY FALLBACK RESPONSE: ${fallback.statusCode} ===');
+        debugPrint('Body: ${fallback.body}');
+        if (fallback.statusCode == 200 || fallback.statusCode == 201) {
+          r = fallback;
+        }
+      }
+
+      final pd = _policyDataFromResponse(r);
+
+      debugPrint('=== POLICY KEYS: ${pd.keys.toList()} ===');
+      debugPrint(
+          '=== Insured: ${pd['Insured']}, ProductClass: ${pd['ProductClass']}, ProductCover: ${pd['ProductCover']} ===');
+
+      _claimantNameController.text = (pd['Insured'] ?? '').toString();
+      _emailController.text = (pd['Email'] ?? pd['email'] ?? '').toString();
+      _phoneController.text =
+          (pd['MobileNo'] ?? pd['Phone'] ?? pd['PhoneNumber'] ?? '').toString();
+      _addressController.text =
+          (pd['Address'] ?? pd['address'] ?? '').toString();
+      _productTypeController.text = (pd['ProductClass'] ?? '').toString();
+      _riskTypeController.text = (pd['ProductCover'] ?? '').toString();
+
+      // Extract item codes from items array: [{item_code: "AGL355BT", desc: "Motor Insurance", ...}]
+      final items = <String>[];
+      if (pd['items'] is List) {
+        for (final item in pd['items']) {
+          if (item is Map) {
+            final code = item['item_code']?.toString() ?? '';
+            if (code.isNotEmpty) items.add(code);
           }
         }
+      }
+      if (items.isNotEmpty) {
+        _itemCodes = items;
+        _selectedItemCode = items.first;
+      }
+      debugPrint('=== ITEM CODES: $_itemCodes ===');
 
-        debugPrint('=== POLICY KEYS: ${pd.keys.toList()} ===');
-        debugPrint(
-            '=== Insured: ${pd['Insured']}, ProductClass: ${pd['ProductClass']}, ProductCover: ${pd['ProductCover']} ===');
-
-        _claimantNameController.text = (pd['Insured'] ?? '').toString();
-        _emailController.text = (pd['Email'] ?? pd['email'] ?? '').toString();
-        _phoneController.text =
-            (pd['MobileNo'] ?? pd['Phone'] ?? pd['PhoneNumber'] ?? '')
-                .toString();
-        _addressController.text =
-            (pd['Address'] ?? pd['address'] ?? '').toString();
-        _productTypeController.text = (pd['ProductClass'] ?? '').toString();
-        _riskTypeController.text = (pd['ProductCover'] ?? '').toString();
-
-        // Extract item codes from items array: [{item_code: "AGL355BT", desc: "Motor Insurance", ...}]
-        final items = <String>[];
-        if (pd['items'] is List) {
-          for (final item in pd['items']) {
-            if (item is Map) {
-              final code = item['item_code']?.toString() ?? '';
-              if (code.isNotEmpty) items.add(code);
-            }
-          }
-        }
-        if (items.isNotEmpty) {
-          _itemCodes = items;
-          _selectedItemCode = items.first;
-        }
-        debugPrint('=== ITEM CODES: $_itemCodes ===');
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Policy verified successfully'),
-              backgroundColor: Colors.green));
-          setState(() => _currentStep = 1);
-        }
-      } else {
-        if (mounted)
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(
-                  ErrorMessages.fromResponse(r, fallback: 'Policy not found')),
-              backgroundColor: Colors.red));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Policy verified successfully'),
+            backgroundColor: Colors.green));
+        setState(() => _currentStep = 1);
       }
     } catch (e) {
       debugPrint('Verify policy error: $e');
@@ -312,8 +368,9 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
             content: Text(ErrorMessages.fromException(e,
                 fallback: 'Unable to verify policy')),
             backgroundColor: Colors.red));
+    } finally {
+      if (mounted) setState(() => _verifying = false);
     }
-    setState(() => _verifying = false);
   }
 
   @override
