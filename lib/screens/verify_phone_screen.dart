@@ -5,8 +5,10 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/customer_details.dart';
 import '../utils/error_messages.dart';
 import '../utils/explore_kyc_flow.dart';
+import 'create_password_screen.dart';
 
 class VerifyPhoneScreen extends StatefulWidget {
   final String email;
@@ -253,7 +255,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
 
   bool _isVerifyingOtp = false;
 
-  Future<bool> _verifyOtp(String phone, String otp) async {
+  Future<Map<String, dynamic>> _verifyOtp(String phone, String otp) async {
     final email = await _signupEmail();
     final normalizedPhone = _phoneNumberForOtpApi(phone);
     final payload = {
@@ -290,7 +292,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
     }
 
     if (_isSuccessfulOtpResponse(data)) {
-      return true;
+      return data;
     }
 
     throw Exception(ErrorMessages.fromResponse(response,
@@ -313,29 +315,68 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
         phone = _phoneNumberForOtpApi(_phoneController.text);
       }
 
-      await _verifyOtp(phone, otp);
+      final otpData = await _verifyOtp(phone, otp);
 
       if (!mounted) return;
-      setState(() => _isVerifyingOtp = false);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Phone verified successfully'),
           backgroundColor: Colors.green));
       final isSignupFlow = prefs.getBool('is_signup_flow') ?? false;
       final hasExistingPolicy = prefs.getBool('has_existing_policy') ?? false;
+      if (!isSignupFlow) {
+        final isExploreFlow = await ExploreKycFlow.isActive();
+        if (!mounted) return;
+        if (isExploreFlow) {
+          Navigator.pushReplacementNamed(context, '/enter-nin');
+          return;
+        }
+        Navigator.pushNamedAndRemoveUntil(
+            context, '/user-portal', (route) => false);
+        return;
+      }
+
+      if (hasExistingPolicy) {
+        var policyData = _policyVerifiedIsTrue(otpData)
+            ? _policyDataFromOtpResponse(otpData)
+            : null;
+
+        policyData ??= await _showPolicyNumberDialog();
+
+        if (!mounted) return;
+        if (policyData == null) {
+          setState(() => _isVerifyingOtp = false);
+          return;
+        }
+
+        final accountData = await _savePolicySignupData(policyData);
+        if (!mounted) return;
+        if (accountData == null) {
+          setState(() => _isVerifyingOtp = false);
+          return;
+        }
+        FocusManager.instance.primaryFocus?.unfocus();
+        await WidgetsBinding.instance.endOfFrame;
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CreatePasswordScreen(
+              createLoginWithApi: true,
+              accountData: accountData,
+            ),
+          ),
+        );
+        return;
+      }
+
       final isExploreFlow = await ExploreKycFlow.isActive();
       if (!mounted) return;
       if (isExploreFlow) {
         Navigator.pushReplacementNamed(context, '/enter-nin');
         return;
       }
-      if (!isSignupFlow) {
-        Navigator.pushNamedAndRemoveUntil(
-            context, '/user-portal', (route) => false);
-        return;
-      }
 
-      final nextRoute = hasExistingPolicy ? '/create-password' : '/enter-nin';
-      Navigator.pushNamed(context, nextRoute);
+      Navigator.pushNamed(context, '/enter-nin');
     } catch (e) {
       if (!mounted) return;
       setState(() => _isVerifyingOtp = false);
@@ -344,6 +385,403 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
               fallback: 'OTP verification failed')),
           backgroundColor: Colors.red));
     }
+  }
+
+  bool _policyVerifiedIsTrue(Map<String, dynamic> data) {
+    final value = _findDeepValue(data, 'policy_verified');
+    if (value is bool) return value == true;
+    final normalized = value?.toString().trim().toLowerCase() ?? '';
+    return normalized == 'true' || normalized == '1' || normalized == 'yes';
+  }
+
+  Map<String, dynamic>? _policyDataFromOtpResponse(Map<String, dynamic> data) {
+    final directPolicy = _findPolicyMap(data);
+    if (directPolicy == null) return null;
+    return _flattenPolicyData(directPolicy);
+  }
+
+  Map<String, dynamic>? _findPolicyMap(Object? value) {
+    if (value is List) {
+      for (final item in value) {
+        if (item is Map) {
+          final map = Map<String, dynamic>.from(item);
+          if (_looksLikePolicyData(map)) return map;
+          final nested = _findPolicyMap(map);
+          if (nested != null) return nested;
+        }
+      }
+      return null;
+    }
+
+    if (value is Map) {
+      final map = Map<String, dynamic>.from(value);
+      if (_looksLikePolicyData(map)) return map;
+
+      for (final key in [
+        'policies',
+        'Policies',
+        'policy',
+        'Policy',
+        'policy_details',
+        'PolicyDetails',
+        'Data',
+        'data',
+        'customer',
+        'Customer',
+      ]) {
+        final nested = _findPolicyMap(map[key]);
+        if (nested != null) return nested;
+      }
+
+      for (final nestedValue in map.values) {
+        final nested = _findPolicyMap(nestedValue);
+        if (nested != null) return nested;
+      }
+    }
+
+    return null;
+  }
+
+  bool _looksLikePolicyData(Map<String, dynamic> data) {
+    return CustomerDetails.valueFrom(data, const [
+          'PolicyNo',
+          'PolicyNumber',
+          'policyNo',
+          'policy_number',
+        ]).isNotEmpty ||
+        CustomerDetails.valueFrom(data, const [
+          'Email',
+          'email',
+          'cust_email',
+        ]).isNotEmpty ||
+        CustomerDetails.valueFrom(data, const [
+          'MobileNo',
+          'Phone',
+          'PhoneNo',
+          'cust_phone',
+          'cust_phone_no',
+        ]).isNotEmpty;
+  }
+
+  Object? _findDeepValue(Object? value, String key) {
+    if (value is Map) {
+      for (final entry in value.entries) {
+        if (entry.key.toString().toLowerCase() == key.toLowerCase()) {
+          return entry.value;
+        }
+        final nested = _findDeepValue(entry.value, key);
+        if (nested != null) return nested;
+      }
+    }
+    if (value is List) {
+      for (final item in value) {
+        final nested = _findDeepValue(item, key);
+        if (nested != null) return nested;
+      }
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> _showPolicyNumberDialog() async {
+    final controller = TextEditingController();
+    String? errorText;
+    var isLoading = false;
+
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: const Text('Verify Policy'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'We could not automatically verify a policy for this phone number. Enter your policy number to continue.',
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: controller,
+                    enabled: !isLoading,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: InputDecoration(
+                      labelText: 'Policy Number',
+                      hintText: 'P/COM/59/01/L/00000006',
+                      errorText: errorText,
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isLoading
+                      ? null
+                      : () => Navigator.pop(dialogContext, null),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          final policyNo = controller.text.trim();
+                          if (policyNo.isEmpty) {
+                            setDialogState(
+                                () => errorText = 'Enter a policy number');
+                            return;
+                          }
+
+                          setDialogState(() {
+                            isLoading = true;
+                            errorText = null;
+                          });
+
+                          try {
+                            final policyData = await _verifyPolicy(policyNo);
+                            if (!dialogContext.mounted) return;
+                            Navigator.pop(dialogContext, policyData);
+                          } catch (e) {
+                            if (!dialogContext.mounted) return;
+                            setDialogState(() {
+                              isLoading = false;
+                              errorText = ErrorMessages.fromException(e,
+                                  fallback: 'Policy not found');
+                            });
+                          }
+                        },
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Verify'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    controller.dispose();
+    return result;
+  }
+
+  Future<Map<String, dynamic>> _verifyPolicy(String policyNo) async {
+    final uri = Uri.https('eportal.rexinsure.com', '/api/getpolicy', {
+      'PolicyNo': policyNo,
+      'IntCode': 'Kissflow',
+      'Password': '1lovetoeatcook1es',
+    });
+
+    debugPrint('=== GET POLICY REQUEST ===');
+    debugPrint('URL: $uri');
+
+    final response = await http.get(uri, headers: {
+      'Accept': 'application/json'
+    }).timeout(const Duration(seconds: 15));
+
+    debugPrint('=== GET POLICY RESPONSE ===');
+    debugPrint('Status Code: ${response.statusCode}');
+    debugPrint('Response Body: ${response.body}');
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(
+          ErrorMessages.fromResponse(response, fallback: 'Policy not found'));
+    }
+
+    final data = _decodeJsonMap(response.body);
+    if (data == null) {
+      throw Exception('Policy not found');
+    }
+
+    final status = _field(data, 'Status').toLowerCase();
+    final statusCode = _field(data, 'StatusCode').isNotEmpty
+        ? _field(data, 'StatusCode')
+        : _field(data, 'Statuscode');
+    final payload = data['Data'] ?? data['data'];
+
+    if ((status == 'success' || statusCode == '200' || statusCode == '201') &&
+        payload is List &&
+        payload.isNotEmpty &&
+        payload.first is Map) {
+      final policyData = Map<String, dynamic>.from(payload.first as Map);
+      policyData.putIfAbsent('PolicyNo', () => policyNo);
+      return policyData;
+    }
+
+    if ((status == 'success' || statusCode == '200' || statusCode == '201') &&
+        payload is Map) {
+      final policyData = Map<String, dynamic>.from(payload);
+      policyData.putIfAbsent('PolicyNo', () => policyNo);
+      return policyData;
+    }
+
+    throw Exception(ErrorMessages.fromResponse(response,
+        fallback: 'Policy number could not be verified'));
+  }
+
+  Future<Map<String, String>?> _savePolicySignupData(
+      Map<String, dynamic> policyData) async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = _flattenPolicyData(policyData);
+    final savedPhone = prefs.getString('signup_phone') ?? '';
+    final savedEmail = prefs.getString('signup_email') ?? '';
+
+    final firstName = CustomerDetails.valueFrom(data, const [
+      'firstName',
+      'FirstName',
+      'Firstname',
+      'cust_first_name',
+    ]);
+    final lastName = CustomerDetails.valueFrom(data, const [
+      'lastName',
+      'LastName',
+      'Lastname',
+      'Surname',
+      'cust_last_name',
+    ]);
+    final insuredName = CustomerDetails.valueFrom(data, const [
+      'Insured',
+      'insured',
+    ]);
+    final insuredNameParts = _namePartsFromInsured(insuredName);
+    final email = CustomerDetails.valueFrom(data, const [
+      'email',
+      'Email',
+      'cust_email',
+    ]);
+    final phone = CustomerDetails.valueFrom(data, const [
+      'phone',
+      'Phone',
+      'PhoneNumber',
+      'PhoneNo',
+      'MobileNo',
+      'Phoneno',
+      'cust_phone',
+      'cust_phone_no',
+    ]);
+    final policyNo = CustomerDetails.valueFrom(data, const [
+      'PolicyNo',
+      'PolicyID',
+      'PolicyNumber',
+      'policyNo',
+      'policyId',
+      'policy_number',
+    ]);
+    final resolvedPhone = savedPhone.isNotEmpty ? savedPhone : phone;
+    if (resolvedPhone.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content:
+                Text('Verified phone number is missing. Please try again.'),
+            backgroundColor: Colors.red));
+      }
+      return null;
+    }
+    final resolvedEmail = email.isNotEmpty
+        ? email
+        : savedEmail.isNotEmpty
+            ? savedEmail
+            : await _showEmailAddressDialog();
+    if (resolvedEmail == null || resolvedEmail.trim().isEmpty) {
+      return null;
+    }
+
+    final accountData = {
+      'firstName': firstName.isNotEmpty
+          ? firstName
+          : insuredNameParts['firstName'] ?? 'Customer',
+      'lastName':
+          lastName.isNotEmpty ? lastName : insuredNameParts['lastName'] ?? '',
+      'email': resolvedEmail.trim(),
+      'phone': resolvedPhone,
+      'occupation':
+          CustomerDetails.valueFrom(data, const ['Occupation', 'occupation']),
+      'dob': CustomerDetails.valueFrom(data, const [
+        'dob',
+        'DOB',
+        'DateOfBirth',
+        'BirthDate',
+        'cust_dob',
+      ]),
+      'state': CustomerDetails.valueFrom(data, const ['State', 'state']),
+      'lga': CustomerDetails.valueFrom(data, const ['LGA', 'Lga', 'lga']),
+      'address': CustomerDetails.valueFrom(data, const [
+        'Address',
+        'ResidentialAddress',
+        'cust_address',
+      ]),
+      'nin': CustomerDetails.ninFrom(data),
+      'reference': policyNo,
+    };
+
+    await prefs.setString('signup_first_name', accountData['firstName'] ?? '');
+    await prefs.setString('signup_last_name', accountData['lastName'] ?? '');
+    await prefs.setString('signup_email', accountData['email'] ?? '');
+    await prefs.setString('signup_phone', accountData['phone'] ?? '');
+    await prefs.setString('signup_dob', accountData['dob'] ?? '');
+    await prefs.setString('signup_state', accountData['state'] ?? '');
+    await prefs.setString('signup_lga', accountData['lga'] ?? '');
+    await prefs.setString('signup_address', accountData['address'] ?? '');
+    await prefs.setString('signup_nin', accountData['nin'] ?? '');
+    await prefs.setString('signup_policy_no', policyNo);
+
+    return accountData;
+  }
+
+  Future<String?> _showEmailAddressDialog() async {
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _EmailAddressDialog(),
+    );
+  }
+
+  Map<String, String> _namePartsFromInsured(String insuredName) {
+    final trimmed = insuredName.trim();
+    if (trimmed.isEmpty) return const {};
+
+    if (trimmed.contains(',')) {
+      final parts = trimmed.split(',');
+      final surname = parts.first.trim();
+      final otherNames = parts.skip(1).join(' ').trim().split(RegExp(r'\s+'));
+      return {
+        'firstName': otherNames.isNotEmpty ? otherNames.first : surname,
+        'lastName': surname,
+      };
+    }
+
+    final parts = trimmed.split(RegExp(r'\s+'));
+    return {
+      'firstName': parts.first,
+      'lastName': parts.length > 1 ? parts.skip(1).join(' ') : '',
+    };
+  }
+
+  Map<String, dynamic> _flattenPolicyData(Map<String, dynamic> policyData) {
+    final flattened = Map<String, dynamic>.from(policyData);
+    for (final key in ['Customer', 'customer', 'Client', 'client']) {
+      final value = policyData[key];
+      if (value is Map) {
+        flattened.addAll(Map<String, dynamic>.from(value));
+      }
+    }
+    final policyDetails =
+        policyData['PolicyDetails'] ?? policyData['policyDetails'];
+    if (policyDetails is Map) {
+      final policies = policyDetails['Policy'] ?? policyDetails['policy'];
+      if (policies is List && policies.isNotEmpty && policies.first is Map) {
+        flattened.addAll(Map<String, dynamic>.from(policies.first as Map));
+      } else if (policies is Map) {
+        flattened.addAll(Map<String, dynamic>.from(policies));
+      }
+    }
+    return flattened;
   }
 
   Future<void> _resendCode() async {
@@ -812,7 +1250,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                         ),
                       ),
                       TextButton(
-                        onPressed: _resendCode,
+                        onPressed: _isVerifyingOtp ? null : _resendCode,
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: const Size(0, 0),
@@ -835,6 +1273,86 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _EmailAddressDialog extends StatefulWidget {
+  const _EmailAddressDialog();
+
+  @override
+  State<_EmailAddressDialog> createState() => _EmailAddressDialogState();
+}
+
+class _EmailAddressDialogState extends State<_EmailAddressDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_isSubmitting) return;
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSubmitting = true);
+    FocusManager.instance.primaryFocus?.unfocus();
+    Navigator.pop(context, _emailController.text.trim());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Enter Email Address'),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Enter the email address you want to use for this account.',
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.done,
+                autocorrect: false,
+                enableSuggestions: false,
+                autofillHints: const [AutofillHints.email],
+                decoration: const InputDecoration(
+                  labelText: 'Email Address',
+                  hintText: 'name@example.com',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final email = value?.trim() ?? '';
+                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+                    return 'Enter a valid email address';
+                  }
+                  return null;
+                },
+                onFieldSubmitted: (_) => _submit(),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isSubmitting ? null : () => Navigator.pop(context, null),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isSubmitting ? null : _submit,
+          child: const Text('Continue'),
+        ),
+      ],
     );
   }
 }

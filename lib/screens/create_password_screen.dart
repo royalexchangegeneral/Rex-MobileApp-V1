@@ -89,17 +89,81 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       return;
     }
 
-    final payload = {
-      'cust_first_name': firstName.isNotEmpty ? firstName : 'Customer',
-      'cust_middle_name': '',
-      'cust_last_name': lastName,
-      'cust_occupation': widget.accountData['occupation'] ?? 'Business',
-      'cust_phone_no': phone,
-      'cust_email': email,
-      'cust_password': password,
-    };
-
     try {
+      final customerPayload = {
+        'cust_first_name': firstName.isNotEmpty ? firstName : 'Customer',
+        'cust_middle_name': null,
+        'cust_last_name': lastName,
+        'cust_type': 'Individual',
+        'cust_occupation': widget.accountData['occupation']?.isNotEmpty == true
+            ? widget.accountData['occupation']
+            : 'Business',
+        'cust_phone_no': phone,
+        'cust_email': email,
+        'cust_address': _safeAddress(widget.accountData['address']),
+        'cust_town': null,
+        'cust_nationality': 'Nigerian',
+        'cust_state': _safeValue(widget.accountData['state']),
+        'cust_lga': _safeValue(widget.accountData['lga']),
+        'cust_dob': _safeValue(_normalizeDob(widget.accountData['dob'])),
+        'cust_national_id_name': 'NIN',
+        'cust_national_id_no': widget.accountData['nin'] ?? '',
+      };
+
+      debugPrint('=== CREATE POLICY CUSTOMER REQUEST ===');
+      debugPrint('URL: https://eportal.rexinsure.com/api/createcustomer');
+      debugPrint('Payload: ${json.encode(customerPayload)}');
+
+      final customerResponse = await http
+          .post(
+            Uri.parse('https://eportal.rexinsure.com/api/createcustomer'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(customerPayload),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      debugPrint('=== CREATE POLICY CUSTOMER RESPONSE ===');
+      debugPrint('Status Code: ${customerResponse.statusCode}');
+      debugPrint('Response Body: ${customerResponse.body}');
+
+      if (customerResponse.statusCode != 200 &&
+          customerResponse.statusCode != 201) {
+        await _showSignupApiError(customerResponse.body,
+            fallback: 'Customer creation failed');
+        return;
+      }
+
+      final customerData = _decodeJsonMap(customerResponse.body);
+      if (customerData == null) {
+        await _showSignupApiError(customerResponse.body,
+            fallback: 'Customer creation failed');
+        return;
+      }
+
+      final customerStatus =
+          customerData['Status']?.toString().toLowerCase() ?? '';
+      final customerStatusCode = customerData['StatusCode']?.toString() ??
+          customerData['Statuscode']?.toString() ??
+          '';
+      final customerAlreadyExists = customerStatusCode == '409';
+      if (customerStatus != 'success' && !customerAlreadyExists) {
+        await _showSignupApiError(customerResponse.body,
+            fallback: 'Customer creation failed');
+        return;
+      }
+
+      final payload = {
+        'cust_first_name': firstName.isNotEmpty ? firstName : 'Customer',
+        'cust_middle_name': '',
+        'cust_last_name': lastName,
+        'cust_occupation': widget.accountData['occupation']?.isNotEmpty == true
+            ? widget.accountData['occupation']
+            : 'Business',
+        'cust_phone_no': phone,
+        'cust_email': email,
+        'cust_password': password,
+      };
+
       final response = await http
           .post(
             Uri.parse('https://eportal.rexinsure.com/api/createlogin'),
@@ -131,6 +195,9 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
           setState(() => _isLoading = false);
 
           if (loginResult.success) {
+            final prefs = await SharedPreferences.getInstance();
+            await _clearSignupData(prefs);
+            if (!mounted) return;
             TextInput.finishAutofillContext();
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text('Account created successfully!'),
@@ -160,6 +227,9 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
           );
           if (!mounted) return;
           if (fallbackSuccess) {
+            final prefs = await SharedPreferences.getInstance();
+            await _clearSignupData(prefs);
+            if (!mounted) return;
             TextInput.finishAutofillContext();
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text('Account created successfully!'),
@@ -401,6 +471,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       'signup_state',
       'signup_lga',
       'signup_address',
+      'signup_policy_no',
       'is_signup_flow',
       'has_existing_policy',
     ]) {

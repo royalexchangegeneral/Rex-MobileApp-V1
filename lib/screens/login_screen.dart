@@ -520,6 +520,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'signup_state',
                                 'signup_lga',
                                 'signup_address',
+                                'signup_policy_no',
                                 'is_signup_flow',
                                 'has_existing_policy',
                               ]) {
