@@ -312,7 +312,7 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
 
     try {
       final payload = {
-        'IntCode': 'Kissflow',
+        'Intcode': 'Kissflow',
         'Password': '1lovetoeatcook1es',
         'number': _ninController.text.trim(),
       };
@@ -583,6 +583,20 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
     await prefs.setString('signup_lga', _selectedLga ?? '');
     await prefs.setString('signup_address', _addressController.text.trim());
 
+    final hasExistingPolicy = prefs.getBool('has_existing_policy') ?? false;
+    final isSignupFlow = prefs.getBool('is_signup_flow') ?? false;
+    final phoneAlreadyVerified =
+        (prefs.getString('signup_phone') ?? '').trim().isNotEmpty;
+    final isExploreFlow = await ExploreKycFlow.isActive();
+    if (!mounted) return;
+    if (isSignupFlow &&
+        !hasExistingPolicy &&
+        phoneAlreadyVerified &&
+        !isExploreFlow) {
+      Navigator.pushNamed(context, '/create-password');
+      return;
+    }
+
     if (!mounted) return;
     final exploreResumeScreen = await ExploreKycFlow.pendingResumeScreen();
     if (!mounted) return;
@@ -594,9 +608,9 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
       return;
     }
 
-    final isExploreFlow = await ExploreKycFlow.isActive();
+    final activeExploreFlow = await ExploreKycFlow.isActive();
     if (!mounted) return;
-    if (isExploreFlow) {
+    if (activeExploreFlow) {
       final activeResumeScreen = await ExploreKycFlow.activeResumeScreen();
       if (!mounted) return;
       if (activeResumeScreen != null) {
@@ -611,10 +625,6 @@ class _EnterNinScreenState extends State<EnterNinScreen> {
       return;
     }
 
-    final hasExistingPolicy = prefs.getBool('has_existing_policy') ?? false;
-    final isSignupFlow = prefs.getBool('is_signup_flow') ?? false;
-    final phoneAlreadyVerified =
-        (prefs.getString('signup_phone') ?? '').trim().isNotEmpty;
     if (!isSignupFlow) {
       Navigator.pushNamedAndRemoveUntil(
           context, '/user-portal', (route) => false);

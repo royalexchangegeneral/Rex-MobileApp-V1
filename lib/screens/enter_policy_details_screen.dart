@@ -236,7 +236,8 @@ class _EnterPolicyDetailsScreenState extends State<EnterPolicyDetailsScreen> {
                 'signup_dob',
                 'signup_state',
                 'signup_lga',
-                'signup_address'
+                'signup_address',
+                'signup_details_completed'
               ]) {
                 await prefs.remove(key);
               }

@@ -270,7 +270,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
         Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'IntCode': 'Kissflow',
+          'Intcode': 'Kissflow',
           'Password': '1lovetoeatcook1es',
           'number': nin,
         }),

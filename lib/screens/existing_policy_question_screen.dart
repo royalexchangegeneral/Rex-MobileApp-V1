@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'signup_screen.dart';
 import '../utils/app_theme.dart';
+import '../utils/explore_kyc_flow.dart';
 
 class ExistingPolicyQuestionScreen extends StatefulWidget {
   const ExistingPolicyQuestionScreen({super.key});
@@ -26,6 +27,7 @@ class _ExistingPolicyQuestionScreenState
     }
 
     final prefs = await SharedPreferences.getInstance();
+    await ExploreKycFlow.complete();
     await prefs.setBool('is_signup_flow', true);
 
     if (_selectedOption == 'yes') {
@@ -37,7 +39,9 @@ class _ExistingPolicyQuestionScreenState
       await prefs.setBool('has_existing_policy', false);
       if (mounted) {
         final savedEmail = prefs.getString('signup_email')?.trim() ?? '';
-        if (savedEmail.isNotEmpty) {
+        final detailsCompleted =
+            prefs.getBool('signup_details_completed') ?? false;
+        if (detailsCompleted && savedEmail.isNotEmpty) {
           Navigator.pushNamed(context, '/verify-phone', arguments: savedEmail);
           return;
         }

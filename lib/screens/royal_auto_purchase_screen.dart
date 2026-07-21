@@ -303,7 +303,7 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
               Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
               headers: {'Content-Type': 'application/json'},
               body: json.encode({
-                'IntCode': 'Kissflow',
+                'Intcode': 'Kissflow',
                 'Password': '1lovetoeatcook1es',
                 'number': _ninController.text.trim()
               }))

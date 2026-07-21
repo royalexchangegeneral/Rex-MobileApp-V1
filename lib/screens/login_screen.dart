@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_theme.dart';
+import '../utils/explore_kyc_flow.dart';
 import '../providers/auth_provider.dart';
 import '../services/biometric_service.dart';
 import '../services/device_security_service.dart';
@@ -521,11 +522,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'signup_lga',
                                 'signup_address',
                                 'signup_policy_no',
+                                'signup_details_completed',
                                 'is_signup_flow',
                                 'has_existing_policy',
                               ]) {
                                 await prefs.remove(key);
                               }
+                              await ExploreKycFlow.complete();
                               await prefs.setBool('is_signup_flow', true);
                               if (!context.mounted) return;
                               Navigator.pushNamed(

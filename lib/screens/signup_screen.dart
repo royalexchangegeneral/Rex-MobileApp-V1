@@ -44,6 +44,7 @@ class _SignupScreenState extends State<SignupScreen> {
           'signup_last_name', _lastNameController.text.trim());
       await prefs.setString('signup_email', _emailController.text.trim());
       await prefs.setBool('is_signup_flow', true);
+      await prefs.setBool('signup_details_completed', true);
       if (mounted) {
         Navigator.pushNamed(
           context,

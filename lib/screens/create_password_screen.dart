@@ -472,6 +472,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       'signup_lga',
       'signup_address',
       'signup_policy_no',
+      'signup_details_completed',
       'is_signup_flow',
       'has_existing_policy',
     ]) {
