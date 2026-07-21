@@ -3,6 +3,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:io';
 import '../utils/app_theme.dart';
 import '../utils/renewal_guard.dart';
@@ -39,7 +41,10 @@ class PolicyDetailsScreen extends StatelessWidget {
     final startDate = data?['startDate']?.toString() ?? '';
     final endDate = data?['endDate']?.toString() ?? '';
     final policyClass = data?['policyClass']?.toString() ?? policyType;
-    final policyId = data?['policyId']?.toString() ?? policyNumber;
+    final policyId = data?['policyNo']?.toString() ??
+        data?['PolicyNo']?.toString() ??
+        data?['policyId']?.toString() ??
+        policyNumber;
     final premium = data?['premium']?.toString() ?? '';
     final insured = data?['insured']?.toString() ?? '';
     final sumInsured = data?['sumInsured']?.toString() ?? '';
@@ -255,7 +260,7 @@ class PolicyDetailsScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildInfoRow(context, 'Policy ID', policyId),
+                  _buildInfoRow(context, 'Policy No.', policyId),
                   _buildInfoRow(context, 'Policy Class', policyClass),
                   _buildInfoRow(context, 'Status', status),
                   _buildInfoRow(context, 'Insured', insured),
@@ -391,8 +396,9 @@ class PolicyDetailsScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () {
-                  final certUrl = _certificateUri().toString();
+                onPressed: () async {
+                  final certUrl = await _certificateUrl(context);
+                  if (certUrl == null || !context.mounted) return;
                   Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -607,6 +613,259 @@ class PolicyDetailsScreen extends StatelessWidget {
     );
   }
 
+  bool get _usesIesCertificateEndpoint {
+    final normalized = policyNumber.trim().toUpperCase();
+    return normalized.startsWith('P/PM') || normalized.startsWith('P/CV');
+  }
+
+  Future<String?> _certificateUrl(BuildContext context) async {
+    if (!_usesIesCertificateEndpoint) {
+      return _certificateUri().toString();
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Generating policy certificate...')),
+      );
+
+      final response = await http
+          .post(
+            Uri.parse(
+                'https://eportaltest.rexinsure.com/api/kissflow/generate/certificate/ies'),
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: json.encode(_iesCertificatePayload()),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw HttpException('Certificate generation failed');
+      }
+
+      final generatedUrl = _certificateUrlFromResponse(response.body);
+      if (generatedUrl.isEmpty) {
+        throw const FormatException('No certificate URL returned');
+      }
+
+      return _normalizeCertificateUrl(generatedUrl);
+    } catch (e) {
+      debugPrint('IES certificate generation error: $e');
+      if (context.mounted) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Unable to generate certificate')),
+        );
+      }
+      return null;
+    }
+  }
+
+  Map<String, dynamic> _iesCertificatePayload() {
+    final names = _firstNonEmpty([
+      policyData?['customerName'],
+      policyData?['names'],
+      policyData?['Insured'],
+      policyData?['insured'],
+    ]);
+    final sumInsured = _firstNonEmpty([
+      policyData?['sumInsured'],
+      policyData?['SumInsured'],
+      policyData?['SumAssured'],
+      policyData?['sumassured'],
+    ]);
+
+    return {
+      'IntCode': 'Kissflow',
+      'Password': 'royal1234',
+      'policyno': policyNumber,
+      'prodcode': _numberValue(sumInsured) > 0 ? 'COM' : 'TP',
+      'refno': _firstNonEmpty([
+        policyData?['CP_REFERENCE_NO'],
+        policyData?['cp_reference_no'],
+        policyData?['refno'],
+        policyData?['refNo'],
+        policyData?['ReferenceNo'],
+        policyData?['reference'],
+        policyNumber,
+      ]),
+      'title': _firstNonEmpty([
+        policyData?['customerTitle'],
+        policyData?['Title'],
+        'Mr',
+      ]),
+      'names': names,
+      'vehmake': _vehicleValue([
+        'vehmake',
+        'VehicleMake',
+        'vehicleMake',
+        'Make',
+        'make',
+      ]),
+      'vehmodel': _vehicleValue([
+        'vehmodel',
+        'VehicleModel',
+        'vehicleModel',
+        'Model',
+        'model',
+      ]),
+      'vehcolor': _vehicleValue([
+        'vehcolor',
+        'VehicleColor',
+        'vehicleColor',
+        'Color',
+        'color',
+      ]),
+      'vehtype': _firstNonEmpty([
+        policyData?['VehicleType'],
+        policyData?['vehicleType'],
+        policyData?['ProductCover'],
+        policyData?['policyClass'],
+        policyType,
+      ]),
+      'regno': _vehicleValue([
+        'regno',
+        'RegNo',
+        'RegistrationNo',
+        'registrationNo',
+        'VehicleRegNo',
+        'item_code',
+      ]),
+      'startdate': _firstNonEmpty([
+        policyData?['startDate'],
+        policyData?['PolicyStartDate'],
+        policyData?['StartDate'],
+      ]),
+      'approvedby': _firstNonEmpty([
+        policyData?['ApprovedBy'],
+        policyData?['approvedby'],
+        'approver@rexinsure.com',
+      ]),
+      'othernames': _firstNonEmpty([
+        policyData?['customerMiddleName'],
+        policyData?['Middlename'],
+        policyData?['MiddleName'],
+      ]),
+      'address': _firstNonEmpty([
+        policyData?['customerAddress'],
+        policyData?['Address'],
+        policyData?['address'],
+      ]),
+      'suminsured': sumInsured,
+      'occupation': _firstNonEmpty([
+        policyData?['customerOccupation'],
+        policyData?['Occupation'],
+        policyData?['occupation'],
+      ]),
+      'premium': _firstNonEmpty([
+        policyData?['premium'],
+        policyData?['Premium'],
+        policyData?['GrossPremium'],
+      ]),
+    };
+  }
+
+  String _vehicleValue(List<String> keys) {
+    final direct = _firstNonEmpty(keys.map((key) => policyData?[key]));
+    if (direct.isNotEmpty) return direct;
+
+    final items = policyData?['items'] ?? policyData?['Items'];
+    if (items is List && items.isNotEmpty && items.first is Map) {
+      final item = Map<String, dynamic>.from(items.first as Map);
+      final itemValue = _firstNonEmpty(keys.map((key) => item[key]));
+      if (itemValue.isNotEmpty) return itemValue;
+
+      final description = item['desc']?.toString().trim() ?? '';
+      final isMake = keys.any((key) => key.toLowerCase().contains('make'));
+      final isModel = keys.any((key) => key.toLowerCase().contains('model'));
+      if (description.contains('-')) {
+        final parts = description.split('-');
+        if (isMake) return parts.first.trim();
+        if (isModel) return parts.skip(1).join('-').trim();
+      }
+      if (isMake) return description;
+    }
+    return '';
+  }
+
+  String _firstNonEmpty(Iterable<dynamic> values) {
+    for (final value in values) {
+      final text = value?.toString().trim() ?? '';
+      if (text.isNotEmpty && text.toLowerCase() != 'null') return text;
+    }
+    return '';
+  }
+
+  double _numberValue(String value) {
+    final cleaned = value.replaceAll(RegExp(r'[^0-9.-]'), '');
+    return double.tryParse(cleaned) ?? 0;
+  }
+
+  String _certificateUrlFromResponse(String body) {
+    try {
+      final decoded = json.decode(body);
+      if (decoded is String)
+        return _looksLikeUrl(decoded) ? decoded.trim() : '';
+      return _findCertificateUrl(decoded);
+    } catch (_) {
+      final trimmed = body.trim();
+      return _looksLikeUrl(trimmed) ? trimmed : '';
+    }
+  }
+
+  String _findCertificateUrl(dynamic value) {
+    if (value is Map) {
+      final map = Map<String, dynamic>.from(value);
+      for (final key in [
+        'url',
+        'certificate_url',
+        'certificateUrl',
+        'download_url',
+        'downloadUrl',
+        'file_url',
+        'fileUrl',
+        'file',
+        'path',
+      ]) {
+        final candidate = map[key]?.toString().trim() ?? '';
+        if (_looksLikeUrl(candidate)) return candidate;
+      }
+
+      for (final nested in map.values) {
+        final found = _findCertificateUrl(nested);
+        if (found.isNotEmpty) return found;
+      }
+    }
+
+    if (value is List) {
+      for (final item in value) {
+        final found = _findCertificateUrl(item);
+        if (found.isNotEmpty) return found;
+      }
+    }
+
+    return '';
+  }
+
+  bool _looksLikeUrl(String value) {
+    final text = value.trim().toLowerCase();
+    return text.startsWith('http://') ||
+        text.startsWith('https://') ||
+        text.startsWith('/');
+  }
+
+  String _normalizeCertificateUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('/')) {
+      return 'https://eportaltest.rexinsure.com$trimmed';
+    }
+    return trimmed;
+  }
+
   String _getCertType() {
     final pClass = (policyData?['policyClass'] ??
             policyData?['ProductClass'] ??
@@ -636,7 +895,9 @@ class PolicyDetailsScreen extends StatelessWidget {
         const SnackBar(content: Text('Downloading policy certificate...')),
       );
 
-      final uri = _certificateUri();
+      final certUrl = await _certificateUrl(ctx);
+      if (certUrl == null) return;
+      final uri = Uri.parse(certUrl);
       final client = HttpClient();
       final request = await client.getUrl(uri);
       final response = await request.close();

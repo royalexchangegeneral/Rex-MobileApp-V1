@@ -73,12 +73,19 @@ class AgentPolicyProvider with ChangeNotifier {
             if (details != null && details['Policy'] is List) {
               for (final p in details['Policy']) {
                 final policyId = p['PolicyID']?.toString() ?? '';
-                if (policyId.isNotEmpty && !seenPolicyIds.contains(policyId)) {
-                  seenPolicyIds.add(policyId);
+                final policyNo = p['PolicyNo']?.toString() ??
+                    p['PolicyNumber']?.toString() ??
+                    policyId;
+                final uniquePolicyKey =
+                    policyNo.trim().isNotEmpty ? policyNo : policyId;
+                if (uniquePolicyKey.isNotEmpty &&
+                    !seenPolicyIds.contains(uniquePolicyKey)) {
+                  seenPolicyIds.add(uniquePolicyKey);
                   final policyClass = p['PolicyClass']?.toString() ?? '';
                   allPolicies.add({
                     if (p is Map) ...Map<String, dynamic>.from(p),
                     'policyId': policyId,
+                    'policyNo': policyNo,
                     'premium': p['Premium']?.toString() ?? '',
                     'policyClass': policyClass,
                     'category': p['Category']?.toString() ??

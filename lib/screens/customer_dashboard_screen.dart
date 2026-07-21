@@ -233,14 +233,14 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                   icon: Icon(Icons.notifications_outlined,
                       color: Theme.of(context).colorScheme.onSurface),
                   onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const NotificationsScreen()))
-                      .then((_) {
-                    if (context.mounted) {
-                      notifProvider.fetchNotifications(context);
-                    }
-                  })),
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const NotificationsScreen()))
+                          .then((_) {
+                        if (context.mounted) {
+                          notifProvider.fetchNotifications(context);
+                        }
+                      })),
               if (notifProvider.unreadCount > 0)
                 Positioned(
                     right: 8,
@@ -400,7 +400,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _buildPolicyCard(
                         '${p['policyClass']} Insurance',
-                        'Policy #${p['policyId']}',
+                        'Policy #${p['policyNo'] ?? p['policyId']}',
                         p['endDate'] ?? '',
                         icon,
                         const Color(0xFF1A3A5C),
@@ -411,7 +411,8 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                             MaterialPageRoute(
                                 builder: (_) => PolicyDetailsScreen(
                                     policyType: '${p['policyClass']} Insurance',
-                                    policyNumber: p['policyId'] ?? '',
+                                    policyNumber:
+                                        p['policyNo'] ?? p['policyId'] ?? '',
                                     policyData: p))),
                       ));
                 }).toList());

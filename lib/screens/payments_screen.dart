@@ -184,7 +184,7 @@ class PaymentsScreen extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 2),
-                  Text('Policy #${p['policyId'] ?? ''}',
+                  Text('Policy #${p['policyNo'] ?? p['policyId'] ?? ''}',
                       style: TextStyle(
                           fontSize: 10, color: _secondaryTextColor(context))),
                 ])),
@@ -209,16 +209,19 @@ class PaymentsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           _row(context, 'End Date', p['endDate']?.toString() ?? '-'),
           const SizedBox(height: 8),
-          _row(context, 'Policy ID', p['policyId']?.toString() ?? '-'),
+          _row(context, 'Policy No.',
+              p['policyNo']?.toString() ?? p['policyId']?.toString() ?? '-'),
           const SizedBox(height: 4),
           Align(
               alignment: Alignment.centerRight,
               child: GestureDetector(
                   onTap: () {
-                    Clipboard.setData(
-                        ClipboardData(text: p['policyId']?.toString() ?? ''));
+                    Clipboard.setData(ClipboardData(
+                        text: p['policyNo']?.toString() ??
+                            p['policyId']?.toString() ??
+                            ''));
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Policy ID copied'),
+                        content: Text('Policy number copied'),
                         duration: Duration(seconds: 1)));
                   },
                   child: const Row(mainAxisSize: MainAxisSize.min, children: [

@@ -347,7 +347,7 @@ class _AgentPoliciesScreenState extends State<AgentPoliciesScreen> {
                     Text(p['customerName']?.toString() ?? '',
                         style: TextStyle(
                             fontSize: 10, color: _secondaryTextColor)),
-                    Text('Policy #${p['policyId']}',
+                    Text('Policy #${p['policyNo'] ?? p['policyId']}',
                         style: TextStyle(
                             fontSize: 10, color: _secondaryTextColor)),
                     if (category.isNotEmpty && category != policyClass)
@@ -420,7 +420,9 @@ class _AgentPoliciesScreenState extends State<AgentPoliciesScreen> {
                   MaterialPageRoute(
                       builder: (_) => PolicyDetailsScreen(
                             policyType: '$policyClass Insurance',
-                            policyNumber: p['policyId']?.toString() ?? '',
+                            policyNumber: p['policyNo']?.toString() ??
+                                p['policyId']?.toString() ??
+                                '',
                             policyData: p,
                             isAgentFlow: true,
                           ))),

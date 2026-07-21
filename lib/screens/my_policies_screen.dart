@@ -36,7 +36,7 @@ class _MyPoliciesScreenState extends State<MyPoliciesScreen> {
       return {
         'title': p['policyClass'] ?? '',
         'vehicle': p['insured'] ?? '',
-        'policyNo': 'Policy #${p['policyId'] ?? ''}',
+        'policyNo': 'Policy #${p['policyNo'] ?? p['policyId'] ?? ''}',
         'status': displayStatus,
         'statusColor': isActive
             ? Colors.green

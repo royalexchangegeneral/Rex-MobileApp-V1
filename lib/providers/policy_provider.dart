@@ -93,11 +93,18 @@ class PolicyProvider with ChangeNotifier {
             if (details['Policy'] is List) {
               for (final p in details['Policy']) {
                 final policyId = p['PolicyID']?.toString() ?? '';
-                if (policyId.isNotEmpty && !seenPolicyIds.contains(policyId)) {
-                  seenPolicyIds.add(policyId);
+                final policyNo = p['PolicyNo']?.toString() ??
+                    p['PolicyNumber']?.toString() ??
+                    policyId;
+                final uniquePolicyKey =
+                    policyNo.trim().isNotEmpty ? policyNo : policyId;
+                if (uniquePolicyKey.isNotEmpty &&
+                    !seenPolicyIds.contains(uniquePolicyKey)) {
+                  seenPolicyIds.add(uniquePolicyKey);
                   allPolicies.add({
                     if (p is Map) ...Map<String, dynamic>.from(p),
                     'policyId': policyId,
+                    'policyNo': policyNo,
                     'premium': p['Premium']?.toString() ?? '',
                     'policyClass': p['PolicyClass']?.toString() ?? '',
                     'status': _getPolicyStatus(p['PolicyEndDate']?.toString()),
@@ -108,6 +115,16 @@ class PolicyProvider with ChangeNotifier {
                     'customerName':
                         '${customer['Firstname'] ?? ''} ${customer['Surname'] ?? ''}'
                             .trim(),
+                    'customerTitle': customer['Title']?.toString() ?? '',
+                    'customerFirstName':
+                        customer['Firstname']?.toString() ?? '',
+                    'customerSurname': customer['Surname']?.toString() ?? '',
+                    'customerMiddleName':
+                        customer['Middlename']?.toString() ?? '',
+                    'customerAddress': customer['Address']?.toString() ?? '',
+                    'customerState': customer['State']?.toString() ?? '',
+                    'customerOccupation':
+                        customer['Occupation']?.toString() ?? '',
                     'customerEmail': customer['Email']?.toString() ?? '',
                     'customerPhone': customer['MobileNo']?.toString() ??
                         customer['Phone']?.toString() ??

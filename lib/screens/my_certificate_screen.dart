@@ -55,13 +55,15 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
     setState(() {
       _certificates.clear();
       for (final p in policies) {
+        final policyNo =
+            p['policyNo']?.toString() ?? p['policyId']?.toString() ?? '';
         _certificates.add({
-          'id': p['policyId']?.toString() ?? '',
+          'id': policyNo,
           'type': (p['policyClass']?.toString() ?? 'INSURANCE').toUpperCase(),
           'name':
               p['insured']?.toString() ?? p['customerName']?.toString() ?? '',
-          'policyNo': p['policyId']?.toString() ?? '',
-          'certNo': p['policyId']?.toString() ?? '',
+          'policyNo': policyNo,
+          'certNo': policyNo,
           'startDate': p['startDate']?.toString() ?? '',
           'expiryDate': p['endDate']?.toString() ?? '',
         });
