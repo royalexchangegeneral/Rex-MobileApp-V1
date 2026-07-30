@@ -211,29 +211,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
     }
   }
 
-  Future<http.Response> _fetchPolicyWithPost(String policyNo) {
-    final url = Uri.parse('https://eportal.rexinsure.com/api/getpolicy');
-    final payload = {
-      'PolicyNo': policyNo,
-      'IntCode': 'Kissflow',
-      'Password': '1lovetoeatcook1es',
-    };
-
-    debugPrint('=== VERIFY POLICY POST: $url ===');
-    debugPrint('Payload: ${json.encode(payload)}');
-    return http
-        .post(
-          url,
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: json.encode(payload),
-        )
-        .timeout(const Duration(seconds: 15));
-  }
-
-  Future<http.Response> _fetchPolicyWithQuery(String policyNo) {
+  Future<http.Response> _fetchPolicy(String policyNo) {
     final url = Uri.https(
       'eportal.rexinsure.com',
       '/api/getpolicy',
@@ -244,7 +222,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
       },
     );
 
-    debugPrint('=== VERIFY POLICY FALLBACK GET: $url ===');
+    debugPrint('=== VERIFY POLICY GET: $url ===');
     return http.get(url, headers: {
       'Accept': 'application/json',
     }).timeout(const Duration(seconds: 15));
@@ -279,16 +257,6 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
     throw Exception('Policy not found. Please confirm the policy number.');
   }
 
-  bool _shouldTryPolicyFallback(http.Response response) {
-    if (response.statusCode >= 500) return true;
-
-    final message = ErrorMessages.fromResponse(response).toLowerCase();
-    return message.contains('something went wrong') ||
-        message.contains('invalid userid') ||
-        message.contains('invalid user id') ||
-        message.contains('invalid password');
-  }
-
   String _friendlyPolicyMessage(String message) {
     final lower = message.toLowerCase();
     if (lower.contains('something went wrong') ||
@@ -311,18 +279,9 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
 
     setState(() => _verifying = true);
     try {
-      var r = await _fetchPolicyWithPost(policyNo);
+      final r = await _fetchPolicy(policyNo);
       debugPrint('=== POLICY RESPONSE: ${r.statusCode} ===');
       debugPrint('Body: ${r.body}');
-
-      if (_shouldTryPolicyFallback(r)) {
-        final fallback = await _fetchPolicyWithQuery(policyNo);
-        debugPrint('=== POLICY FALLBACK RESPONSE: ${fallback.statusCode} ===');
-        debugPrint('Body: ${fallback.body}');
-        if (fallback.statusCode == 200 || fallback.statusCode == 201) {
-          r = fallback;
-        }
-      }
 
       final pd = _policyDataFromResponse(r);
 
