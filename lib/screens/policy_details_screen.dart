@@ -24,6 +24,8 @@ class PolicyDetailsScreen extends StatelessWidget {
   final String policyNumber;
   final Map<String, dynamic>? policyData;
   final bool isAgentFlow;
+  static const String _policyInfoBearerToken =
+      '28AnYQWy2PGXptmPJd2mEYVXt0gg7RznjnBMbC4I';
 
   const PolicyDetailsScreen({
     super.key,
@@ -629,6 +631,9 @@ class PolicyDetailsScreen extends StatelessWidget {
         const SnackBar(content: Text('Generating policy certificate...')),
       );
 
+      final policyInfo = await _fetchPolicyInfoForCertificate();
+      final certificatePayload = _iesCertificatePayload(policyInfo);
+
       final response = await http
           .post(
             Uri.parse(
@@ -637,7 +642,7 @@ class PolicyDetailsScreen extends StatelessWidget {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
             },
-            body: json.encode(_iesCertificatePayload()),
+            body: json.encode(certificatePayload),
           )
           .timeout(const Duration(seconds: 30));
 
@@ -662,55 +667,120 @@ class PolicyDetailsScreen extends StatelessWidget {
     }
   }
 
-  Map<String, dynamic> _iesCertificatePayload() {
+  Future<Map<String, dynamic>> _fetchPolicyInfoForCertificate() async {
+    final response = await http
+        .get(
+          Uri.https(
+            'eportal.rexinsure.com',
+            '/api/kissflow/getpolinfo',
+            {
+              'PolicyNo': policyNumber,
+              'IntCode': 'Kissflow',
+              'Password': '1lovetoeatcook1es',
+            },
+          ),
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $_policyInfoBearerToken',
+          },
+        )
+        .timeout(const Duration(seconds: 30));
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HttpException('Policy info lookup failed');
+    }
+
+    final decoded = json.decode(response.body);
+    final fetchedPolicyInfo = _policyInfoFromResponse(decoded);
+    return {
+      if (policyData != null) ...policyData!,
+      ...fetchedPolicyInfo,
+    };
+  }
+
+  Map<String, dynamic> _policyInfoFromResponse(dynamic decoded) {
+    if (decoded is Map) {
+      final map = Map<String, dynamic>.from(decoded);
+      for (final key in [
+        'Data',
+        'data',
+        'PolicyInfo',
+        'policyInfo',
+        'Policy',
+        'policy',
+      ]) {
+        final value = map[key];
+        if (value is Map) return Map<String, dynamic>.from(value);
+        if (value is List && value.isNotEmpty && value.first is Map) {
+          return Map<String, dynamic>.from(value.first as Map);
+        }
+      }
+      return map;
+    }
+
+    if (decoded is List && decoded.isNotEmpty && decoded.first is Map) {
+      return Map<String, dynamic>.from(decoded.first as Map);
+    }
+
+    throw const FormatException('Policy info returned an invalid response');
+  }
+
+  Map<String, dynamic> _iesCertificatePayload(Map<String, dynamic> source) {
     final names = _firstNonEmpty([
-      policyData?['customerName'],
-      policyData?['names'],
-      policyData?['Insured'],
-      policyData?['insured'],
+      source['customerName'],
+      source['names'],
+      source['Names'],
+      source['Insured'],
+      source['insured'],
     ]);
     final sumInsured = _firstNonEmpty([
-      policyData?['sumInsured'],
-      policyData?['SumInsured'],
-      policyData?['SumAssured'],
-      policyData?['sumassured'],
+      source['sumInsured'],
+      source['SumInsured'],
+      source['SumAssured'],
+      source['sumassured'],
     ]);
 
     return {
       'IntCode': 'Kissflow',
       'Password': 'royal1234',
-      'policyno': policyNumber,
+      'policyno': _firstNonEmpty([
+        source['PolicyNo'],
+        source['policyno'],
+        source['policyNo'],
+        policyNumber,
+      ]),
       'prodcode': _numberValue(sumInsured) > 0 ? 'COM' : 'TP',
       'refno': _firstNonEmpty([
-        policyData?['CP_REFERENCE_NO'],
-        policyData?['cp_reference_no'],
-        policyData?['refno'],
-        policyData?['refNo'],
-        policyData?['ReferenceNo'],
-        policyData?['reference'],
+        source['CP_REFERENCE_NO'],
+        source['cp_reference_no'],
+        source['refno'],
+        source['refNo'],
+        source['ReferenceNo'],
+        source['reference'],
         policyNumber,
       ]),
       'title': _firstNonEmpty([
-        policyData?['customerTitle'],
-        policyData?['Title'],
+        source['customerTitle'],
+        source['Title'],
+        source['title'],
         'Mr',
       ]),
       'names': names,
-      'vehmake': _vehicleValue([
+      'vehmake': _vehicleValue(source, [
         'vehmake',
         'VehicleMake',
         'vehicleMake',
         'Make',
         'make',
       ]),
-      'vehmodel': _vehicleValue([
+      'vehmodel': _vehicleValue(source, [
         'vehmodel',
         'VehicleModel',
         'vehicleModel',
         'Model',
         'model',
       ]),
-      'vehcolor': _vehicleValue([
+      'vehcolor': _vehicleValue(source, [
         'vehcolor',
         'VehicleColor',
         'vehicleColor',
@@ -718,59 +788,63 @@ class PolicyDetailsScreen extends StatelessWidget {
         'color',
       ]),
       'vehtype': _firstNonEmpty([
-        policyData?['VehicleType'],
-        policyData?['vehicleType'],
-        policyData?['ProductCover'],
-        policyData?['policyClass'],
+        source['VehicleType'],
+        source['vehicleType'],
+        source['ProductCover'],
+        source['policyClass'],
+        source['PolicyClass'],
         policyType,
       ]),
-      'regno': _vehicleValue([
+      'regno': _vehicleValue(source, [
         'regno',
         'RegNo',
         'RegistrationNo',
         'registrationNo',
         'VehicleRegNo',
+        'ItemCode',
         'item_code',
       ]),
       'startdate': _firstNonEmpty([
-        policyData?['startDate'],
-        policyData?['PolicyStartDate'],
-        policyData?['StartDate'],
+        source['startDate'],
+        source['PolicyStartDate'],
+        source['StartDate'],
+        source['startdate'],
       ]),
       'approvedby': _firstNonEmpty([
-        policyData?['ApprovedBy'],
-        policyData?['approvedby'],
+        source['ApprovedBy'],
+        source['approvedby'],
         'approver@rexinsure.com',
       ]),
       'othernames': _firstNonEmpty([
-        policyData?['customerMiddleName'],
-        policyData?['Middlename'],
-        policyData?['MiddleName'],
+        source['customerMiddleName'],
+        source['Middlename'],
+        source['MiddleName'],
+        source['othernames'],
       ]),
       'address': _firstNonEmpty([
-        policyData?['customerAddress'],
-        policyData?['Address'],
-        policyData?['address'],
+        source['customerAddress'],
+        source['Address'],
+        source['address'],
       ]),
       'suminsured': sumInsured,
       'occupation': _firstNonEmpty([
-        policyData?['customerOccupation'],
-        policyData?['Occupation'],
-        policyData?['occupation'],
+        source['customerOccupation'],
+        source['Occupation'],
+        source['occupation'],
       ]),
       'premium': _firstNonEmpty([
-        policyData?['premium'],
-        policyData?['Premium'],
-        policyData?['GrossPremium'],
+        source['premium'],
+        source['Premium'],
+        source['GrossPremium'],
       ]),
     };
   }
 
-  String _vehicleValue(List<String> keys) {
-    final direct = _firstNonEmpty(keys.map((key) => policyData?[key]));
+  String _vehicleValue(Map<String, dynamic> source, List<String> keys) {
+    final direct = _firstNonEmpty(keys.map((key) => source[key]));
     if (direct.isNotEmpty) return direct;
 
-    final items = policyData?['items'] ?? policyData?['Items'];
+    final items = source['items'] ?? source['Items'];
     if (items is List && items.isNotEmpty && items.first is Map) {
       final item = Map<String, dynamic>.from(items.first as Map);
       final itemValue = _firstNonEmpty(keys.map((key) => item[key]));
@@ -818,6 +892,7 @@ class PolicyDetailsScreen extends StatelessWidget {
     if (value is Map) {
       final map = Map<String, dynamic>.from(value);
       for (final key in [
+        'certificate',
         'url',
         'certificate_url',
         'certificateUrl',

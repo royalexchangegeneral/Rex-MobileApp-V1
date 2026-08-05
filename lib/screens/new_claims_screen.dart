@@ -9,7 +9,9 @@ import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/error_messages.dart';
 import '../widgets/agent_bottom_nav.dart';
+import '../providers/agent_policy_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/policy_provider.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
@@ -33,8 +35,26 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.policyNumber != null)
+    if (widget.policyNumber != null) {
       _policyNoController.text = widget.policyNumber!;
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (widget.isAgentFlow) {
+          final policyProvider =
+              Provider.of<AgentPolicyProvider>(context, listen: false);
+          if (policyProvider.policies.isEmpty && !policyProvider.loading) {
+            policyProvider.fetchAgentPolicies(context);
+          }
+        } else {
+          final policyProvider =
+              Provider.of<PolicyProvider>(context, listen: false);
+          if (policyProvider.policies.isEmpty && !policyProvider.loading) {
+            policyProvider.fetchPolicies(context);
+          }
+        }
+      });
+    }
   }
 
   // Step 2
@@ -497,6 +517,101 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
                 color: Theme.of(context).colorScheme.onSurface)),
       );
 
+  String _policyNoFrom(Map<String, dynamic> policy) {
+    final policyNo = policy['policyNo']?.toString() ??
+        policy['PolicyNo']?.toString() ??
+        policy['PolicyNumber']?.toString() ??
+        policy['policyId']?.toString() ??
+        policy['PolicyID']?.toString() ??
+        '';
+    return policyNo.replaceAll('Policy #', '').trim();
+  }
+
+  List<Map<String, String>> _policyOptions(List<Map<String, dynamic>> policies) {
+    final seen = <String>{};
+    final options = <Map<String, String>>[];
+
+    for (final policy in policies) {
+      final policyNo = _policyNoFrom(policy);
+      if (policyNo.isEmpty || seen.contains(policyNo)) continue;
+      seen.add(policyNo);
+
+      options.add({
+        'policyNo': policyNo,
+        'class': (policy['policyClass'] ??
+                policy['PolicyClass'] ??
+                policy['ProductClass'] ??
+                '')
+            .toString()
+            .trim(),
+      });
+    }
+
+    return options;
+  }
+
+  Widget _buildPolicyDropdown({
+    required List<Map<String, dynamic>> policies,
+    required bool loading,
+  }) {
+    final options = _policyOptions(policies);
+    final selectedPolicyNo = options
+            .any((option) => option['policyNo'] == _policyNoController.text)
+        ? _policyNoController.text
+        : null;
+
+    return DropdownButtonFormField<String>(
+      value: selectedPolicyNo,
+      isExpanded: true,
+      decoration: _inputDeco(
+          loading ? 'loading policy numbers' : 'select policy number'),
+      icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[500], size: 20),
+      style: TextStyle(
+          fontSize: 12, color: Theme.of(context).colorScheme.onSurface),
+      items: options.map((option) {
+        final policyNo = option['policyNo'] ?? '';
+        return DropdownMenuItem<String>(
+          value: policyNo,
+          child: Text(
+            policyNo,
+            overflow: TextOverflow.ellipsis,
+          ),
+        );
+      }).toList(),
+      onChanged: loading || options.isEmpty
+          ? null
+          : (value) {
+              setState(() => _policyNoController.text = value ?? '');
+            },
+    );
+  }
+
+  Widget _buildPolicyNoInput() {
+    if (widget.policyNumber != null) {
+      return TextField(
+          controller: _policyNoController,
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+          decoration: _inputDeco('enter policy number'));
+    }
+
+    if (widget.isAgentFlow) {
+      return Consumer<AgentPolicyProvider>(builder: (context, policyProvider, _) {
+        return _buildPolicyDropdown(
+          policies: policyProvider.policies,
+          loading: policyProvider.loading,
+        );
+      });
+    }
+
+    return Consumer<PolicyProvider>(builder: (context, policyProvider, _) {
+      return _buildPolicyDropdown(
+        policies: policyProvider.policies,
+        loading: policyProvider.loading,
+      );
+    });
+  }
+
   // STEP 1: Enter Policy No
   Widget _buildStep1() {
     return SingleChildScrollView(
@@ -506,11 +621,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _label('Enter Policy No.'),
-          TextField(
-              controller: _policyNoController,
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
-              decoration: _inputDeco('enter policy number')),
+          _buildPolicyNoInput(),
           const Padding(padding: EdgeInsets.only(top: 280)),
           SizedBox(
             width: double.infinity,

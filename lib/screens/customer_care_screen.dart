@@ -9,6 +9,7 @@ import '../providers/auth_provider.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_profile_screen.dart';
 import 'my_claims_screen.dart';
+import 'my_policies_screen.dart';
 import 'new_policy_screen.dart';
 import 'new_ticket_screen.dart';
 import 'service_request_screen.dart';
@@ -328,8 +329,15 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
                                     builder: (_) =>
                                         const CustomerDashboardScreen()),
                                 (r) => false)),
-                        _nav(Icons.description_outlined, 'Policies', false,
-                            null),
+                        _nav(
+                            Icons.description_outlined,
+                            'Policies',
+                            false,
+                            () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        const MyPoliciesScreen()))),
                         const SizedBox(width: 48),
                         _nav(
                             Icons.assignment_outlined,

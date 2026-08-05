@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../utils/app_theme.dart';
 
@@ -18,6 +19,7 @@ class _SplashScreenState extends State<SplashScreen>
   late final Animation<double> _logoScale;
   late final Animation<double> _logoOpacity;
   Timer? _navigationTimer;
+  bool _isResolvingLaunchRoute = true;
 
   @override
   void initState() {
@@ -51,6 +53,21 @@ class _SplashScreenState extends State<SplashScreen>
       curve: Curves.easeOut,
     );
 
+    _resolveLaunchRoute();
+  }
+
+  Future<void> _resolveLaunchRoute() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+
+    if (!mounted) return;
+
+    if (hasSeenOnboarding) {
+      Navigator.of(context).pushReplacementNamed('/user-portal');
+      return;
+    }
+
+    setState(() => _isResolvingLaunchRoute = false);
     _logoController.forward();
 
     _navigationTimer = Timer(const Duration(seconds: 3), () {
@@ -70,6 +87,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_isResolvingLaunchRoute) {
+      return const Scaffold(backgroundColor: Color(0xFFFBFAFA));
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFFBFAFA),
       body: SafeArea(
