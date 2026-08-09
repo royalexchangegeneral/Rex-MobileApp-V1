@@ -258,7 +258,7 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
     setState(() => _loadingVehicleList = true);
     try {
       final response = await http.get(
-        Uri.parse('https://eportal.rexinsure.com/api/vehicleList'),
+        Uri.parse('https://eportaltest.rexinsure.com/api/vehicleList'),
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 15));
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -300,11 +300,11 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
     try {
       final r = await http
           .post(
-              Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
+              Uri.parse('https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
               headers: {'Content-Type': 'application/json'},
               body: json.encode({
-                'Intcode': 'Kissflow',
-                'Password': '1lovetoeatcook1es',
+                'Intcode': 'TESTCODE',
+                'Password': 'royal1234',
                 'number': _ninController.text.trim()
               }))
           .timeout(const Duration(seconds: 15));
@@ -367,11 +367,11 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
       final r = await http
           .post(
               Uri.parse(
-                  'https://eportal.rexinsure.com/api/vehicleVerification'),
+                  'https://eportaltest.rexinsure.com/api/vehicleVerification'),
               headers: {'Content-Type': 'application/json'},
               body: json.encode({
-                'IntCode': 'Kissflow',
-                'Password': '1lovetoeatcook1es',
+                'IntCode': 'TESTCODE',
+                'Password': 'royal1234',
                 'RegNo': _regNumberController.text.trim()
               }))
           .timeout(const Duration(seconds: 15));

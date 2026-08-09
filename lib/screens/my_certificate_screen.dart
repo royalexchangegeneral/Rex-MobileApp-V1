@@ -91,7 +91,7 @@ class _MyCertificateScreenState extends State<MyCertificateScreen> {
 
   String _getCertUrl(Map<String, String> cert) {
     final certPath = _getCertPath(cert['type'] ?? '');
-    return 'https://eportal.rexinsure.com/$certPath?policy=${cert['policyNo'] ?? ''}';
+    return 'https://eportaltest.rexinsure.com/$certPath?policy=${cert['policyNo'] ?? ''}';
   }
 
   List<Map<String, String>> get _filteredCertificates {

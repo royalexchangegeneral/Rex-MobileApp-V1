@@ -25,7 +25,7 @@ class PolicyDetailsScreen extends StatelessWidget {
   final Map<String, dynamic>? policyData;
   final bool isAgentFlow;
   static const String _policyInfoBearerToken =
-      '28AnYQWy2PGXptmPJd2mEYVXt0gg7RznjnBMbC4I';
+      'SZyn3hKMefEYZRrZCEWr6H2f8qSRlVBkYCmsaVrN';
 
   const PolicyDetailsScreen({
     super.key,
@@ -609,7 +609,7 @@ class PolicyDetailsScreen extends StatelessWidget {
 
   Uri _certificateUri() {
     return Uri.https(
-      'eportal.rexinsure.com',
+      'eportaltest.rexinsure.com',
       _getCertType(),
       {'policy': policyNumber},
     );
@@ -671,12 +671,12 @@ class PolicyDetailsScreen extends StatelessWidget {
     final response = await http
         .get(
           Uri.https(
-            'eportal.rexinsure.com',
+            'eportaltest.rexinsure.com',
             '/api/kissflow/getpolinfo',
             {
               'PolicyNo': policyNumber,
-              'IntCode': 'Kissflow',
-              'Password': '1lovetoeatcook1es',
+              'IntCode': 'TESTCODE',
+              'Password': 'royal1234',
             },
           ),
           headers: {
@@ -741,7 +741,7 @@ class PolicyDetailsScreen extends StatelessWidget {
     ]);
 
     return {
-      'IntCode': 'Kissflow',
+      'IntCode': 'TESTCODE',
       'Password': 'royal1234',
       'policyno': _firstNonEmpty([
         source['PolicyNo'],

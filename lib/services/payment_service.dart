@@ -10,7 +10,7 @@ import '../utils/error_messages.dart';
 class PaymentService {
   PaymentService._();
 
-  static const String _paymentBaseUrl = 'https://eportal.rexinsure.com';
+  static const String _paymentBaseUrl = 'https://eportaltest.rexinsure.com';
   static const String _proposalUrl =
       '$_paymentBaseUrl/api/submit-product-proposal';
   static const String _purchaseUrl =
@@ -227,8 +227,8 @@ class PaymentService {
     if (normalizedAgentCode.isEmpty) return null;
 
     final payload = {
-      'IntCode': 'Kissflow',
-      'Password': '1lovetoeatcook1es',
+      'IntCode': 'TESTCODE',
+      'Password': 'royal1234',
       'agentcode': normalizedAgentCode,
       'productcode': productCode.trim().toUpperCase(),
       'subproductcode': subProductCode.trim().toUpperCase(),
@@ -351,8 +351,8 @@ class PaymentService {
       // Step 1: Submit product proposal
       final proposalPayload = {
         if (includeCredentials) ...{
-          'IntCode': 'Kissflow',
-          'Password': '1lovetoeatcook1es',
+          'IntCode': 'TESTCODE',
+          'Password': 'royal1234',
         },
         'product_code': productCode,
         'names': names,
@@ -459,8 +459,8 @@ class PaymentService {
       }
 
       final purchasePayload = {
-        'IntCode': 'Kissflow',
-        'Password': '1lovetoeatcook1es',
+        'IntCode': 'TESTCODE',
+        'Password': 'royal1234',
         'product_code': productCode,
         'names': names,
         'email': paymentEmail,
@@ -607,8 +607,8 @@ class PaymentService {
       }
 
       final payload = {
-        'IntCode': 'Kissflow',
-        'Password': '1lovetoeatcook1es',
+        'IntCode': 'TESTCODE',
+        'Password': 'royal1234',
         'product_code': productCode,
         'names': names,
         'email': paymentEmail,
@@ -723,8 +723,8 @@ class PaymentService {
       // Step 1: Submit CP proposal as multipart with images
       final request = http.MultipartRequest('POST', Uri.parse(_proposalUrl));
       request.fields.addAll(fields);
-      request.fields['IntCode'] = 'Kissflow';
-      request.fields['Password'] = '1lovetoeatcook1es';
+      request.fields['IntCode'] = 'TESTCODE';
+      request.fields['Password'] = 'royal1234';
       _addAgentStringFields(
           request.fields, normalizedAgentCode, normalizedAgentUserType);
 
@@ -860,8 +860,8 @@ class PaymentService {
       }
 
       final purchasePayload = {
-        'IntCode': 'Kissflow',
-        'Password': '1lovetoeatcook1es',
+        'IntCode': 'TESTCODE',
+        'Password': 'royal1234',
         'product_code': 'CP',
         'names': names,
         'email': paymentEmail,

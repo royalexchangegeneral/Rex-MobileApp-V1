@@ -45,14 +45,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         };
 
         debugPrint('=== PASSWORD RESET API REQUEST ===');
-        debugPrint('URL: https://eportal.rexinsure.com/api/passwordreset');
+        debugPrint('URL: https://eportaltest.rexinsure.com/api/passwordreset');
         debugPrint('Email being sent: ${widget.email}');
         debugPrint('OTP being sent: ${widget.otp}');
         debugPrint('Request Body: ${json.encode(requestBody)}');
 
         final response = await http
             .post(
-          Uri.parse('https://eportal.rexinsure.com/api/passwordreset'),
+          Uri.parse('https://eportaltest.rexinsure.com/api/passwordreset'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(requestBody),
         )

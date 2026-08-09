@@ -26,7 +26,7 @@ class NotificationsProvider with ChangeNotifier {
 
       final r = await http.get(
         Uri.parse(
-            'https://eportal.rexinsure.com/api/notifications?userId=$userCode'),
+            'https://eportaltest.rexinsure.com/api/notifications?userId=$userCode'),
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 15));
 
@@ -81,7 +81,7 @@ class NotificationsProvider with ChangeNotifier {
       final r = await http
           .post(
             Uri.parse(
-                'https://eportal.rexinsure.com/api/notifications/mark-read'),
+                'https://eportaltest.rexinsure.com/api/notifications/mark-read'),
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json'

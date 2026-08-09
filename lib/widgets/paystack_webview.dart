@@ -17,7 +17,7 @@ class PaymentVerifyResult {
 /// Returns PaymentVerifyResult with success status, reference, and message.
 class PaystackWebView extends StatefulWidget {
   static const String paymentCallbackUrl =
-      'https://eportal.rexinsure.com/api/verifypayment';
+      'https://eportaltest.rexinsure.com/api/verifypayment';
 
   final String url;
   final String callbackUrl;
@@ -54,7 +54,7 @@ class _PaystackWebViewState extends State<PaystackWebView> {
         (path == callbackPath || path.startsWith('$callbackPath/'));
 
     return matchesConfiguredCallback ||
-        ((uri.host.toLowerCase() == 'eportal.rexinsure.com' ||
+        ((uri.host.toLowerCase() == 'eportaltest.rexinsure.com' ||
                 uri.host.toLowerCase() == 'eporttest.rexinsure.com') &&
             path.contains('verifypayment'));
   }
@@ -64,7 +64,7 @@ class _PaystackWebViewState extends State<PaystackWebView> {
     if (uri == null) return false;
 
     final host = uri.host.toLowerCase();
-    return host == 'eportal.rexinsure.com' ||
+    return host == 'eportaltest.rexinsure.com' ||
         host == 'eporttest.rexinsure.com' ||
         host == 'checkout.paystack.com' ||
         host.endsWith('.paystack.co') ||

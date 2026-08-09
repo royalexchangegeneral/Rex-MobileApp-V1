@@ -8,8 +8,8 @@ class WebViewSecurity {
     'standard.paystack.co',
     'checkout.paystack.com',
     'rexinsure.com',
-    'eportal.rexinsure.com',
-    'eportal.rexinsure.com',
+    'eportaltest.rexinsure.com',
+    'eportaltest.rexinsure.com',
   ];
 
   /// Returns true if the given URL belongs to a trusted domain.

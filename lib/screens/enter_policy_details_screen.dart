@@ -68,11 +68,11 @@ class _EnterPolicyDetailsScreenState extends State<EnterPolicyDetailsScreen> {
     }
     setState(() => _isVerifying = true);
     try {
-      final url = Uri.parse('https://eportal.rexinsure.com/api/getpolicy');
+      final url = Uri.parse('https://eportaltest.rexinsure.com/api/getpolicy');
       final payload = {
         'PolicyNo': policyNo,
-        'IntCode': 'Kissflow',
-        'Password': '1lovetoeatcook1es',
+        'IntCode': 'TESTCODE',
+        'Password': 'royal1234',
       };
       debugPrint('=== GET POLICY REQUEST: $url ===');
       debugPrint('Payload: ${json.encode(payload)}');
@@ -187,7 +187,7 @@ class _EnterPolicyDetailsScreenState extends State<EnterPolicyDetailsScreen> {
       debugPrint('=== CREATE CUSTOMER ===');
       debugPrint('Payload: ${json.encode(custPayload)}');
       final custR = await http
-          .post(Uri.parse('https://eportal.rexinsure.com/api/createcustomer'),
+          .post(Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
               headers: {'Content-Type': 'application/json'},
               body: json.encode(custPayload))
           .timeout(const Duration(seconds: 15));
@@ -210,7 +210,7 @@ class _EnterPolicyDetailsScreenState extends State<EnterPolicyDetailsScreen> {
           debugPrint('=== CREATE LOGIN ===');
           debugPrint('Payload: ${json.encode(loginPayload)}');
           final loginR = await http
-              .post(Uri.parse('https://eportal.rexinsure.com/api/createlogin'),
+              .post(Uri.parse('https://eportaltest.rexinsure.com/api/createlogin'),
                   headers: {'Content-Type': 'application/json'},
                   body: json.encode(loginPayload))
               .timeout(const Duration(seconds: 15));

@@ -267,11 +267,11 @@ class _AddClientScreenState extends State<AddClientScreen> {
     try {
       final response = await http
           .post(
-        Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
+        Uri.parse('https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'Intcode': 'Kissflow',
-          'Password': '1lovetoeatcook1es',
+          'Intcode': 'TESTCODE',
+          'Password': 'royal1234',
           'number': nin,
         }),
       )
@@ -397,12 +397,12 @@ class _AddClientScreenState extends State<AddClientScreen> {
       };
 
       debugPrint('=== CREATE CUSTOMER API REQUEST ===');
-      debugPrint('URL: https://eportal.rexinsure.com/api/createcustomer');
+      debugPrint('URL: https://eportaltest.rexinsure.com/api/createcustomer');
       debugPrint('Request Body: ${json.encode(requestBody)}');
 
       final response = await http
           .post(
-        Uri.parse('https://eportal.rexinsure.com/api/createcustomer'),
+        Uri.parse('https://eportaltest.rexinsure.com/api/createcustomer'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(requestBody),
       )

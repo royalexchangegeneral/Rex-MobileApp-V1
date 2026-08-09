@@ -27,7 +27,7 @@ class AppUpdateService {
 
   static const String _configUrl = String.fromEnvironment(
     'APP_UPDATE_CONFIG_URL',
-    defaultValue: 'https://eportal.rexinsure.com/api/mobile/app-version',
+    defaultValue: 'https://eportaltest.rexinsure.com/api/mobile/app-version',
   );
 
   static const String _androidStoreUrl =

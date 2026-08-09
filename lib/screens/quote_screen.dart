@@ -424,13 +424,13 @@ class _QuoteScreenState extends State<QuoteScreen> {
       };
 
       debugPrint('=== QUOTE API REQUEST ===');
-      debugPrint('URL: https://eportal.rexinsure.com/api/quote-enquiry');
+      debugPrint('URL: https://eportaltest.rexinsure.com/api/quote-enquiry');
       debugPrint('Payload: ${json.encode(requestBody)}');
       debugPrint('=========================');
 
       final response = await http
           .post(
-            Uri.parse('https://eportal.rexinsure.com/api/quote-enquiry'),
+            Uri.parse('https://eportaltest.rexinsure.com/api/quote-enquiry'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode(requestBody),
           )

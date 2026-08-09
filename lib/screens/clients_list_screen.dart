@@ -50,7 +50,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
 
       final r = await http
           .post(
-            Uri.parse('https://eportal.rexinsure.com/api/agent/customers'),
+            Uri.parse('https://eportaltest.rexinsure.com/api/agent/customers'),
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'

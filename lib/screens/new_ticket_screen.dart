@@ -161,7 +161,7 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
 
     for (var attempt = 1; attempt <= 2; attempt++) {
       final request = http.MultipartRequest('POST',
-          Uri.parse('https://eportal.rexinsure.com/api/support/ticket/create'));
+          Uri.parse('https://eportaltest.rexinsure.com/api/support/ticket/create'));
       request.headers['Accept'] = 'application/json';
       request.headers['Connection'] = 'close';
       request.fields.addAll(fields);

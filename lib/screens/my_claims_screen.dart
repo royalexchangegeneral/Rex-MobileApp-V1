@@ -217,7 +217,7 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
 
   Future<Map<String, dynamic>> _fetchClaimStatus(String claimNo) async {
     final uri = Uri.https(
-      'eportal.rexinsure.com',
+      'eportaltest.rexinsure.com',
       '/api/getclaim-status',
       {'claim_num': claimNo},
     );
@@ -770,7 +770,7 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
 
     try {
       final uri = Uri.https(
-        'eportal.rexinsure.com',
+        'eportaltest.rexinsure.com',
         '/api/getclaim-info',
         {'claim_num': claimNo},
       );
@@ -811,7 +811,7 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
 
   Future<Map<String, dynamic>> _fetchStatusDetails(String claimNo) async {
     final uri = Uri.https(
-      'eportal.rexinsure.com',
+      'eportaltest.rexinsure.com',
       '/api/getclaim-status',
       {'claim_num': claimNo},
     );

@@ -49,8 +49,8 @@ class PolicyProvider with ChangeNotifier {
 
   Future<void> _fetchPoliciesForPhone(String phone) async {
     final requestBody = {
-      'IntCode': 'Kissflow',
-      'Password': '1lovetoeatcook1es',
+      'IntCode': 'TESTCODE',
+      'Password': 'royal1234',
       'MobileNo': phone,
     };
 
@@ -59,11 +59,11 @@ class PolicyProvider with ChangeNotifier {
     debugPrint('===================================');
 
     final uri = Uri.https(
-      'eportal.rexinsure.com',
+      'eportaltest.rexinsure.com',
       '/api/getcustomerpolicy',
       {
-        'IntCode': 'Kissflow',
-        'Password': '1lovetoeatcook1es',
+        'IntCode': 'TESTCODE',
+        'Password': 'royal1234',
         'MobileNo': phone,
       },
     );

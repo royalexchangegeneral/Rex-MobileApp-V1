@@ -121,7 +121,7 @@ class _TrackTicketScreenState extends State<TrackTicketScreen> {
 
     try {
       final uri = Uri.https(
-        'eportal.rexinsure.com',
+        'eportaltest.rexinsure.com',
         '/api/support/tickets',
         {
           'userId': _userId,

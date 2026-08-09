@@ -170,7 +170,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
 
   Future<Map<String, dynamic>> _fetchClaimStatus(String claimNo) async {
     final uri = Uri.https(
-      'eportal.rexinsure.com',
+      'eportaltest.rexinsure.com',
       '/api/getclaim-status',
       {'claim_num': claimNo},
     );

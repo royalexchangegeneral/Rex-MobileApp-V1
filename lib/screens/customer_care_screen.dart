@@ -111,7 +111,7 @@ class _CustomerCareScreenState extends State<CustomerCareScreen> {
 
       while (hasNextPage) {
         final uri = Uri.https(
-          'eportal.rexinsure.com',
+          'eportaltest.rexinsure.com',
           '/api/support/tickets',
           {
             'userId': userId,

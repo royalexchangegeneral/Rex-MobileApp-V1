@@ -143,7 +143,7 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
               .trim();
 
       final request = http.MultipartRequest('POST',
-          Uri.parse('https://eportal.rexinsure.com/api/claim_notification'));
+          Uri.parse('https://eportaltest.rexinsure.com/api/claim_notification'));
       request.headers['Accept'] = 'application/json';
       request.headers['User-Agent'] = 'RexMobileApp/1.0';
 
@@ -233,12 +233,12 @@ class _NewClaimsScreenState extends State<NewClaimsScreen> {
 
   Future<http.Response> _fetchPolicy(String policyNo) {
     final url = Uri.https(
-      'eportal.rexinsure.com',
+      'eportaltest.rexinsure.com',
       '/api/getpolicy',
       {
         'PolicyNo': policyNo,
-        'IntCode': 'Kissflow',
-        'Password': '1lovetoeatcook1es',
+        'IntCode': 'TESTCODE',
+        'Password': 'royal1234',
       },
     );
 

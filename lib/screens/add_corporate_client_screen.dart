@@ -92,11 +92,11 @@ class _AddCorporateClientScreenState extends State<AddCorporateClientScreen> {
     try {
       final response = await http
           .post(
-        Uri.parse('https://eportal.rexinsure.com/api/verify/cac'),
+        Uri.parse('https://eportaltest.rexinsure.com/api/verify/cac'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'IntCode': 'Kissflow',
-          'Password': '1lovetoeatcook1es',
+          'IntCode': 'TESTCODE',
+          'Password': 'royal1234',
           'business_number': cac,
           'business_country': 'NG',
         }),

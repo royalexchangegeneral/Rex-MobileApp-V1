@@ -163,14 +163,14 @@ class AuthProvider with ChangeNotifier {
 
       if (kDebugMode) {
         debugPrint('=== LOGIN API REQUEST ===');
-        debugPrint('URL: https://eportal.rexinsure.com/api/userlogin');
+        debugPrint('URL: https://eportaltest.rexinsure.com/api/userlogin');
         debugPrint('Payload: ${json.encode(requestBody)}');
         debugPrint('=========================');
       }
 
       final response = await http
           .post(
-            Uri.parse('https://eportal.rexinsure.com/api/userlogin'),
+            Uri.parse('https://eportaltest.rexinsure.com/api/userlogin'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode(requestBody),
           )
@@ -386,7 +386,7 @@ class AuthProvider with ChangeNotifier {
       final requestBody = {'userid': userId};
       final response = await http
           .post(
-            Uri.parse('https://eportal.rexinsure.com/api/disable-user-account'),
+            Uri.parse('https://eportaltest.rexinsure.com/api/disable-user-account'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode(requestBody),
           )

@@ -145,12 +145,12 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
     };
 
     debugPrint('=== SEND PHONE OTP REQUEST ===');
-    debugPrint('URL: https://eportal.rexinsure.com/api/send-otp');
+    debugPrint('URL: https://eportaltest.rexinsure.com/api/send-otp');
     debugPrint('Payload: ${json.encode(payload)}');
 
     final response = await http
         .post(
-          Uri.parse('https://eportal.rexinsure.com/api/send-otp'),
+          Uri.parse('https://eportaltest.rexinsure.com/api/send-otp'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(payload),
         )
@@ -265,12 +265,12 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
     };
 
     debugPrint('=== VERIFY PHONE OTP REQUEST ===');
-    debugPrint('URL: https://eportal.rexinsure.com/api/mobile/verify-otp');
+    debugPrint('URL: https://eportaltest.rexinsure.com/api/mobile/verify-otp');
     debugPrint('Payload: ${json.encode(payload)}');
 
     final response = await http
         .post(
-          Uri.parse('https://eportal.rexinsure.com/api/mobile/verify-otp'),
+          Uri.parse('https://eportaltest.rexinsure.com/api/mobile/verify-otp'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(payload),
         )
@@ -572,10 +572,10 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
   }
 
   Future<Map<String, dynamic>> _verifyPolicy(String policyNo) async {
-    final uri = Uri.https('eportal.rexinsure.com', '/api/getpolicy', {
+    final uri = Uri.https('eportaltest.rexinsure.com', '/api/getpolicy', {
       'PolicyNo': policyNo,
-      'IntCode': 'Kissflow',
-      'Password': '1lovetoeatcook1es',
+      'IntCode': 'TESTCODE',
+      'Password': 'royal1234',
     });
 
     debugPrint('=== GET POLICY REQUEST ===');

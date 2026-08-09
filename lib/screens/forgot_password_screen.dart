@@ -33,12 +33,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         };
 
         debugPrint('=== SEND OTP API REQUEST ===');
-        debugPrint('URL: https://eportal.rexinsure.com/api/otp');
+        debugPrint('URL: https://eportaltest.rexinsure.com/api/otp');
         debugPrint('Request Body: ${json.encode(requestBody)}');
 
         final response = await http
             .post(
-          Uri.parse('https://eportal.rexinsure.com/api/otp'),
+          Uri.parse('https://eportaltest.rexinsure.com/api/otp'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(requestBody),
         )

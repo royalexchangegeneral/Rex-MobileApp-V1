@@ -115,7 +115,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     try {
       final url =
-          'https://eportal.rexinsure.com/api/fetch-policy-report?agentcode=$agentCode&period=$period&startdate=$startDate&enddate=$endDate';
+          'https://eportaltest.rexinsure.com/api/fetch-policy-report?agentcode=$agentCode&period=$period&startdate=$startDate&enddate=$endDate';
       debugPrint('=== FETCH REPORT ===');
       debugPrint(
           'Payload: agentcode=$agentCode, period=$period, startdate=$startDate, enddate=$endDate');

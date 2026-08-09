@@ -35,7 +35,7 @@ class AgentPolicyProvider with ChangeNotifier {
       debugPrint('AgencyCode: $agencyCode');
 
       final url =
-          'https://eportal.rexinsure.com/api/getcustomerpolicytest?IntCode=Kissflow&Password=1lovetoeatcook1es&AgencyCode=$agencyCode';
+          'https://eportaltest.rexinsure.com/api/getcustomerpolicytest?IntCode=TESTCODE&Password=royal1234&AgencyCode=$agencyCode';
       final r = await http.get(
         Uri.parse(url),
         headers: {'Accept': 'application/json'},
@@ -133,7 +133,7 @@ class AgentPolicyProvider with ChangeNotifier {
       final agentCode = auth.userCode?.toString() ?? '';
       final r = await http
           .post(
-            Uri.parse('https://eportal.rexinsure.com/api/agent/customers'),
+            Uri.parse('https://eportaltest.rexinsure.com/api/agent/customers'),
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'
@@ -189,7 +189,7 @@ class AgentPolicyProvider with ChangeNotifier {
 
       final r = await http.get(
         Uri.parse(
-            'https://eportal.rexinsure.com/api/get-commission?agentcode=$agentCode&period=$period&startdate=$startDate&enddate=$endDate'),
+            'https://eportaltest.rexinsure.com/api/get-commission?agentcode=$agentCode&period=$period&startdate=$startDate&enddate=$endDate'),
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 15));
 

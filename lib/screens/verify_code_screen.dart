@@ -80,7 +80,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     try {
       final response = await http
           .post(
-        Uri.parse('https://eportal.rexinsure.com/api/otp'),
+        Uri.parse('https://eportaltest.rexinsure.com/api/otp'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'Email': widget.email}),
       )

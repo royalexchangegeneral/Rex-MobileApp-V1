@@ -220,11 +220,11 @@ class _AddClientScreenState extends State<AddClientScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
+        Uri.parse('https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'IntCode': 'Kissflow',
-          'Password': '1lovetoeatcook1es',
+          'IntCode': 'TESTCODE',
+          'Password': 'royal1234',
           'number': nin,
         }),
       ).timeout(

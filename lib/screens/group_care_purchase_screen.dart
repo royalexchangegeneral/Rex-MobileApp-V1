@@ -219,11 +219,11 @@ class _GroupCarePurchaseScreenState extends State<GroupCarePurchaseScreen> {
     try {
       final response = await http
           .post(
-            Uri.parse('https://eportal.rexinsure.com/api/mobile/verify/nin'),
+            Uri.parse('https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode({
-              'Intcode': 'Kissflow',
-              'Password': '1lovetoeatcook1es',
+              'Intcode': 'TESTCODE',
+              'Password': 'royal1234',
               'number': nin
             }),
           )
