@@ -64,7 +64,6 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
     final base = (agentPremium ?? _getBaseAmount()).toDouble();
     final charge = _getPaystackChargeFor(base);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _buildInfoRow(context, 'Product', vehicleType),
       _buildInfoRow(
           context, 'Price', loading ? 'Loading...' : _formatNaira(base)),
       _buildInfoRow(context, 'Paystack Charges', _formatNaira(charge)),
@@ -87,6 +86,10 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
     if (vt.contains('motorcycle')) return 'TPMC';
     if (vt.contains('tricycle') || vt.contains('keke')) return 'TPTCL';
     return 'TP';
+  }
+
+  String _productSummaryText() {
+    return 'Third party motor cover for the selected vehicle type, supporting statutory protection before the vehicle is put on the road.';
   }
 
   String _getVehicleType() {
@@ -283,6 +286,18 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text('Product Summary',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface)),
+                  const SizedBox(height: 16),
+                  _buildInfoRow(context, 'Product', vehicleType, fontSize: 12),
+                  _buildInfoRow(context, 'Summary', _productSummaryText(),
+                      fontSize: 12),
+                  _buildInfoRow(context, 'Cover Type', 'Third Party Motor',
+                      fontSize: 12),
+                  const SizedBox(height: 24),
                   Text('Payment Information',
                       style: TextStyle(
                           fontSize: 16,
@@ -437,7 +452,8 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, String label, String value) {
+  Widget _buildInfoRow(BuildContext context, String label, String value,
+      {double fontSize = 13}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final labelColor = isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
     final valueColor = Theme.of(context).colorScheme.onSurface;
@@ -450,12 +466,12 @@ class PrivateMotorDetailsScreen extends StatelessWidget {
           Expanded(
               flex: 2,
               child: Text(label,
-                  style: TextStyle(fontSize: 13, color: labelColor))),
+                  style: TextStyle(fontSize: fontSize, color: labelColor))),
           Expanded(
               flex: 3,
               child: Text(value,
                   style: TextStyle(
-                      fontSize: 13,
+                      fontSize: fontSize,
                       fontWeight: FontWeight.w500,
                       color: valueColor),
                   textAlign: TextAlign.right)),

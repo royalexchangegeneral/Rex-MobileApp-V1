@@ -300,7 +300,8 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
     try {
       final r = await http
           .post(
-              Uri.parse('https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
+              Uri.parse(
+                  'https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
               headers: {'Content-Type': 'application/json'},
               body: json.encode({
                 'Intcode': 'TESTCODE',
@@ -448,6 +449,11 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
   }
 
   double _getTotal() => _getBase() + _getCharge();
+
+  String _productSummaryText() {
+    return 'Enhanced motor cover that combines comprehensive-style protection with a fixed monthly contribution for the selected Royal Auto plan.';
+  }
+
   String _fmtN(double a) =>
       '₦${a.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+\.)'), (m) => '${m[1]},')}';
 
@@ -1105,9 +1111,17 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
   Widget _summaryStep() => Padding(
       padding: const EdgeInsets.all(24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sec(
+            'Product Summary',
+            [
+              _sRow('Product', widget.productName, fontSize: 11),
+              _sRow('Summary', _productSummaryText(), fontSize: 11),
+              _sRow('Benefit', 'Coverage up to ₦3,000,000', fontSize: 11),
+              _sRow('Plan Price', widget.price, fontSize: 11),
+            ],
+            titleFontSize: 13),
+        const SizedBox(height: 20),
         _sec('Payment Information', [
-          _sRow('Product', widget.productName),
-          _sRow('Price', widget.price),
           _sRow('Premium', _fmtN(_getBase())),
           _sRow('Paystack Charges', _fmtN(_getCharge())),
           _sRow('Total', _fmtN(_getTotal()))
@@ -1200,35 +1214,37 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
       ]));
 
   // Helpers
-  Widget _sec(String t, List<Widget> r) => Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF111827)
-              : Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
+  Widget _sec(String t, List<Widget> r, {double titleFontSize = 14}) =>
+      Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
               color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF334155)
-                  : Colors.grey[200]!)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(t,
-            style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface)),
-        SizedBox(height: 12),
-        ...r
-      ]));
-  Widget _sRow(String l, String v) => Padding(
+                  ? const Color(0xFF111827)
+                  : Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF334155)
+                      : Colors.grey[200]!)),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(t,
+                style: TextStyle(
+                    fontSize: titleFontSize,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface)),
+            SizedBox(height: 12),
+            ...r
+          ]));
+  Widget _sRow(String l, String v, {double fontSize = 12}) => Padding(
       padding: EdgeInsets.only(bottom: 10),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(
             flex: 2,
             child: Text(l,
                 style: TextStyle(
-                    fontSize: 12,
+                    fontSize: fontSize,
                     color: Theme.of(context).brightness == Brightness.dark
                         ? const Color(0xFFCBD5E1)
                         : Colors.grey[600]))),
@@ -1237,7 +1253,7 @@ class _RoyalAutoPurchaseScreenState extends State<RoyalAutoPurchaseScreen> {
             flex: 3,
             child: Text(v.isNotEmpty ? v : '-',
                 style: TextStyle(
-                    fontSize: 12,
+                    fontSize: fontSize,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface),
                 textAlign: TextAlign.right))

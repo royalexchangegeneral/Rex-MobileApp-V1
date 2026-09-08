@@ -46,6 +46,10 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
 
   double _getTotalAmount() => _getBaseAmount() + _getPaystackCharge();
 
+  String _productSummaryText() {
+    return 'Comprehensive motor insurance that protects the vehicle against covered loss or damage based on the declared sum insured.';
+  }
+
   String _formatNaira(double amount) {
     return '₦${amount.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+\.)'), (m) => '${m[1]},')}';
   }
@@ -275,14 +279,27 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text('Product Summary',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface)),
+                  const SizedBox(height: 16),
+                  _buildInfoRow(context, 'Product', 'Motor Comprehensive',
+                      fontSize: 12),
+                  _buildInfoRow(context, 'Summary', _productSummaryText(),
+                      fontSize: 12),
+                  _buildInfoRow(context, 'Vehicle Type', vehicleType,
+                      fontSize: 12),
+                  _buildInfoRow(context, 'Sum Insured', 'N$sumInsured',
+                      fontSize: 12),
+                  const SizedBox(height: 24),
                   Text('Payment Information',
                       style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.onSurface)),
                   SizedBox(height: 16),
-                  _buildInfoRow(context, 'Product', 'Motor Comprehensive'),
-                  _buildInfoRow(context, 'Sum Insured', 'N$sumInsured'),
                   _buildInfoRow(context, 'Premium', premium),
                   _buildInfoRow(context, 'Paystack Charges',
                       _formatNaira(_getPaystackCharge())),
@@ -423,7 +440,8 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, String label, String value) {
+  Widget _buildInfoRow(BuildContext context, String label, String value,
+      {double fontSize = 14}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final labelColor = isDark ? const Color(0xFFCBD5E1) : Colors.grey[600]!;
     final valueColor = Theme.of(context).colorScheme.onSurface;
@@ -436,12 +454,12 @@ class ComprehensiveSummaryScreen extends StatelessWidget {
           Expanded(
               flex: 2,
               child: Text(label,
-                  style: TextStyle(fontSize: 14, color: labelColor))),
+                  style: TextStyle(fontSize: fontSize, color: labelColor))),
           Expanded(
               flex: 3,
               child: Text(value,
                   style: TextStyle(
-                      fontSize: 14,
+                      fontSize: fontSize,
                       fontWeight: FontWeight.w600,
                       color: valueColor),
                   textAlign: TextAlign.right)),

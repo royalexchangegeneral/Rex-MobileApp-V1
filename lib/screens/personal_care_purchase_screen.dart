@@ -307,7 +307,8 @@ class _PersonalCarePurchaseScreenState
     try {
       final response = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
+            Uri.parse(
+                'https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode({
               'Intcode': 'TESTCODE',
@@ -417,6 +418,74 @@ class _PersonalCarePurchaseScreenState
 
   double _getTotalAmount() {
     return _getSummaryBaseAmount() + _getPaystackCharge();
+  }
+
+  String _productSummaryText() {
+    if (widget.productName.toLowerCase().contains('driver')) {
+      return 'Protection for licensed drivers and riders, with accident benefits for death, permanent disability, and medical expenses.';
+    }
+    return 'Personal accident cover that supports the policyholder with benefits for death, permanent disability, and medical expenses.';
+  }
+
+  Map<String, String> _selectedBenefits() {
+    final isDriver = widget.productName.toLowerCase().contains('driver');
+    final driverBenefits = {
+      'Option A': {
+        'Death': '₦250,000.00',
+        'Permanent Disability': '₦250,000.00',
+        'Medical Expenses': '₦50,000.00',
+      },
+      'Option B': {
+        'Death': '₦350,000.00',
+        'Permanent Disability': '₦350,000.00',
+        'Medical Expenses': '₦100,000.00',
+      },
+      'Option C': {
+        'Death': '₦500,000.00',
+        'Permanent Disability': '₦500,000.00',
+        'Medical Expenses': '₦150,000.00',
+      },
+      'Option D': {
+        'Death': '₦750,000.00',
+        'Permanent Disability': '₦750,000.00',
+        'Medical Expenses': '₦200,000.00',
+      },
+      'Option E': {
+        'Death': '₦1,000,000.00',
+        'Permanent Disability': '₦1,000,000.00',
+        'Medical Expenses': '₦250,000.00',
+      },
+    };
+    final personalBenefits = {
+      'Option A': {
+        'Death': '₦250,000.00',
+        'Permanent Disability': '₦250,000.00',
+        'Medical Expenses': '₦50,000.00',
+      },
+      'Option B': {
+        'Death': '₦300,000.00',
+        'Permanent Disability': '₦300,000.00',
+        'Medical Expenses': '₦75,000.00',
+      },
+      'Option C': {
+        'Death': '₦500,000.00',
+        'Permanent Disability': '₦500,000.00',
+        'Medical Expenses': '₦100,000.00',
+      },
+      'Option D': {
+        'Death': '₦750,000.00',
+        'Permanent Disability': '₦750,000.00',
+        'Medical Expenses': '₦150,000.00',
+      },
+      'Option E': {
+        'Death': '₦1,000,000.00',
+        'Permanent Disability': '₦1,000,000.00',
+        'Medical Expenses': '₦200,000.00',
+      },
+    };
+
+    return (isDriver ? driverBenefits : personalBenefits)[widget.optionTitle] ??
+        const {};
   }
 
   String _formatNaira(double amount) {
@@ -1107,9 +1176,22 @@ class _PersonalCarePurchaseScreenState
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _summarySection(
+            'Product Summary',
+            [
+              _summaryRow('Product', widget.productName,
+                  singleLine: true, fontSize: 11),
+              _summaryRow('Plan', widget.optionTitle,
+                  singleLine: true, fontSize: 11),
+              _summaryRow('Summary', _productSummaryText(), fontSize: 11),
+              ..._selectedBenefits().entries.map(
+                    (entry) =>
+                        _summaryRow(entry.key, entry.value, fontSize: 11),
+                  ),
+            ],
+            titleFontSize: 13),
+        const SizedBox(height: 20),
         _summarySection('Payment Information', [
-          _summaryRow('Product', '${widget.productName} ${widget.optionTitle}',
-              singleLine: true),
           _summaryRow('Price', _summaryPriceText()),
           _summaryRow('Paystack Charges', _formatNaira(_getPaystackCharge())),
           _summaryRow('Total', _formatNaira(_getTotalAmount())),
@@ -1173,7 +1255,8 @@ class _PersonalCarePurchaseScreenState
     );
   }
 
-  Widget _summarySection(String title, List<Widget> rows) {
+  Widget _summarySection(String title, List<Widget> rows,
+      {double titleFontSize = 14}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = isDark ? const Color(0xFF111827) : Colors.grey[50]!;
     final borderColor = isDark ? const Color(0xFF334155) : Colors.grey[200]!;
@@ -1188,7 +1271,7 @@ class _PersonalCarePurchaseScreenState
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(title,
             style: TextStyle(
-                fontSize: 14,
+                fontSize: titleFontSize,
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 12),
@@ -1197,7 +1280,8 @@ class _PersonalCarePurchaseScreenState
     );
   }
 
-  Widget _summaryRow(String label, String value, {bool singleLine = false}) {
+  Widget _summaryRow(String label, String value,
+      {bool singleLine = false, double fontSize = 12}) {
     final labelColor = Theme.of(context).brightness == Brightness.dark
         ? const Color(0xFFCBD5E1)
         : Colors.grey[600]!;
@@ -1207,14 +1291,14 @@ class _PersonalCarePurchaseScreenState
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(
             flex: 2,
-            child:
-                Text(label, style: TextStyle(fontSize: 12, color: labelColor))),
+            child: Text(label,
+                style: TextStyle(fontSize: fontSize, color: labelColor))),
         SizedBox(width: 8),
         Expanded(
             flex: 3,
             child: Text(value.isNotEmpty ? value : '-',
                 style: TextStyle(
-                    fontSize: 12,
+                    fontSize: fontSize,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface),
                 textAlign: TextAlign.right)),

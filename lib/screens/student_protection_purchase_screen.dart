@@ -249,7 +249,8 @@ class _StudentProtectionPurchaseScreenState
     try {
       final r = await http
           .post(
-              Uri.parse('https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
+              Uri.parse(
+                  'https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
               headers: {'Content-Type': 'application/json'},
               body: json.encode({
                 'Intcode': 'TESTCODE',
@@ -340,6 +341,43 @@ class _StudentProtectionPurchaseScreenState
   }
 
   double _getTotal() => _getSummaryBase() + _getCharge();
+
+  String _productSummaryText() {
+    return 'Student-focused accident protection with benefits for death, permanent disability, and medical expenses.';
+  }
+
+  Map<String, String> _selectedBenefits() {
+    const benefits = {
+      'Option A': {
+        'Death': '₦500,000.00',
+        'Permanent Disability': '₦500,000.00',
+        'Medical Expenses': '₦50,000.00',
+      },
+      'Option B': {
+        'Death': '₦750,000.00',
+        'Permanent Disability': '₦750,000.00',
+        'Medical Expenses': '₦100,000.00',
+      },
+      'Option C': {
+        'Death': '₦1,000,000.00',
+        'Permanent Disability': '₦1,000,000.00',
+        'Medical Expenses': '₦150,000.00',
+      },
+      'Option D': {
+        'Death': '₦1,500,000.00',
+        'Permanent Disability': '₦1,500,000.00',
+        'Medical Expenses': '₦200,000.00',
+      },
+      'Option E': {
+        'Death': '₦2,000,000.00',
+        'Permanent Disability': '₦2,000,000.00',
+        'Medical Expenses': '₦250,000.00',
+      },
+    };
+
+    return benefits[widget.optionTitle] ?? const {};
+  }
+
   String _fmtN(double a) =>
       '₦${a.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+\.)'), (m) => '${m[1]},')}';
 
@@ -970,8 +1008,19 @@ class _StudentProtectionPurchaseScreenState
   Widget _s3() => Padding(
       padding: const EdgeInsets.all(24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sec(
+            'Product Summary',
+            [
+              _sRow('Product', 'Student Protection Plan', fontSize: 11),
+              _sRow('Plan', widget.optionTitle, fontSize: 11),
+              _sRow('Summary', _productSummaryText(), fontSize: 11),
+              ..._selectedBenefits().entries.map(
+                    (entry) => _sRow(entry.key, entry.value, fontSize: 11),
+                  ),
+            ],
+            titleFontSize: 13),
+        const SizedBox(height: 20),
         _sec('Payment Information', [
-          _sRow('Product', 'Student Protection Plan ${widget.optionTitle}'),
           _sRow('Price', _summaryPriceText()),
           _sRow('Paystack Charges', _fmtN(_getCharge())),
           _sRow('Total', _fmtN(_getTotal()))
@@ -1015,35 +1064,37 @@ class _StudentProtectionPurchaseScreenState
       ]));
 
   // Helpers
-  Widget _sec(String t, List<Widget> r) => Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF111827)
-              : Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
+  Widget _sec(String t, List<Widget> r, {double titleFontSize = 14}) =>
+      Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
               color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF334155)
-                  : Colors.grey[200]!)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(t,
-            style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface)),
-        SizedBox(height: 12),
-        ...r
-      ]));
-  Widget _sRow(String l, String v) => Padding(
+                  ? const Color(0xFF111827)
+                  : Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF334155)
+                      : Colors.grey[200]!)),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(t,
+                style: TextStyle(
+                    fontSize: titleFontSize,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface)),
+            SizedBox(height: 12),
+            ...r
+          ]));
+  Widget _sRow(String l, String v, {double fontSize = 12}) => Padding(
       padding: EdgeInsets.only(bottom: 10),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(
             flex: 2,
             child: Text(l,
                 style: TextStyle(
-                    fontSize: 12,
+                    fontSize: fontSize,
                     color: Theme.of(context).brightness == Brightness.dark
                         ? const Color(0xFFCBD5E1)
                         : Colors.grey[600]))),
@@ -1052,7 +1103,7 @@ class _StudentProtectionPurchaseScreenState
             flex: 3,
             child: Text(v.isNotEmpty ? v : '-',
                 style: TextStyle(
-                    fontSize: 12,
+                    fontSize: fontSize,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface),
                 textAlign: TextAlign.right))
