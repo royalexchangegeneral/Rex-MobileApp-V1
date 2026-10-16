@@ -46,7 +46,7 @@ class _SelectClientScreenState extends State<SelectClientScreen> {
       final agentCode = auth.userCode ?? '';
       final r = await http
           .post(
-            Uri.parse('https://eportaltest.rexinsure.com/api/agent/customers'),
+            Uri.parse('https://eportal.rexinsure.com/api/agent/customers'),
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'

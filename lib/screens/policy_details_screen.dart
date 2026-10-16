@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import '../utils/app_theme.dart';
+import '../utils/certificate_url.dart';
+import '../services/certificate_policy_service.dart';
 import '../utils/renewal_guard.dart';
 import '../utils/theme_helper.dart';
 import '../widgets/agent_bottom_nav.dart';
@@ -25,7 +27,7 @@ class PolicyDetailsScreen extends StatelessWidget {
   final Map<String, dynamic>? policyData;
   final bool isAgentFlow;
   static const String _policyInfoBearerToken =
-      'SZyn3hKMefEYZRrZCEWr6H2f8qSRlVBkYCmsaVrN';
+      '28AnYQWy2PGXptmPJd2mEYVXt0gg7RznjnBMbC4I';
 
   const PolicyDetailsScreen({
     super.key,
@@ -609,7 +611,7 @@ class PolicyDetailsScreen extends StatelessWidget {
 
   Uri _certificateUri() {
     return Uri.https(
-      'eportaltest.rexinsure.com',
+      'eportal.rexinsure.com',
       _getCertType(),
       {'policy': policyNumber},
     );
@@ -617,7 +619,7 @@ class PolicyDetailsScreen extends StatelessWidget {
 
   bool get _usesIesCertificateEndpoint {
     final normalized = policyNumber.trim().toUpperCase();
-    return normalized.startsWith('P/PM') || normalized.startsWith('P/CV');
+    return normalized.startsWith('P/PM/') || normalized.startsWith('P/CV/');
   }
 
   Future<String?> _certificateUrl(BuildContext context) async {
@@ -637,7 +639,7 @@ class PolicyDetailsScreen extends StatelessWidget {
       final response = await http
           .post(
             Uri.parse(
-                'https://eportaltest.rexinsure.com/api/kissflow/generate/certificate/ies'),
+                'https://eportal.rexinsure.com/api/kissflow/generate/certificate/ies'),
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
@@ -650,12 +652,12 @@ class PolicyDetailsScreen extends StatelessWidget {
         throw HttpException('Certificate generation failed');
       }
 
-      final generatedUrl = _certificateUrlFromResponse(response.body);
+      final generatedUrl = certificateUrlFromResponse(response.body);
       if (generatedUrl.isEmpty) {
         throw const FormatException('No certificate URL returned');
       }
 
-      return _normalizeCertificateUrl(generatedUrl);
+      return generatedUrl;
     } catch (e) {
       debugPrint('IES certificate generation error: $e');
       if (context.mounted) {
@@ -668,61 +670,12 @@ class PolicyDetailsScreen extends StatelessWidget {
   }
 
   Future<Map<String, dynamic>> _fetchPolicyInfoForCertificate() async {
-    final response = await http
-        .get(
-          Uri.https(
-            'eportaltest.rexinsure.com',
-            '/api/kissflow/getpolinfo',
-            {
-              'PolicyNo': policyNumber,
-              'IntCode': 'TESTCODE',
-              'Password': 'royal1234',
-            },
-          ),
-          headers: {
-            'Accept': 'application/json',
-            'Authorization': 'Bearer $_policyInfoBearerToken',
-          },
-        )
-        .timeout(const Duration(seconds: 30));
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw HttpException('Policy info lookup failed');
-    }
-
-    final decoded = json.decode(response.body);
-    final fetchedPolicyInfo = _policyInfoFromResponse(decoded);
+    final fetchedPolicyInfo = await fetchCertificatePolicy(
+      policyNumber, _policyInfoBearerToken);
     return {
       if (policyData != null) ...policyData!,
       ...fetchedPolicyInfo,
     };
-  }
-
-  Map<String, dynamic> _policyInfoFromResponse(dynamic decoded) {
-    if (decoded is Map) {
-      final map = Map<String, dynamic>.from(decoded);
-      for (final key in [
-        'Data',
-        'data',
-        'PolicyInfo',
-        'policyInfo',
-        'Policy',
-        'policy',
-      ]) {
-        final value = map[key];
-        if (value is Map) return Map<String, dynamic>.from(value);
-        if (value is List && value.isNotEmpty && value.first is Map) {
-          return Map<String, dynamic>.from(value.first as Map);
-        }
-      }
-      return map;
-    }
-
-    if (decoded is List && decoded.isNotEmpty && decoded.first is Map) {
-      return Map<String, dynamic>.from(decoded.first as Map);
-    }
-
-    throw const FormatException('Policy info returned an invalid response');
   }
 
   Map<String, dynamic> _iesCertificatePayload(Map<String, dynamic> source) {
@@ -736,15 +689,17 @@ class PolicyDetailsScreen extends StatelessWidget {
     final sumInsured = _firstNonEmpty([
       source['sumInsured'],
       source['SumInsured'],
+      source['sumass'],
       source['SumAssured'],
       source['sumassured'],
     ]);
 
     return {
-      'IntCode': 'TESTCODE',
-      'Password': 'royal1234',
+      'IntCode': 'Kissflow',
+      'Password': '1lovetoeatcook1es',
       'policyno': _firstNonEmpty([
         source['PolicyNo'],
+        source['polnum'],
         source['policyno'],
         source['policyNo'],
         policyNumber,
@@ -807,6 +762,7 @@ class PolicyDetailsScreen extends StatelessWidget {
       'startdate': _firstNonEmpty([
         source['startDate'],
         source['PolicyStartDate'],
+        source['effdate'],
         source['StartDate'],
         source['startdate'],
       ]),
@@ -835,6 +791,7 @@ class PolicyDetailsScreen extends StatelessWidget {
       'premium': _firstNonEmpty([
         source['premium'],
         source['Premium'],
+        source['curprem'],
         source['GrossPremium'],
       ]),
     };
@@ -874,71 +831,6 @@ class PolicyDetailsScreen extends StatelessWidget {
   double _numberValue(String value) {
     final cleaned = value.replaceAll(RegExp(r'[^0-9.-]'), '');
     return double.tryParse(cleaned) ?? 0;
-  }
-
-  String _certificateUrlFromResponse(String body) {
-    try {
-      final decoded = json.decode(body);
-      if (decoded is String)
-        return _looksLikeUrl(decoded) ? decoded.trim() : '';
-      return _findCertificateUrl(decoded);
-    } catch (_) {
-      final trimmed = body.trim();
-      return _looksLikeUrl(trimmed) ? trimmed : '';
-    }
-  }
-
-  String _findCertificateUrl(dynamic value) {
-    if (value is Map) {
-      final map = Map<String, dynamic>.from(value);
-      for (final key in [
-        'certificate',
-        'url',
-        'certificate_url',
-        'certificateUrl',
-        'download_url',
-        'downloadUrl',
-        'file_url',
-        'fileUrl',
-        'file',
-        'path',
-      ]) {
-        final candidate = map[key]?.toString().trim() ?? '';
-        if (_looksLikeUrl(candidate)) return candidate;
-      }
-
-      for (final nested in map.values) {
-        final found = _findCertificateUrl(nested);
-        if (found.isNotEmpty) return found;
-      }
-    }
-
-    if (value is List) {
-      for (final item in value) {
-        final found = _findCertificateUrl(item);
-        if (found.isNotEmpty) return found;
-      }
-    }
-
-    return '';
-  }
-
-  bool _looksLikeUrl(String value) {
-    final text = value.trim().toLowerCase();
-    return text.startsWith('http://') ||
-        text.startsWith('https://') ||
-        text.startsWith('/');
-  }
-
-  String _normalizeCertificateUrl(String value) {
-    final trimmed = value.trim();
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      return trimmed;
-    }
-    if (trimmed.startsWith('/')) {
-      return 'https://eportaltest.rexinsure.com$trimmed';
-    }
-    return trimmed;
   }
 
   String _getCertType() {

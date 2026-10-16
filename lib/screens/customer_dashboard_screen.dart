@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/claim_number.dart';
+import '../utils/claim_status.dart';
 import '../utils/theme_helper.dart';
 import '../providers/auth_provider.dart';
 import 'login_screen.dart';
@@ -46,19 +48,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
     return '';
   }
 
-  String _claimNumber(Map<String, dynamic> claim) {
-    return _claimValue(claim, [
-      'ClaimNo',
-      'claimNo',
-      'ClaimNO',
-      'ClaimNum',
-      'ClaimNumber',
-      'Claim_Number',
-      'ClaimID',
-      'claim_num',
-      'claim_no',
-    ]);
-  }
+  String _claimNumber(Map<String, dynamic> claim) => claimNumberFrom(claim);
 
   int _claimProgressIndex(String status) {
     final s = status.toLowerCase();
@@ -108,6 +98,10 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
   String _displayClaimStatus(Map<String, dynamic> claim) {
     final claimNo = _claimNumber(claim);
     final statusPayload = _claimStatusCache[claimNo];
+    if (hasSettledClaimStatus([
+      claim,
+      if (statusPayload != null) statusPayload,
+    ])) return 'Claim Paid';
     final fallbackStatus =
         _claimValue(claim, ['ClaimStatus', 'Status', 'status']);
 
@@ -170,7 +164,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
 
   Future<Map<String, dynamic>> _fetchClaimStatus(String claimNo) async {
     final uri = Uri.https(
-      'eportaltest.rexinsure.com',
+      'eportal.rexinsure.com',
       '/api/getclaim-status',
       {'claim_num': claimNo},
     );

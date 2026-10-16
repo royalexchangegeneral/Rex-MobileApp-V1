@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/claim_number.dart';
+import '../utils/claim_status.dart';
 import '../utils/error_messages.dart';
 import '../utils/theme_helper.dart';
 import '../providers/policy_provider.dart';
@@ -56,20 +58,6 @@ String _claimMapValue(Map<String, dynamic> claim, List<String> keys) {
   return '';
 }
 
-String _claimNumberFrom(Map<String, dynamic> claim) {
-  return _claimMapValue(claim, [
-    'ClaimNo',
-    'claimNo',
-    'ClaimNO',
-    'ClaimNum',
-    'ClaimNumber',
-    'Claim_Number',
-    'ClaimID',
-    'claim_num',
-    'claim_no',
-  ]);
-}
-
 int _claimProgressIndex(String status) {
   final s = status.toLowerCase();
   if (s.contains('claim paid')) return 7;
@@ -119,8 +107,12 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
   }
 
   String _getCurrentClaimStatus(Map<String, dynamic> claim) {
-    final claimNo = _claimNumberFrom(claim);
+    final claimNo = claimNumberFrom(claim);
     final statusPayload = _claimStatusCache[claimNo];
+    if (hasSettledClaimStatus([
+      claim,
+      if (statusPayload != null) statusPayload,
+    ])) return 'Claim Paid';
     final rawStatus = statusPayload == null
         ? _getClaimStatus(claim)
         : _claimMapValue(statusPayload, ['Status', 'status']).isNotEmpty
@@ -193,7 +185,7 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
 
   void _prefetchClaimStatuses(List<Map<String, dynamic>> claims) {
     for (final claim in claims) {
-      final claimNo = _claimNumberFrom(claim);
+      final claimNo = claimNumberFrom(claim);
       if (claimNo.isEmpty ||
           _claimStatusCache.containsKey(claimNo) ||
           _claimStatusLoading.contains(claimNo)) {
@@ -217,7 +209,7 @@ class _MyClaimsScreenState extends State<MyClaimsScreen> {
 
   Future<Map<String, dynamic>> _fetchClaimStatus(String claimNo) async {
     final uri = Uri.https(
-      'eportaltest.rexinsure.com',
+      'eportal.rexinsure.com',
       '/api/getclaim-status',
       {'claim_num': claimNo},
     );
@@ -768,51 +760,48 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
       _error = null;
     });
 
-    try {
-      final uri = Uri.https(
-        'eportaltest.rexinsure.com',
-        '/api/getclaim-info',
-        {'claim_num': claimNo},
-      );
+    Map<String, dynamic>? details;
+    Map<String, dynamic>? statusDetails;
+    Object? detailsError;
 
-      final response = await http.get(uri, headers: {
-        'Accept': 'application/json'
-      }).timeout(const Duration(seconds: 30));
+    // Both endpoints can contain claim details. A missing information record
+    // must not prevent us from reading the workflow record returned by status.
+    await Future.wait([
+      () async {
+        try {
+          details = await _fetchClaimRecord('/api/getclaim-info', claimNo);
+        } catch (e) {
+          detailsError = e;
+        }
+      }(),
+      () async {
+        try {
+          statusDetails =
+              await _fetchClaimRecord('/api/getclaim-status', claimNo);
+        } catch (e) {
+          debugPrint('Unable to refresh claim status: $e');
+        }
+      }(),
+    ]);
 
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception(ErrorMessages.fromResponse(response,
-            fallback: 'Unable to load claim details'));
-      }
-
-      final decoded = json.decode(response.body);
-      if (decoded is Map && decoded['status'] == false) {
-        final message = ErrorMessages.fromDecodedJson(decoded);
-        throw Exception(
-            message.isNotEmpty ? message : 'Unable to load claim details');
-      }
-      final payload = _payloadFrom(decoded);
-      final statusPayload = await _fetchStatusDetails(claimNo);
-
-      if (!mounted) return;
-      setState(() {
-        _details = payload;
-        _statusDetails = statusPayload;
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = ErrorMessages.fromException(e,
+    if (!mounted) return;
+    setState(() {
+      _details = details;
+      _statusDetails = statusDetails;
+      _loading = false;
+      if (details == null && statusDetails == null) {
+        _error = ErrorMessages.fromException(
+            detailsError ?? Exception('Unable to load claim details'),
             fallback: 'Unable to load claim details');
-      });
-    }
+      }
+    });
   }
 
-  Future<Map<String, dynamic>> _fetchStatusDetails(String claimNo) async {
+  Future<Map<String, dynamic>> _fetchClaimRecord(
+      String path, String claimNo) async {
     final uri = Uri.https(
-      'eportaltest.rexinsure.com',
-      '/api/getclaim-status',
+      'eportal.rexinsure.com',
+      path,
       {'claim_num': claimNo},
     );
 
@@ -822,17 +811,41 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception(ErrorMessages.fromResponse(response,
-          fallback: 'Unable to load claim status'));
+          fallback: 'Unable to load claim details'));
     }
 
     final decoded = json.decode(response.body);
     if (decoded is Map && decoded['status'] == false) {
       final message = ErrorMessages.fromDecodedJson(decoded);
       throw Exception(
-          message.isNotEmpty ? message : 'Unable to load claim status');
+          message.isNotEmpty ? message : 'Unable to load claim details');
     }
 
-    return _payloadFrom(decoded);
+    final payload = _payloadFrom(decoded);
+    // Empty envelopes and error metadata are not claim records.
+    if (_claimMapValue(payload, [
+      'ClaimNo',
+      'claimNo',
+      'ClaimNO',
+      'ClaimNum',
+      'ClaimNumber',
+      'Claim_Number',
+      'claim_num',
+      'claim_no',
+      'ClaimID',
+      'PolicyNo',
+      'PolicyNumber',
+      'Policy_Number',
+      'policyno',
+      'polnum',
+      'ClaimType',
+      'Risk_Type',
+      'ClaimStatus',
+      'Status2_Stages',
+    ]).isEmpty) {
+      throw Exception('Claim information not found');
+    }
+    return payload;
   }
 
   Map<String, dynamic> _payloadFrom(dynamic decoded) {
@@ -867,17 +880,7 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
         if (_statusDetails != null) ..._statusDetails!,
       };
 
-  String get _claimNumber => _read([
-        'ClaimNo',
-        'claimNo',
-        'ClaimNO',
-        'ClaimNum',
-        'ClaimNumber',
-        'Claim_Number',
-        'ClaimID',
-        'claim_num',
-        'claim_no',
-      ]);
+  String get _claimNumber => claimNumberFrom(widget.claim);
 
   String _read(List<String> keys, {bool fromFallbackOnly = false}) {
     final maps = fromFallbackOnly
@@ -945,7 +948,8 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
   int _progressIndex(String status) {
     final s = status.toLowerCase();
     if (s.contains('claim paid')) return 7;
-    if (s.contains('paid') || s.contains('settled')) return 6;
+    if (s.trim() == 'settled') return 7;
+    if (s.contains('paid')) return 6;
     if (s.contains('payment approved')) return 5;
     if (s.contains('payment approval stage')) return 4;
     if (s.contains('offer')) return 2;
@@ -1061,6 +1065,7 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
       'LossLocation',
       'AccidentLocation',
       'IncidentLocation',
+      'IncidentPlace',
       'Address',
     ]);
     final description = _read([
@@ -1074,8 +1079,15 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
     ]);
     final progressStage =
         _read(['Status2_Stages', 'status2_stages', 'Status2Stages']);
-    final progressIndex =
-        _progressIndex(progressStage.isNotEmpty ? progressStage : status);
+    // Settlement confirms payment, even if the workflow stage is stale.
+    final isSettled = hasSettledClaimStatus([
+      widget.claim,
+      if (_details != null) _details!,
+      if (_statusDetails != null) _statusDetails!,
+    ]);
+    final progressIndex = isSettled
+        ? 7
+        : _progressIndex(progressStage.isNotEmpty ? progressStage : status);
     final overallStatus = progressIndex > 6
         ? 'Claim Paid'
         : (status.isNotEmpty ? status : 'Pending');
@@ -1342,7 +1354,7 @@ class _ClaimDetailsScreenState extends State<ClaimDetailsScreen> {
             ? const Color(0xFFE8923E)
             : Colors.grey;
     final subtitle = isCompleted
-        ? 'Approved'
+        ? (isLast ? 'Paid' : 'Approved')
         : isCurrent
             ? 'In Progress'
             : 'Pending';

@@ -308,11 +308,11 @@ class _PersonalCarePurchaseScreenState
       final response = await http
           .post(
             Uri.parse(
-                'https://eportaltest.rexinsure.com/api/mobile/verify/nin'),
+                'https://eportal.rexinsure.com/api/mobile/verify/nin'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode({
-              'Intcode': 'TESTCODE',
-              'Password': 'royal1234',
+              'Intcode': 'Kissflow',
+              'Password': '1lovetoeatcook1es',
               'number': nin,
             }),
           )
