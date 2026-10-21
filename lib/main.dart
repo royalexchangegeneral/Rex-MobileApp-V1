@@ -93,7 +93,10 @@ class MyApp extends StatelessWidget {
                 child: InactivityService(
                   timeout: const Duration(minutes: 3),
                   navigatorKey: _navigatorKey,
-                  child: AppUpdateGate(child: child!),
+                  child: AppUpdateGate(
+                    navigatorKey: _navigatorKey,
+                    child: child!,
+                  ),
                 ),
               );
             },

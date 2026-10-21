@@ -86,10 +86,11 @@ class AppUpdateService {
         'minBuildNumber',
       ]);
 
-      final isNewerVersion =
-          _compareVersions(latestVersion, currentVersion) > 0;
-      final isNewerBuild =
-          latestBuild != null && latestBuild > currentBuildNumber;
+      final versionComparison = _compareVersions(latestVersion, currentVersion);
+      final isNewerVersion = versionComparison > 0;
+      final isNewerBuild = versionComparison == 0 &&
+          latestBuild != null &&
+          latestBuild > currentBuildNumber;
       final updateAvailable = isNewerVersion || isNewerBuild;
       if (!updateAvailable) return null;
 

@@ -1,7 +1,7 @@
 name: rex_insurance
 description: A comprehensive general insurance platform
 publish_to: 'none'
-version: 1.1.6+24
+version: 1.1.7+25
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -36,7 +36,8 @@ dependencies:
   flutter_secure_storage: ^10.3.1
   path_provider: ^2.1.2
   pdf: ^3.10.8
-  file_picker: ^8.0.0
+  file_picker:
+    path: third_party/file_picker
   safe_device: ^1.1.7
 
 dev_dependencies:
